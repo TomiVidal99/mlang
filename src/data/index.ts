@@ -1,2 +1,2 @@
-export * from "./completionData";
-export * from "./syntaxReferences";
+export * from './completionData';
+export * from './syntaxReferences';
