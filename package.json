@@ -1,0 +1,28 @@
+{
+	"name": "mlang",
+	"description": "LSP implementation for octave programming language",
+	"version": "1.0.0",
+	"author": "Tomás Vidal",
+	"license": "MIT",
+	"engines": {
+		"node": "*"
+	},
+	"repository": {
+		"type": "git",
+		"url": "https://github.com/TomiVidal99/mlang"
+	},
+	"dependencies": {
+		"@types/node": "18.15.5",
+		"@typescript-eslint/eslint-plugin": "5.56.0",
+		"@typescript-eslint/parser": "5.56.0",
+		"eslint": "8.36.0",
+		"typescript": "5.0.2",
+		"vscode-languageserver": "8.1.0",
+		"vscode-languageserver-textdocument": "1.0.8"
+	},
+	"scripts": {
+		"compile": "tsc -b",
+		"watch": "tsc -b -w",
+		"lint": "eslint ./src --ext .ts"
+	}
+}
