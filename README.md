@@ -6,6 +6,7 @@ This is an implementation of the [Language Server Protocol](https://code.visuals
 
 ## TODO
 - [ ] make tests.
+- [ ] add husky (for linting before commit).
 - [ ] key words completion.
 - [ ] syntax checking.
 - [ ] formatting.
