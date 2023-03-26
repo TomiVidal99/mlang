@@ -1,10 +1,109 @@
-import { CompletionItem, CompletionItemKind } from 'vscode-languageserver';
+import { CompletionItem, CompletionItemKind, MarkupKind } from 'vscode-languageserver';
 
 export const completionData: CompletionItem[] = [
+{
+    label: 'for',
+    kind: CompletionItemKind.Keyword,
+    documentation: {
+      kind: MarkupKind.Markdown,
+      value: '[for loop](https://octave.org/doc/v6.4.0/Control-Statements.html#Control-Statements)',
+    },
+  },
+  {
+    label: 'while',
+    kind: CompletionItemKind.Keyword,
+    documentation: {
+      kind: MarkupKind.Markdown,
+      value: '[while loop](https://octave.org/doc/v6.4.0/Control-Statements.html#Control-Statements)',
+    },
+  },
+  {
+    label: 'if',
+    kind: CompletionItemKind.Keyword,
+    documentation: {
+      kind: MarkupKind.Markdown,
+      value: '[if statement](https://octave.org/doc/v6.4.0/Control-Statements.html#Control-Statements)',
+    },
+  },
+  {
+    label: 'else',
+    kind: CompletionItemKind.Keyword,
+    documentation: {
+      kind: MarkupKind.Markdown,
+      value: '[if statement else clause](https://octave.org/doc/v6.4.0/Control-Statements.html#Control-Statements)',
+    },
+  },
+  {
+    label: 'elseif',
+    kind: CompletionItemKind.Keyword,
+    documentation: {
+      kind: MarkupKind.Markdown,
+      value: '[if statement elseif clause](https://octave.org/doc/v6.4.0/Control-Statements.html#Control-Statements)',
+    },
+  },
+  {
+    label: 'switch',
+    kind: CompletionItemKind.Keyword,
+    documentation: {
+      kind: MarkupKind.Markdown,
+      value: '[switch statement](https://octave.org/doc/v6.4.0/Control-Statements.html#Control-Statements)',
+    },
+  },
+  {
+    label: 'case',
+    kind: CompletionItemKind.Keyword,
+    documentation: {
+      kind: MarkupKind.Markdown,
+      value: '[switch statement case clause](https://octave.org/doc/v6.4.0/Control-Statements.html#Control-Statements)',
+    },
+  },
+  {
+    label: 'otherwise',
+    kind: CompletionItemKind.Keyword,
+    documentation: {
+      kind: MarkupKind.Markdown,
+      value: '[switch statement otherwise clause](https://octave.org/doc/v6.4.0/Control-Statements.html#Control-Statements)',
+    },
+  },
+  {
+    label: 'break',
+    kind: CompletionItemKind.Keyword,
+    documentation: {
+      kind: MarkupKind.Markdown,
+      value: '[break statement](https://octave.org/doc/v6.4.0/Control-Statements.html#Control-Statements)',
+    },
+  },
+  {
+    label: 'continue',
+    kind: CompletionItemKind.Keyword,
+    documentation: {
+      kind: MarkupKind.Markdown,
+      value: '[continue statement](https://octave.org/doc/v6.4.0/Control-Statements.html#Control-Statements)',
+    },
+  },
+  {
+    label: 'return',
+    kind: CompletionItemKind.Keyword,
+    documentation: {
+      kind: MarkupKind.Markdown,
+      value: '[return statement](https://octave.org/doc/v6.4.0/Control-Statements.html#Control-Statements)',
+    },
+  },
+  {
+    label: 'end',
+    kind: CompletionItemKind.Keyword,
+    documentation: {
+      kind: MarkupKind.Markdown,
+      value: '[block end marker](https://octave.org/doc/v6.4.0/Control-Statements.html#Control-Statements)',
+    },
+  },
   {
     label: 'function',
-    kind: CompletionItemKind.Function,
-    documentation: '[Octave function](https://docs.octave.org/v4.0.1/Defining-Functions.html)'
+    kind: CompletionItemKind.Keyword,
+    documentation: {
+      kind: MarkupKind.Markdown,
+      value: '[block end marker](https://docs.octave.org/v4.0.1/Defining-Functions.html)',
+    },
   },
   {
     label: "abs",
