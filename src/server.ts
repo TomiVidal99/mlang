@@ -11,17 +11,13 @@ import {
   MessageType,
   CompletionItem,
   TextDocumentPositionParams,
-  Range,
-  Definition,
   Location,
-  Connection,
-  Position,
 } from "vscode-languageserver/node";
 
 import { TextDocument } from "vscode-languageserver-textdocument";
 import { completionData } from "./data";
-import { getDefinition, getWordInDocument, getWordRangeAtPosition } from "./utils";
-import { stringify } from "querystring";
+import { getDefinition, getWordRangeAtPosition } from "./utils";
+import { handleOnDefinition } from "./handleOnDefinition";
 
 // Create a connection for the server, using Node's IPC as a transport.
 // Also include all preview / proposed LSP features.
@@ -95,43 +91,8 @@ connection.onInitialized(() => {
   }
 });
 
-connection.onDefinition(async (params): Promise<Location | Location[] | null> => {
-  const documentUri = params.textDocument.uri;
-  const position = params.position;
-
-  const document = documents.get(documentUri);
-  if (!document) {
-    return null;
-  }
-
-  const wordRange = getWordRangeAtPosition(document, position);
-  if (!wordRange) {
-    return null;
-  }
-
-  const word = document.getText(wordRange);
-  const locations: Location[] = [];
-
-  // Search for definition in the current file
-  const currentDefinition = getDefinition({document, word, connection: connection});
-  if (currentDefinition) {
-    locations.push(...currentDefinition);
-  }
-
-  // Search for definition in other open files
-  for (const doc of documents.all()) {
-    if (doc.uri === documentUri) {
-      continue;
-    }
-    log(JSON.stringify(doc));
-    const definition = getDefinition({document: doc, word, connection: connection});
-    if (definition) {
-      locations.push(...definition);
-    }
-  }
-
-  return locations.length > 0 ? locations : null;
-});
+// handles the onDefinition capability
+connection.onDefinition((params) => handleOnDefinition({params, documents}));
 
 // The example settings
 interface ISettings {
