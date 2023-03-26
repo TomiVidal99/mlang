@@ -8,7 +8,7 @@ import {
 
 import { TextDocument } from "vscode-languageserver-textdocument";
 import { ISettings } from "./data";
-import { handleOnCompletion, handleOnDefinition, handleOnDidChangeConfiguration, handleOnInitialize, handleOnInitialized, validateTextDocument } from ".";
+import { handleOnCompletion, handleOnDefinition, handleOnDidChangeConfiguration, handleOnInitialize, handleOnInitialized, updateCompletionList, validateTextDocument } from ".";
 
 // Create a connection for the server, using Node's IPC as a transport.
 // Also include all preview / proposed LSP features.
@@ -43,6 +43,8 @@ documents.onDidChangeContent((change) => {
   // The content of a text document has changed. This event is emitted
   // when the text document first opened or when its content has changed.
   validateTextDocument(change.document, hasConfigurationCapability, connection);
+  log("Changed");
+  updateCompletionList({document: change.document});
 });
 
 // This handler provides the initial list of the completion items.

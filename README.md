@@ -7,7 +7,7 @@ This is an implementation of the [Language Server Protocol](https://code.visuals
 - [vscode-languageserver](https://www.npmjs.com/package/vscode-languageserver) _(LSP official node package)_
 
 ## Working features
-- Completion
+- Completion _(of the most common keywords)_
 - goToDefinition
 
 ## How to setup in the client
@@ -38,6 +38,7 @@ end
 
 ## TODO
 - [ ] make tests.
+- [ ] fix goToDefinition, (only gets definition in others files if they are opened).
 - [ ] add husky (for linting before commit).
 - [ ] key words completion.
 - [ ] syntax checking.
