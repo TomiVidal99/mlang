@@ -1,7 +1,3 @@
-/* --------------------------------------------------------------------------------------------
- * Copyright (c) Microsoft Corporation. All rights reserved.
- * Licensed under the MIT License. See License.txt in the project root for license information.
- * ------------------------------------------------------------------------------------------ */
 import {
   createConnection,
   TextDocuments,
@@ -16,10 +12,16 @@ import {
   CompletionItem,
   TextDocumentPositionParams,
   Range,
+  Definition,
+  Location,
+  Connection,
+  Position,
 } from "vscode-languageserver/node";
 
-import { Position, TextDocument } from "vscode-languageserver-textdocument";
+import { TextDocument } from "vscode-languageserver-textdocument";
 import { completionData } from "./data";
+import { getDefinition, getWordInDocument, getWordRangeAtPosition } from "./utils";
+import { stringify } from "querystring";
 
 // Create a connection for the server, using Node's IPC as a transport.
 // Also include all preview / proposed LSP features.
@@ -93,78 +95,43 @@ connection.onInitialized(() => {
   }
 });
 
-connection.onDefinition((params) => {
-  const document = documents.get(params.textDocument.uri);
+connection.onDefinition(async (params): Promise<Location | Location[] | null> => {
+  const documentUri = params.textDocument.uri;
+  const position = params.position;
+
+  const document = documents.get(documentUri);
   if (!document) {
     return null;
   }
 
-  const position = params.position;
-  const wordRange = getWordRange(document, position);
+  const wordRange = getWordRangeAtPosition(document, position);
   if (!wordRange) {
     return null;
   }
 
   const word = document.getText(wordRange);
+  const locations: Location[] = [];
 
-  // Your implementation logic here
-  log("searching definition for " + word);
-
-  return null;
-});
-
-function getWordRange(document: TextDocument, position: Position): Range | null {
-  const line = document.getText({ start: { line: position.line, character: 0 }, end: { line: position.line + 1, character: 0 } });
-  const word = line.match(/[\w\d]+/g)?.find(w => document.offsetAt(position) >= line.indexOf(w) && document.offsetAt(position) < line.indexOf(w) + w.length);
-  if (!word) {
-    return null;
+  // Search for definition in the current file
+  const currentDefinition = getDefinition({document, word, connection: connection});
+  if (currentDefinition) {
+    locations.push(...currentDefinition);
   }
-  const wordStart = line.indexOf(word);
-  const wordEnd = wordStart + word.length;
-  return Range.create(position.line, wordStart, position.line, Math.min(wordEnd, line.length));
-}
 
-// function getDefinition(connection: Connection, document: TextDocument, position: Position): Location[] {
-//   const wordRange = getWordRange(document, position);
-//   if (!wordRange) {
-//     return [];
-//   }
-//   const word = document.getText(wordRange);
-//   const locations: Location[] = [];
-//
-//   // search all open documents for the definition of the word
-//   connection.workspace.getWorkspaceFolders()?.forEach(folder => {
-//     connection.workspace.textDocuments.forEach(doc => {
-//       if (doc.uri.startsWith(folder.uri)) {
-//         const definitionPosition = findDefinition(doc, word);
-//         if (definitionPosition) {
-//           locations.push(Location.create(doc.uri, definitionPosition));
-//         }
-//       }
-//     });
-//   });
-//
-//   return locations;
-// }
-//
-// function findDefinition(document: TextDocument, word: string): Position | null {
-//   for (let i = 0; i < document.lineCount; i++) {
-//     const line = document.getText({ start: { line: i, character: 0 }, end: { line: i + 1, character: 0 } });
-//     const index = line.indexOf(word);
-//     if (index !== -1) {
-//       const range = Range.create(i, index, i, index + word.length);
-//       if (isDefinition(document, range)) {
-//         return range.start;
-//       }
-//     }
-//   }
-//   return null;
-// }
-//
-// function isDefinition(document: TextDocument, range: Range): boolean {
-//   // TODO: implement your own logic to determine if the given range is a definition
-//   return true;
-// }
+  // Search for definition in other open files
+  for (const doc of documents.all()) {
+    if (doc.uri === documentUri) {
+      continue;
+    }
+    log(JSON.stringify(doc));
+    const definition = getDefinition({document: doc, word, connection: connection});
+    if (definition) {
+      locations.push(...definition);
+    }
+  }
+
+  return locations.length > 0 ? locations : null;
+});
 
 // The example settings
 interface ISettings {
