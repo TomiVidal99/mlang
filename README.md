@@ -2,10 +2,12 @@
 This is an implementation of the [Language Server Protocol](https://code.visualstudio.com/api/language-extensions/language-server-extension-guide) for the [Octave](https://octave.org/) programming language
 
 ## Features
-- None yet.
+- Completion.
+- goToDefinition.
 
 ## How to setup in the client
 ### Neovim (lua)
+``` lua
 local lspconfig = require("lspconfig")
 local lspconfig_config = require("lspconfig.configs")
 -- mlang
@@ -27,6 +29,7 @@ if not lspconfig_config.mlang then
 		},
 	}
 end
+```
 
 ## TODO
 - [ ] make tests.
