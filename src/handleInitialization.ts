@@ -1,13 +1,27 @@
 import { DidChangeConfigurationNotification, InitializeParams, InitializeResult, TextDocumentSyncKind, _Connection } from "vscode-languageserver";
+import { functionsMap, getFilesInWorkspace, updateFunctionList } from "./managers";
+import { URI } from "vscode-uri";
+import { log } from "./server";
 
 interface IOnInitializeProps {
   params: InitializeParams;
   hasConfigurationCapability: boolean;
   hasWorkspaceFolderCapability: boolean;
   hasDiagnosticRelatedInformationCapability: boolean;
+  connection: _Connection;
 }
-export function handleOnInitialize({params, hasConfigurationCapability, hasWorkspaceFolderCapability, hasDiagnosticRelatedInformationCapability}: IOnInitializeProps) {
+export function handleOnInitialize({params, hasConfigurationCapability, hasWorkspaceFolderCapability, hasDiagnosticRelatedInformationCapability, connection}: IOnInitializeProps) {
   const capabilities = params.capabilities;
+  const rootUri = params.rootUri;
+  const workspace = URI.parse(rootUri).fsPath;
+  const documentsInWorkspace = getFilesInWorkspace({workspace});
+
+  // fills the list of function references, to goToReference and goToDefinition
+  updateFunctionList({documents: documentsInWorkspace});
+
+  functionsMap.forEach((func) => {
+    log(`fn name: ${func.name}, in ${func.uri}`);
+  });
 
   // Does the client support the `workspace/configuration` request?
   // If not, we fall back using global settings.

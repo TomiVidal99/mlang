@@ -12,7 +12,7 @@ import { handleOnCompletion, handleOnDefinition, handleOnDidChangeConfiguration,
 
 // Create a connection for the server, using Node's IPC as a transport.
 // Also include all preview / proposed LSP features.
-const connection = createConnection(ProposedFeatures.all);
+export const connection = createConnection(ProposedFeatures.all);
 
 // Create a simple text document manager.
 const documents = new TextDocuments<TextDocument>(TextDocument);
@@ -43,7 +43,7 @@ documents.onDidChangeContent((change) => {
   // The content of a text document has changed. This event is emitted
   // when the text document first opened or when its content has changed.
   validateTextDocument(change.document, hasConfigurationCapability, connection);
-  log("Changed");
+  //log("Changed");
   updateCompletionList({document: change.document});
 });
 

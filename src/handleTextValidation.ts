@@ -76,6 +76,6 @@ export async function validateTextDocument(
     diagnostics.push(diagnostic);
   }
 
-  // Send the computed diagnostics to VSCode.
+  // Send the computed diagnostics to client.
   connection.sendDiagnostics({ uri: textDocument.uri, diagnostics });
 }

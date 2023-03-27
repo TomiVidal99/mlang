@@ -13,17 +13,19 @@
 	},
 	"dependencies": {
 		"@types/node": "18.15.5",
+		"@types/recursive-readdir": "^2.2.1",
 		"@typescript-eslint/eslint-plugin": "5.43.0",
 		"@typescript-eslint/parser": "5.56.0",
 		"esbuild": "0.17.14",
 		"eslint": "8.0.1",
+		"recursive-readdir": "^2.2.3",
 		"typescript": "5.1.0-dev.20230326",
 		"vscode-languageserver": "8.1.0",
 		"vscode-languageserver-textdocument": "1.0.8",
 		"vscode-uri": "3.0.7"
 	},
 	"scripts": {
-    "compile": "esbuild src/server.ts --platform=node --bundle --outfile=./out/server.js",
+		"compile": "esbuild src/server.ts --platform=node --bundle --outfile=./out/server.js",
 		"build": "tsc -b",
 		"watch": "tsc -b -w",
 		"lint": "eslint ./src --ext .ts",

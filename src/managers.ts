@@ -1,0 +1,112 @@
+/*
+ * These manager holds data from the files in the workspace.
+ */
+
+import { TextDocument } from "vscode-languageserver-textdocument";
+import { log } from "./server";
+import * as fs from "fs";
+import * as path from "path";
+import { FunctionDefinition, getFunctionDefinitions } from "./utils";
+import {
+  Diagnostic,
+  DiagnosticSeverity,
+  _Connection,
+} from "vscode-languageserver";
+import { sendDiagnostics } from "./sendDiagnostics";
+
+export const functionsMap = new Map<string, FunctionDefinition>();
+
+type DiagnosticTupleType = [string, Diagnostic[]];
+
+export function getFilesInWorkspace({
+  workspace,
+}: {
+  workspace: string;
+}): TextDocument[] {
+  const files = getAllMFiles(workspace);
+  log(`name: ${workspace}`);
+  const documents = files.map((file) => {
+    // log(`file (${i}): ${file}`);
+    const uri = path.resolve(file);
+    const content = fs.readFileSync(file, "utf-8");
+    const document = TextDocument.create(uri, "octave", 1, content);
+    return document;
+  });
+
+  return documents;
+}
+
+export function updateFunctionList({
+  documents,
+}: {
+  documents: TextDocument[];
+}): void {
+  const diagnostics: DiagnosticTupleType[] = [];
+  documents.forEach((doc) => {
+    const functions = getFunctionDefinitions(doc);
+    const currentDocFunctionsMap = new Map<string, FunctionDefinition>();
+    const currentFileDiagnostics: Diagnostic[] = [];
+    functions.forEach((func) => {
+      // TODO: check if a function defined as a script in a file matches other definitions
+      currentDocFunctionsMap.set(func.id, func);
+      const localDiagnostics = checkIfFunctionAlreadyExists({
+        currentFunction: func,
+        functionsInDoc: currentDocFunctionsMap,
+      });
+      currentFileDiagnostics.push(...localDiagnostics);
+      functionsMap.set(func.id, func);
+    });
+    const diagnosticTuple: DiagnosticTupleType = [
+      doc.uri,
+      currentFileDiagnostics,
+    ];
+    diagnostics.push(diagnosticTuple);
+  });
+
+  // Send the computed diagnostics to client.
+  diagnostics.forEach(([uri, diagnostics]) => {
+    sendDiagnostics({ uri, diagnostics });
+  });
+}
+
+function getAllMFiles(rootDir: string): string[] {
+  const files: string[] = [];
+
+  function traverseDir(currentDir: string) {
+    const dirEntries = fs.readdirSync(currentDir, { withFileTypes: true });
+    for (const dirEntry of dirEntries) {
+      //const fullPath = `${currentDir}/${dirEntry.name}`;
+      const fullPath = path.join(currentDir, dirEntry.name);
+      if (dirEntry.isDirectory()) {
+        traverseDir(fullPath);
+      } else if (dirEntry.isFile() && dirEntry.name.endsWith(".m")) {
+        files.push(fullPath);
+      }
+    }
+  }
+
+  traverseDir(rootDir);
+  return files;
+}
+
+function checkIfFunctionAlreadyExists({
+  functionsInDoc,
+  currentFunction,
+}: {
+  functionsInDoc: Map<string, FunctionDefinition>;
+  currentFunction: FunctionDefinition;
+}): Diagnostic[] {
+  const diagnostics: Diagnostic[] = [];
+  functionsInDoc.forEach((func) => {
+    if (func.name === currentFunction.name) {
+      const diagnostic: Diagnostic = {
+        severity: DiagnosticSeverity.Error,
+        range: currentFunction.range,
+        message: `${func.name} it's already defined.`,
+        source: "ex",
+      };
+      diagnostics.push(diagnostic);
+    }
+  });
+  return diagnostics;
+}
