@@ -1,5 +1,5 @@
 import { CompletionItem, TextDocument, TextDocumentPositionParams, TextDocuments } from "vscode-languageserver";
-import { completionData } from "./data";
+import { completionData } from "../data";
 import { log } from "console";
 
 interface IUpdateCompletionListProps {

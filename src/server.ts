@@ -4,11 +4,15 @@ import {
   ProposedFeatures,
   MessageType,
   TextDocumentPositionParams,
+  Diagnostic,
+  PublishDiagnosticsParams,
 } from "vscode-languageserver/node";
 
 import { TextDocument } from "vscode-languageserver-textdocument";
 import { ISettings } from "./data";
-import { handleOnCompletion, handleOnDefinition, handleOnDidChangeConfiguration, handleOnInitialize, handleOnInitialized, updateCompletionList, validateTextDocument } from ".";
+import { handleOnCompletion, handleOnDefinition, handleOnDidChangeConfiguration, handleOnInitialize, handleOnInitialized, updateCompletionList, validateTextDocument } from "./handlers";
+import { handleOnReference } from "./handlers/handleOnReference";
+import { formatURI } from "./utils";
 
 // Create a connection for the server, using Node's IPC as a transport.
 // Also include all preview / proposed LSP features.
@@ -25,15 +29,18 @@ let hasDiagnosticRelatedInformationCapability = false;
 export const documentSettings = new Map<string, Thenable<ISettings>>();
 
 export function log(message: string): void {
+  // TODO: this is only for dev purposes
+  return;
   connection.sendRequest("window/showMessage", {
     type: MessageType.Info,
     message,
   });
 }
 
-connection.onInitialize((params) => handleOnInitialize({ params, hasDiagnosticRelatedInformationCapability, hasWorkspaceFolderCapability, hasConfigurationCapability }));
+connection.onInitialize((params) => handleOnInitialize({ params, hasDiagnosticRelatedInformationCapability, hasWorkspaceFolderCapability, hasConfigurationCapability, connection }));
 connection.onInitialized(() => handleOnInitialized({ hasConfigurationCapability, hasWorkspaceFolderCapability, connection }));
 connection.onDefinition((params) => handleOnDefinition({ params, documents }));
+// connection.onReferences((params) => handleOnReference({params}));
 connection.onDidChangeConfiguration((change) => handleOnDidChangeConfiguration({ documents, change, hasConfigurationCapability, connection }));
 documents.onDidClose((e) => {
   // Only keep settings for open documents
@@ -71,3 +78,24 @@ documents.listen(connection);
 
 // Listen on the connection
 connection.listen();
+
+export async function sendDiagnostics({
+  diagnostics,
+  uri,
+}: {
+  diagnostics: Diagnostic[];
+  uri: string;
+}): Promise<void> {
+  const formattedUri = formatURI(uri);
+  log(
+    `got diagnostics to show ${JSON.stringify(
+      diagnostics
+    )}, path ${formattedUri}`
+  );
+  const params: PublishDiagnosticsParams = {
+    diagnostics: [...diagnostics],
+    uri: formattedUri,
+  };
+  return connection.sendDiagnostics(params);
+}
+

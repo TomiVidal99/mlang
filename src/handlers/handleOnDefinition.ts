@@ -1,5 +1,6 @@
 import { Location, TextDocument, TextDocuments } from "vscode-languageserver";
-import { getDefinition, getWordRangeAtPosition } from "./utils";
+import { formatURI, getWordRangeAtPosition } from "../utils";
+import { functionsMap } from "../managers";
 
 interface IProps {
   params: any;
@@ -23,22 +24,15 @@ export async function handleOnDefinition({ params, documents }: IProps ): Promis
   const word = document.getText(wordRange);
   const locations: Location[] = [];
 
-  // Search for definition in the current file
-  const currentDefinition = getDefinition({document, word});
-  if (currentDefinition) {
-    locations.push(...currentDefinition);
-  }
-
-  // Search for definition in other open files
-  for (const doc of documents.all()) {
-    if (doc.uri === documentUri) {
-      continue;
+  functionsMap.forEach((func) => {
+    if (func.name === word) {
+      const loc: Location = {
+        range: func.range,
+        uri: formatURI(func.uri)
+      };
+      locations.push(loc);
     }
-    const definition = getDefinition({document: doc, word});
-    if (definition) {
-      locations.push(...definition);
-    }
-  }
+  });
 
   return locations.length > 0 ? locations : null;
 }

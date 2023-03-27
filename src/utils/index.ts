@@ -1,4 +1,4 @@
 export * from "./getWordInDocument";
 export * from "./getWordRageAtPosition";
-export * from "./getDefinition";
 export * from "./getFunctionDefinitions";
+export * from "./formatURI";

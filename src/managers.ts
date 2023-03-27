@@ -3,7 +3,7 @@
  */
 
 import { TextDocument } from "vscode-languageserver-textdocument";
-import { log } from "./server";
+import { log, sendDiagnostics } from "./server";
 import * as fs from "fs";
 import * as path from "path";
 import { FunctionDefinition, getFunctionDefinitions } from "./utils";
@@ -12,7 +12,7 @@ import {
   DiagnosticSeverity,
   _Connection,
 } from "vscode-languageserver";
-import { sendDiagnostics } from "./sendDiagnostics";
+// import { sendDiagnostics } from "./sendDiagnostics";
 
 export const functionsMap = new Map<string, FunctionDefinition>();
 
@@ -48,25 +48,30 @@ export function updateFunctionList({
     const currentFileDiagnostics: Diagnostic[] = [];
     functions.forEach((func) => {
       // TODO: check if a function defined as a script in a file matches other definitions
-      currentDocFunctionsMap.set(func.id, func);
       const localDiagnostics = checkIfFunctionAlreadyExists({
         currentFunction: func,
         functionsInDoc: currentDocFunctionsMap,
       });
+      currentDocFunctionsMap.set(func.id, func);
       currentFileDiagnostics.push(...localDiagnostics);
       functionsMap.set(func.id, func);
     });
-    const diagnosticTuple: DiagnosticTupleType = [
-      doc.uri,
-      currentFileDiagnostics,
-    ];
-    diagnostics.push(diagnosticTuple);
+    if (currentFileDiagnostics.length > 0) {
+      const diagnosticTuple: DiagnosticTupleType = [
+        doc.uri,
+        currentFileDiagnostics,
+      ];
+      diagnostics.push(diagnosticTuple);
+    }
   });
 
   // Send the computed diagnostics to client.
-  diagnostics.forEach(([uri, diagnostics]) => {
-    sendDiagnostics({ uri, diagnostics });
-  });
+  if (diagnostics.length > 0) {
+    diagnostics.forEach(([uri, diagnostics]) => {
+      // TODO: check why diagnostics are not working
+      sendDiagnostics({ uri, diagnostics });
+    });
+  }
 }
 
 function getAllMFiles(rootDir: string): string[] {
@@ -99,11 +104,12 @@ function checkIfFunctionAlreadyExists({
   const diagnostics: Diagnostic[] = [];
   functionsInDoc.forEach((func) => {
     if (func.name === currentFunction.name) {
+      log(`Found redefined function! ${func.name} in (${func.uri}), matched (${currentFunction.uri})`);
       const diagnostic: Diagnostic = {
         severity: DiagnosticSeverity.Error,
         range: currentFunction.range,
-        message: `${func.name} it's already defined.`,
-        source: "ex",
+        message: `"${func.name}" it's already defined.`,
+        source: "mlang",
       };
       diagnostics.push(diagnostic);
     }

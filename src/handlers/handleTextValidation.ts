@@ -1,6 +1,6 @@
 import { Diagnostic, DiagnosticSeverity, TextDocument, _Connection } from "vscode-languageserver";
-import { ISettings, defaultSettings, globalSettings } from "./data";
-import { documentSettings } from "./server";
+import { ISettings, defaultSettings, globalSettings } from "../data";
+import { documentSettings } from "../server";
 
 export function getDocumentSettings(
   resource: string,
