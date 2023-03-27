@@ -37,6 +37,7 @@ end
 ```
 
 ## TODO
+- [ ] add diagnositics (check when repeated function definitions).
 - [ ] make tests.
 - [ ] fix goToDefinition, (only gets definition in others files if they are opened).
 - [ ] add husky (for linting before commit).

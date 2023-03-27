@@ -1,6 +1,6 @@
 import { Diagnostic, DiagnosticSeverity, TextDocument, _Connection } from "vscode-languageserver";
-import { ISettings, defaultSettings, globalSettings } from "./data";
-import { documentSettings } from "./server";
+import { ISettings, defaultSettings, globalSettings } from "../data";
+import { documentSettings } from "../server";
 
 export function getDocumentSettings(
   resource: string,
@@ -76,6 +76,6 @@ export async function validateTextDocument(
     diagnostics.push(diagnostic);
   }
 
-  // Send the computed diagnostics to VSCode.
+  // Send the computed diagnostics to client.
   connection.sendDiagnostics({ uri: textDocument.uri, diagnostics });
 }

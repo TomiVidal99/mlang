@@ -4,8 +4,8 @@ import {
   TextDocuments,
   _Connection,
 } from "vscode-languageserver";
-import { ISettings, defaultSettings, updateGlobalSettings } from "./data";
-import { documentSettings } from "./server";
+import { ISettings, defaultSettings, updateGlobalSettings } from "../data";
+import { documentSettings } from "../server";
 import { validateTextDocument } from ".";
 
 interface IOnDidChangeConfigurationProps {
