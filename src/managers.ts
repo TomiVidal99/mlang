@@ -14,6 +14,7 @@ import {
 } from "vscode-languageserver";
 // import { sendDiagnostics } from "./sendDiagnostics";
 
+export const readDocuments: string[] = [];
 export const functionsMap = new Map<string, FunctionDefinition>();
 
 type DiagnosticTupleType = [string, Diagnostic[]];
@@ -24,7 +25,7 @@ export function getFilesInWorkspace({
   workspace: string;
 }): TextDocument[] {
   const files = getAllMFiles(workspace);
-  log(`name: ${workspace}`);
+  // log(`name: ${workspace}`);
   const documents = files.map((file) => {
     // log(`file (${i}): ${file}`);
     const uri = path.resolve(file);
@@ -46,6 +47,7 @@ export function updateFunctionList({
     const functions = getFunctionDefinitions(doc);
     const currentDocFunctionsMap = new Map<string, FunctionDefinition>();
     const currentFileDiagnostics: Diagnostic[] = [];
+    readDocuments.push(doc.uri);
     functions.forEach((func) => {
       // TODO: check if a function defined as a script in a file matches other definitions
       const localDiagnostics = checkIfFunctionAlreadyExists({
@@ -104,7 +106,7 @@ function checkIfFunctionAlreadyExists({
   const diagnostics: Diagnostic[] = [];
   functionsInDoc.forEach((func) => {
     if (func.name === currentFunction.name) {
-      log(`Found redefined function! ${func.name} in (${func.uri}), matched (${currentFunction.uri})`);
+      // log(`Found redefined function! ${func.name} in (${func.uri}), matched (${currentFunction.uri})`);
       const diagnostic: Diagnostic = {
         severity: DiagnosticSeverity.Error,
         range: currentFunction.range,

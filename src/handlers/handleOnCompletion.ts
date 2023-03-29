@@ -21,7 +21,7 @@ function grabFunctionsFromDocument({text}: {text: string}) {
   const FUNCTION_REGEX = /function\s+(\w+)\s*\([\w\s,]*\)\s*.*?(endfunction|end)\b/gms;
   const matches = FUNCTION_REGEX.exec(text);
   log("TEST!");
-  matches.forEach((match) => {
+  matches?.forEach((match) => {
     log("function: " + match);
   });
 }

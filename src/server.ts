@@ -10,7 +10,7 @@ import {
 
 import { TextDocument } from "vscode-languageserver-textdocument";
 import { ISettings } from "./data";
-import { handleOnCompletion, handleOnDefinition, handleOnDidChangeConfiguration, handleOnInitialize, handleOnInitialized, updateCompletionList, validateTextDocument } from "./handlers";
+import { handleDidOpenTextDocument, handleOnCompletion, handleOnDefinition, handleOnDidChangeConfiguration, handleOnInitialize, handleOnInitialized, updateCompletionList, validateTextDocument } from "./handlers";
 import { handleOnReference } from "./handlers/handleOnReference";
 import { formatURI } from "./utils";
 
@@ -30,7 +30,7 @@ export const documentSettings = new Map<string, Thenable<ISettings>>();
 
 export function log(message: string): void {
   // TODO: this is only for dev purposes
-  return;
+  // return;
   connection.sendRequest("window/showMessage", {
     type: MessageType.Info,
     message,
@@ -39,6 +39,7 @@ export function log(message: string): void {
 
 connection.onInitialize((params) => handleOnInitialize({ params, hasDiagnosticRelatedInformationCapability, hasWorkspaceFolderCapability, hasConfigurationCapability, connection }));
 connection.onInitialized(() => handleOnInitialized({ hasConfigurationCapability, hasWorkspaceFolderCapability, connection }));
+connection.onDidOpenTextDocument((params) => handleDidOpenTextDocument({params}));
 connection.onDefinition((params) => handleOnDefinition({ params, documents }));
 // connection.onReferences((params) => handleOnReference({params}));
 connection.onDidChangeConfiguration((change) => handleOnDidChangeConfiguration({ documents, change, hasConfigurationCapability, connection }));
@@ -87,11 +88,11 @@ export async function sendDiagnostics({
   uri: string;
 }): Promise<void> {
   const formattedUri = formatURI(uri);
-  log(
-    `got diagnostics to show ${JSON.stringify(
-      diagnostics
-    )}, path ${formattedUri}`
-  );
+  // log(
+  //   `got diagnostics to show ${JSON.stringify(
+  //     diagnostics
+  //   )}, path ${formattedUri}`
+  // );
   const params: PublishDiagnosticsParams = {
     diagnostics: [...diagnostics],
     uri: formattedUri,
