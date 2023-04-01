@@ -45,6 +45,7 @@ end
 - [ ] key words completion.
 - [ ] syntax checking.
 - [ ] formatting.
+- [ ] linting for imports.
 
 ## How to contribute?
 Clone the repository and install the node dependencies with ```$ yarn```. Then modify the files in the _"src"_ folder. After you should be able to compile the server with ```$ yarn compile```
