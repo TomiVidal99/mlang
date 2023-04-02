@@ -6,17 +6,15 @@ import {
 } from "vscode-languageserver";
 import { ISettings, defaultSettings, updateGlobalSettings } from "../data";
 import { documentSettings } from "../server";
-import { validateTextDocument } from ".";
+import { hasConfigurationCapability, validateTextDocument } from ".";
 
 interface IOnDidChangeConfigurationProps {
   change: DidChangeConfigurationParams;
-  hasConfigurationCapability: boolean;
   documents: TextDocuments<TextDocument>;
   connection: _Connection;
 }
 export function handleOnDidChangeConfiguration({
   change,
-  hasConfigurationCapability,
   documents,
   connection,
 }: IOnDidChangeConfigurationProps) {

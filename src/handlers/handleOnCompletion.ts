@@ -1,9 +1,8 @@
 import { CompletionItem, CompletionItemKind, MarkupKind, TextDocument, TextDocumentPositionParams, TextDocuments } from "vscode-languageserver";
 import { completionData } from "../data";
 import { log } from "console";
-import { functionsMap, updateFunctionList } from "../managers";
 import * as path from "path";
-import { getPathFromURI } from "../utils";
+import { getAllFunctionDefinitions, getPathFromURI } from "../utils";
 
 interface IUpdateCompletionListProps {
   document: TextDocument;
@@ -11,7 +10,7 @@ interface IUpdateCompletionListProps {
 export function updateCompletionList({document}: IUpdateCompletionListProps) {
   // const text = document.getText();
   // const definedFunctions = grabFunctionsFromDocument({text});
-  updateFunctionList({documents: [document]});
+  // updateFunctionList({documents: [document]});
 }
 
 export function handleOnCompletion({documentPosition, documents}: {documentPosition: TextDocumentPositionParams, documents: TextDocuments<TextDocument>}): CompletionItem[] {
@@ -19,8 +18,9 @@ export function handleOnCompletion({documentPosition, documents}: {documentPosit
 }
 
 function getFunctionsFromFunctionsMap(): CompletionItem[] {
+  // TODO: fix this to use map
   const functionsReferences: CompletionItem[] = [];
-  functionsMap.forEach((val) => {
+  getAllFunctionDefinitions().forEach((val) => {
     log("test");
     const newCompletionItem: CompletionItem = {
       label: val.name,
@@ -36,6 +36,7 @@ function getFunctionsFromFunctionsMap(): CompletionItem[] {
 }
 
 function getDocumentsToBeExacutable({documents, currentDocument}:{documents: TextDocuments<TextDocument>, currentDocument: string}): CompletionItem[] {
+  // TODO: fix this to use map
   const documentsReferences: CompletionItem[] = [];
   documents.all().forEach((doc) => {
     if (currentDocument === doc.uri) return;

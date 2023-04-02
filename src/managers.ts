@@ -3,7 +3,7 @@
  */
 
 import { TextDocument } from "vscode-languageserver-textdocument";
-import { log, sendDiagnostics } from "./server";
+import { log} from "./server";
 import * as fs from "fs";
 import * as path from "path";
 import { FunctionDefinition, getFunctionDefinitions } from "./utils";
@@ -12,7 +12,6 @@ import {
   DiagnosticSeverity,
   _Connection,
 } from "vscode-languageserver";
-// import { sendDiagnostics } from "./sendDiagnostics";
 
 export const readDocuments: string[] = [];
 export const functionsMap = new Map<string, FunctionDefinition>();

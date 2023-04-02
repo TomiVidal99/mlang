@@ -3,3 +3,4 @@ export * from "./getWordRageAtPosition";
 export * from "./getFunctionDefinitions";
 export * from "./formatURI";
 export * from "./getPathFromURI";
+export * from "./documentData";
