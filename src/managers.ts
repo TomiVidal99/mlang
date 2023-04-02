@@ -50,13 +50,18 @@ export function updateFunctionList({
     readDocuments.push(doc.uri);
     functions.forEach((func) => {
       // TODO: check if a function defined as a script in a file matches other definitions
+      // (if both file and functin referece have to same name only show one of them)
       const localDiagnostics = checkIfFunctionAlreadyExists({
         currentFunction: func,
         functionsInDoc: currentDocFunctionsMap,
       });
       currentDocFunctionsMap.set(func.id, func);
       currentFileDiagnostics.push(...localDiagnostics);
-      functionsMap.set(func.id, func);
+      Array.from(functionsMap).filter(([name, f]) => {
+        return f.range.start === func.range.start;
+      }).length > 0
+        ? null
+        : (function(){functionsMap.set(func.id, func); log("adding: " + func.name);}());
     });
     if (currentFileDiagnostics.length > 0) {
       const diagnosticTuple: DiagnosticTupleType = [

@@ -68,6 +68,7 @@ interface IOnInitializedProps {
   hasWorkspaceFolderCapability: boolean;
 }
 export function handleOnInitialized({connection, hasWorkspaceFolderCapability, hasConfigurationCapability}: IOnInitializedProps) {
+  log("initialized");
   if (hasConfigurationCapability) {
     // Register for all configuration changes.
     connection.client.register(

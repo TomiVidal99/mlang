@@ -1,4 +1,4 @@
-import { DidOpenTextDocumentParams } from "vscode-languageserver";
+import { DidOpenTextDocumentParams, TextDocumentChangeEvent } from "vscode-languageserver";
 import { readDocuments, updateFunctionList } from "../managers";
 import { TextDocument } from "vscode-languageserver-textdocument";
 import { log } from "../server";
@@ -13,4 +13,9 @@ export function handleDidOpenTextDocument({params}: {params: DidOpenTextDocument
 
   const doc = TextDocument.create(uri, languageId, version, text);
   // updateFunctionList({documents: [doc]});
+}
+
+export function handleDidOpenFile({change}: {change: TextDocumentChangeEvent<TextDocument>}): void {
+  const document = change.document;
+  log("changed: " + document.uri);
 }

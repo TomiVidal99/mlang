@@ -10,9 +10,11 @@ import {
 
 import { TextDocument } from "vscode-languageserver-textdocument";
 import { ISettings } from "./data";
-import { handleDidOpenTextDocument, handleOnCompletion, handleOnDefinition, handleOnDidChangeConfiguration, handleOnInitialize, handleOnInitialized, updateCompletionList, validateTextDocument } from "./handlers";
+import { handleDidOpenFile, handleDidOpenTextDocument, handleOnCompletion, handleOnDefinition, handleOnDidChangeConfiguration, handleOnInitialize, handleOnInitialized, updateCompletionList, validateTextDocument } from "./handlers";
 import { handleOnReference } from "./handlers/handleOnReference";
 import { formatURI } from "./utils";
+import { handleOnDidChangeContent } from "./handlers/handleDidChangeTextDocument";
+import { handleOnDidSave } from "./handlers/handleDidSaveTextDocument";
 
 // Create a connection for the server, using Node's IPC as a transport.
 // Also include all preview / proposed LSP features.
@@ -37,26 +39,27 @@ export function log(message: string): void {
   });
 }
 
+documents.onDidChangeContent((change) => handleOnDidChangeContent({change}));
+documents.onDidOpen((change) => handleDidOpenFile({change}));
+documents.onDidSave((change) => handleOnDidSave({change}));
 connection.onInitialize((params) => handleOnInitialize({ params, hasDiagnosticRelatedInformationCapability, hasWorkspaceFolderCapability, hasConfigurationCapability, connection }));
 connection.onInitialized(() => handleOnInitialized({ hasConfigurationCapability, hasWorkspaceFolderCapability, connection }));
 connection.onDidOpenTextDocument((params) => handleDidOpenTextDocument({params}));
 connection.onDefinition((params) => handleOnDefinition({ params, documents }));
-// connection.onReferences((params) => handleOnReference({params}));
+connection.onReferences((params) => handleOnReference({params}));
 connection.onDidChangeConfiguration((change) => handleOnDidChangeConfiguration({ documents, change, hasConfigurationCapability, connection }));
 documents.onDidClose((e) => {
   // Only keep settings for open documents
   documentSettings.delete(e.document.uri);
 });
 documents.onDidChangeContent((change) => {
-  // The content of a text document has changed. This event is emitted
-  // when the text document first opened or when its content has changed.
   validateTextDocument(change.document, hasConfigurationCapability, connection);
-  //log("Changed");
+  log("Changed");
   updateCompletionList({document: change.document});
 });
 
 // This handler provides the initial list of the completion items.
-connection.onCompletion((_textDocumentPosition: TextDocumentPositionParams) => handleOnCompletion(_textDocumentPosition));
+connection.onCompletion((_textDocumentPosition: TextDocumentPositionParams) => handleOnCompletion({documentPosition: _textDocumentPosition, documents}));
 
 // This handler resolves additional information for the item selected in
 // the completion list.
