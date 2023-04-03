@@ -7,8 +7,8 @@ This is an implementation of the [Language Server Protocol](https://code.visuals
 - [vscode-languageserver](https://www.npmjs.com/package/vscode-languageserver) _(LSP official node package)_
 
 ## Working features
-- Completion _(of the most common keywords)_
-- goToDefinition
+- Completion _(some keywords, some native functions, user defined functions and files)_
+- goToDefinition _(for user defined functions and files)_
 
 ## How to setup in the client
 ### Neovim (lua)
@@ -37,16 +37,15 @@ end
 ```
 
 ## TODO
+- [ ] add more native completion items (keywords and functions).
 - [ ] optimize esbuild bundle config.
 - [ ] add diagnositics (check when repeated function definitions).
 - [ ] make tests.
-- [ ] fix goToDefinition, (only gets definition in others files if they are opened).
 - [ ] add husky (for linting before commit).
 - [ ] key words completion.
 - [ ] syntax checking.
 - [ ] formatting.
 - [ ] linting for imports.
-- [ ] file definitions (files can be called as functions).
 
 ## How to contribute?
 Clone the repository and install the node dependencies with ```$ yarn```. Then modify the files in the _"src"_ folder. After you should be able to compile the server with ```$ yarn compile```
