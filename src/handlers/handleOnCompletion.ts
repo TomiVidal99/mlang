@@ -41,7 +41,7 @@ function getDocumentsToBeExacutable({documents, currentDocument}:{documents: Tex
   documents.all().forEach((doc) => {
     if (currentDocument === doc.uri) return;
     const newCompletionItem: CompletionItem = {
-      label: path.basename(getPathFromURI(doc.uri)),
+      label: path.basename(getPathFromURI(doc.uri), ".m"),
       kind: CompletionItemKind.File,
       documentation: {
         kind: MarkupKind.Markdown,
