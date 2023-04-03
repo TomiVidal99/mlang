@@ -5,7 +5,6 @@ import {
 } from "./getFunctionDefinitions";
 import { getPathFromURI } from "./getPathFromURI";
 import { documentData } from "../server";
-import { log } from "console";
 
 export function addNewDocument(document: TextDocument): void {
   const data = new DocumentData(document);
@@ -15,16 +14,16 @@ export function addNewDocument(document: TextDocument): void {
 
 export function updateDocumentData(document: TextDocument): void {
   let foundFlag = false;
+  const doc = TextDocument.create(getPathFromURI(document.uri), document.languageId, document.version, document.getText());
   documentData.forEach((data) => {
-    if (data.getURI() === document.uri) {
+    if (data.getURI() === doc.uri) {
       foundFlag = true;
-      log("updating " + data.getURI());
-      data.setDocument(document);
+      data.setDocument(doc);
       data.updateDocumentData();
     }
   });
   if (!foundFlag) {
-    addNewDocument(document);
+    addNewDocument(doc);
   }
 }
 
