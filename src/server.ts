@@ -7,9 +7,8 @@ import {
 
 import { TextDocument } from "vscode-languageserver-textdocument";
 import { ISettings } from "./data";
-import { handleOnCompletion, handleOnDefinition, handleOnDidChangeConfiguration, updateCompletionList, handleOnInitialize, handleOnInitialized } from "./handlers";
+import { handleOnCompletion, handleOnDefinition, handleOnDidChangeConfiguration, handleOnInitialize, handleOnInitialized } from "./handlers";
 import { DocumentData, updateDocumentData  } from "./utils";
-import { handleOnDidChangeContent } from "./handlers/handleDidChangeTextDocument";
 
 export const connection = createConnection(ProposedFeatures.all);
 export const documentSettings = new Map<string, Thenable<ISettings>>();

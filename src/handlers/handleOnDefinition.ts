@@ -1,5 +1,6 @@
 import { Location, TextDocument, TextDocuments } from "vscode-languageserver";
 import { formatURI, getAllFunctionDefinitions, getWordRangeAtPosition } from "../utils";
+import { log } from "../server";
 
 interface IProps {
   params: any;
@@ -23,7 +24,9 @@ export async function handleOnDefinition({ params, documents }: IProps ): Promis
   const word = document.getText(wordRange);
   const locations: Location[] = [];
 
-  getAllFunctionDefinitions().forEach((func) => {
+  const allFunctionsDefinitions = getAllFunctionDefinitions();
+  log(JSON.stringify(allFunctionsDefinitions));
+  allFunctionsDefinitions.forEach((func) => {
     if (func.name === word) {
       const loc: Location = {
         range: func.range,
