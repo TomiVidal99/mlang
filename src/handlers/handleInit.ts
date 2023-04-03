@@ -1,27 +1,33 @@
 import { DidChangeConfigurationNotification, InitializeParams, InitializeResult, TextDocumentSyncKind, _Connection } from "vscode-languageserver";
-import { functionsMap, getFilesInWorkspace, updateFunctionList } from "./managers";
+import { getFilesInWorkspace} from "../managers";
 import { URI } from "vscode-uri";
-import { log } from "./server";
+import { log } from "../server";
+import { addNewDocument } from "../utils";
+
+export let hasConfigurationCapability = false;
+export let hasWorkspaceFolderCapability = false;
+export let hasDiagnosticRelatedInformationCapability = false;
 
 interface IOnInitializeProps {
   params: InitializeParams;
-  hasConfigurationCapability: boolean;
-  hasWorkspaceFolderCapability: boolean;
-  hasDiagnosticRelatedInformationCapability: boolean;
   connection: _Connection;
 }
-export function handleOnInitialize({params, hasConfigurationCapability, hasWorkspaceFolderCapability, hasDiagnosticRelatedInformationCapability, connection}: IOnInitializeProps) {
+export function handleOnInitialize({params, connection}: IOnInitializeProps) {
   const capabilities = params.capabilities;
-  const rootUri = params.rootUri as string;
+  const rootUri = params.rootUri;
   const workspace = URI.parse(rootUri).fsPath;
   const documentsInWorkspace = getFilesInWorkspace({workspace});
 
-  // fills the list of function references, to goToReference and goToDefinition
-  updateFunctionList({documents: documentsInWorkspace});
-
-  functionsMap.forEach((func) => {
-    log(`fn name: ${func.name}, in ${func.uri}`);
+  documentsInWorkspace.forEach((doc) => {
+    addNewDocument(doc);
   });
+
+  // fills the list of function references, to goToReference and goToDefinition
+  // updateFunctionList({documents: documentsInWorkspace});
+  //
+  // functionsMap.forEach((func) => {
+  //   log(`fn name: ${func.name}, in ${func.uri}`);
+  // });
 
   // Does the client support the `workspace/configuration` request?
   // If not, we fall back using global settings.
@@ -40,13 +46,15 @@ export function handleOnInitialize({params, hasConfigurationCapability, hasWorks
   const result: InitializeResult = {
     capabilities: {
       textDocumentSync: TextDocumentSyncKind.Incremental,
-      // Tell the client that this server supports code completion.
-      completionProvider: {
+      completionProvider: { // allows completion
         resolveProvider: true,
       },
-      definitionProvider: {
+      definitionProvider: { // allows goToDefinition
         workDoneProgress: true,
-      }
+      },
+      // referencesProvider: { // allows goToReference
+      //   workDoneProgress: true,
+      // }
     },
   };
   if (hasWorkspaceFolderCapability) {
@@ -61,10 +69,9 @@ export function handleOnInitialize({params, hasConfigurationCapability, hasWorks
 
 interface IOnInitializedProps {
   connection: _Connection;
-  hasConfigurationCapability: boolean;
-  hasWorkspaceFolderCapability: boolean;
 }
-export function handleOnInitialized({connection, hasWorkspaceFolderCapability, hasConfigurationCapability}: IOnInitializedProps) {
+export function handleOnInitialized({connection}: IOnInitializedProps) {
+  log("initialized");
   if (hasConfigurationCapability) {
     // Register for all configuration changes.
     connection.client.register(

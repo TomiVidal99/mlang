@@ -3,7 +3,7 @@
  */
 
 import { TextDocument } from "vscode-languageserver-textdocument";
-import { log, sendDiagnostics } from "./server";
+import { log} from "./server";
 import * as fs from "fs";
 import * as path from "path";
 import { FunctionDefinition, getFunctionDefinitions } from "./utils";
@@ -12,8 +12,8 @@ import {
   DiagnosticSeverity,
   _Connection,
 } from "vscode-languageserver";
-// import { sendDiagnostics } from "./sendDiagnostics";
 
+export const readDocuments: string[] = [];
 export const functionsMap = new Map<string, FunctionDefinition>();
 
 type DiagnosticTupleType = [string, Diagnostic[]];
@@ -24,7 +24,7 @@ export function getFilesInWorkspace({
   workspace: string;
 }): TextDocument[] {
   const files = getAllMFiles(workspace);
-  log(`name: ${workspace}`);
+  // log(`name: ${workspace}`);
   const documents = files.map((file) => {
     // log(`file (${i}): ${file}`);
     const uri = path.resolve(file);
@@ -46,15 +46,21 @@ export function updateFunctionList({
     const functions = getFunctionDefinitions(doc);
     const currentDocFunctionsMap = new Map<string, FunctionDefinition>();
     const currentFileDiagnostics: Diagnostic[] = [];
+    readDocuments.push(doc.uri);
     functions.forEach((func) => {
       // TODO: check if a function defined as a script in a file matches other definitions
+      // (if both file and functin referece have to same name only show one of them)
       const localDiagnostics = checkIfFunctionAlreadyExists({
         currentFunction: func,
         functionsInDoc: currentDocFunctionsMap,
       });
       currentDocFunctionsMap.set(func.id, func);
       currentFileDiagnostics.push(...localDiagnostics);
-      functionsMap.set(func.id, func);
+      Array.from(functionsMap).filter(([name, f]) => {
+        return f.range.start === func.range.start;
+      }).length > 0
+        ? null
+        : (function(){functionsMap.set(func.id, func); log("adding: " + func.name);}());
     });
     if (currentFileDiagnostics.length > 0) {
       const diagnosticTuple: DiagnosticTupleType = [
@@ -104,7 +110,7 @@ function checkIfFunctionAlreadyExists({
   const diagnostics: Diagnostic[] = [];
   functionsInDoc.forEach((func) => {
     if (func.name === currentFunction.name) {
-      log(`Found redefined function! ${func.name} in (${func.uri}), matched (${currentFunction.uri})`);
+      // log(`Found redefined function! ${func.name} in (${func.uri}), matched (${currentFunction.uri})`);
       const diagnostic: Diagnostic = {
         severity: DiagnosticSeverity.Error,
         range: currentFunction.range,

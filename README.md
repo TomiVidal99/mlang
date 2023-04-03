@@ -37,6 +37,7 @@ end
 ```
 
 ## TODO
+- [ ] optimize esbuild bundle config.
 - [ ] add diagnositics (check when repeated function definitions).
 - [ ] make tests.
 - [ ] fix goToDefinition, (only gets definition in others files if they are opened).
@@ -44,6 +45,8 @@ end
 - [ ] key words completion.
 - [ ] syntax checking.
 - [ ] formatting.
+- [ ] linting for imports.
+- [ ] file definitions (files can be called as functions).
 
 ## How to contribute?
 Clone the repository and install the node dependencies with ```$ yarn```. Then modify the files in the _"src"_ folder. After you should be able to compile the server with ```$ yarn compile```

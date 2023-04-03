@@ -13,11 +13,11 @@ export async function sendDiagnostics({
   uri: string;
 }): Promise<void> {
   const formattedUri = formatURI(uri);
-  log(
-    `got diagnostics to show ${JSON.stringify(
-      diagnostics
-    )}, path ${formattedUri}`
-  );
+  // log(
+  //   `got diagnostics to show ${JSON.stringify(
+  //     diagnostics
+  //   )}, path ${formattedUri}`
+  // );
   const params: PublishDiagnosticsParams = {
     diagnostics: [...diagnostics],
     uri: formattedUri,
