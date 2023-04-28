@@ -8,55 +8,6 @@ export interface FunctionDefinition {
   uri: string;
 }
 
-// export function getFunctionDefinitions(
-//   document: TextDocument
-// ): FunctionDefinition[] {
-//   const functionRegex = /function\s+\[?[^\]]*\]?\s*(\w+)\s*=\s*([^(]+)/g;
-//   const anonymousFunctionRegex = /@\(?.*\)?\s*(\w+)\s*(?=@|\(|\s*=)/g;
-//
-//   const functionDefinitions: FunctionDefinition[] = [];
-//
-//   const lines = document.getText().split(/\r?\n/);
-//   let currentFunctionName: string | null = null;
-//
-//   for (let i = 0; i < lines.length; i++) {
-//     const line = lines[i];
-//
-//     const functionMatch = functionRegex.exec(line);
-//     if (functionMatch) {
-//       const functionName = functionMatch[1];
-//       const functionArgs = functionMatch[2].trim().split(/\s*,\s*/);
-//       const startPosition = { line: i, character: functionMatch.index };
-//       currentFunctionName = functionName;
-//       functionDefinitions.push({
-//         id: randomUUID(),
-//         name: functionName,
-//         args: functionArgs,
-//         startPosition,
-//       });
-//       continue;
-//     }
-//
-//     const anonymousFunctionMatch = anonymousFunctionRegex.exec(line);
-//     if (anonymousFunctionMatch) {
-//       const functionName = currentFunctionName || "anonymous";
-//       const functionArgs = anonymousFunctionMatch[1].trim().split(/\s*,\s*/);
-//       const startPosition = {
-//         line: i,
-//         character: anonymousFunctionMatch.index,
-//       };
-//       functionDefinitions.push({
-//         id: randomUUID(),
-//         name: functionName,
-//         args: functionArgs,
-//         startPosition,
-//       });
-//     }
-//   }
-//
-//   return functionDefinitions;
-// }
-
 export function getFunctionDefinitions(document: TextDocument): FunctionDefinition[] {
   const definitions: FunctionDefinition[] = [];
   const text = document.getText();
