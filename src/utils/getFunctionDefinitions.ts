@@ -1,15 +1,15 @@
 import { randomUUID } from "crypto";
 import { Position, Range, TextDocument } from "vscode-languageserver";
 
-export interface FunctionDefinition {
+export interface IKeyword {
   id: string;
   name: string;
   range: Range;
   uri: string;
 }
 
-export function getFunctionDefinitions(document: TextDocument): FunctionDefinition[] {
-  const definitions: FunctionDefinition[] = [];
+export function getFunctionDefinitions(document: TextDocument): IKeyword[] {
+  const definitions: IKeyword[] = [];
   const text = document.getText();
   const lines = text.split("\n");
 

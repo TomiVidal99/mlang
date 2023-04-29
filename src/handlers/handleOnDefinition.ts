@@ -1,6 +1,5 @@
 import { Location, Position, Range, TextDocument, TextDocuments } from "vscode-languageserver";
 import { formatURI, getAllFunctionDefinitions, getPathFromURI, getWordRangeAtPosition } from "../utils";
-import { log } from "../server";
 import * as path from "path";
 
 interface IProps {
