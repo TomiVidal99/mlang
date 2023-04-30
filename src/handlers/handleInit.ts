@@ -52,9 +52,9 @@ export function handleOnInitialize({params, connection}: IOnInitializeProps) {
       definitionProvider: { // allows goToDefinition
         workDoneProgress: true,
       },
-      // referencesProvider: { // allows goToReference
-      //   workDoneProgress: true,
-      // }
+      referencesProvider: { // allows goToReference
+        workDoneProgress: true,
+      }
     },
   };
   if (hasWorkspaceFolderCapability) {

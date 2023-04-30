@@ -1,11 +1,12 @@
 import { TextDocument } from "vscode-languageserver-textdocument";
 import {
   IKeyword,
-  getFunctionDefinitions,
 } from "./getFunctionDefinitions";
 import { getPathFromURI } from "./getPathFromURI";
-import { documentData, log } from "../server";
+import { connection, documentData, log } from "../server";
 import { Parser } from "../parser";
+import { Diagnostic, PublishDiagnosticsParams } from "vscode-languageserver";
+import { formatURI } from "./formatURI";
 
 export function addNewDocument(document: TextDocument): void {
   const data = new DocumentData(document);
@@ -21,6 +22,7 @@ export function updateDocumentData(document: TextDocument): void {
       foundFlag = true;
       data.setDocument(doc);
       data.updateDocumentData();
+      connection.sendDiagnostics(data.getDiagnostics());
     }
   });
   if (!foundFlag) {
@@ -35,15 +37,24 @@ export function getAllFunctionDefinitions(): IKeyword[] {
   return functions;
 }
 
+export function getAllFunctionReferences(): IKeyword[] {
+  const functions: IKeyword[] = documentData.flatMap((data) =>
+    data.getFunctionsReferencesNames()
+  ).map((d) => d[1]);
+  return functions;
+}
+
 export class DocumentData {
   private functionsDefinitions: IKeyword[];
   private functionsReferences: IKeyword[];
   private document: TextDocument;
+  private diagnostics: Diagnostic[];
 
   constructor(document: TextDocument) {
     this.functionsDefinitions = [];
     this.functionsReferences = [];
     this.document = document;
+    this.diagnostics = [];
   }
 
   public setDocument(document: TextDocument): void {
@@ -56,9 +67,9 @@ export class DocumentData {
   public updateDocumentData(): void {
     // TODO: get the other data
     const parser = new Parser(this.document);
-    const definitions = parser.getFunctionsDefinitions();
-    this.functionsDefinitions = definitions;
-    // log(JSON.stringify(this.functionsDefinitions));
+    this.functionsDefinitions = parser.getFunctionsDefinitions(); 
+    this.functionsReferences = parser.getFunctionsReferences();
+    this.updateDiagnostics(parser.getDiagnostics());
   }
 
   /**
@@ -81,5 +92,19 @@ export class DocumentData {
 
   public getFunctionsDefinitionsNames(): [string, IKeyword][] {
     return this.functionsDefinitions.map((fn) => [fn.name, fn]);
+  }
+
+  /**
+  * Sends the updated diagnostics to the client.
+  */
+  public updateDiagnostics(diagnostics: Diagnostic[]): void {
+    this.diagnostics = diagnostics;
+  }
+
+  public getDiagnostics(): PublishDiagnosticsParams {
+    return {
+      uri: formatURI(this.document.uri),
+      diagnostics: this.diagnostics
+    };
   }
 }
