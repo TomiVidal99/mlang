@@ -37,6 +37,8 @@ end
 ```
 
 ## TODO
+- [ ] add diagnostics checking for arguments and return values (function references).
+- [ ] add completion for arguments and return values (function references).
 - [ ] add more native completion items (keywords and functions).
 - [ ] optimize esbuild bundle config.
 - [ ] add diagnositics (check when repeated function definitions).
