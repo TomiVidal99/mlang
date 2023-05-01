@@ -1,3 +1,6 @@
+// IMPORTANT: the regex that have groups that returns values should be named like so:
+// (?<GROUP_NAME>mypattern)
+
 export interface IToken {
   name: TokenNameType;
   pattern: RegExp;
@@ -11,7 +14,9 @@ export type TokenNameType =
   | "VARIABLE_REFERENCE"
   | "VARIABLE_DECLARATION"
   | "END_FUNCTION"
-  | "FUNCTION_REFERENCE"
+  | "FUNCTION_REFERENCE_WITH_SINGLE_OUTPUT"
+  | "FUNCTION_REFERENCE_WITH_MULTIPLE_OUTPUTS"
+  | "FUNCTION_REFERENCE_WITHOUT_OUTPUT"
   | "FUNCTION_WITH_OUTPUT"
   | "FUNCTION_WITHOUT_OUTPUT"
   | "ANONYMOUS_FUNCTION";
@@ -27,8 +32,16 @@ export const GRAMMAR: IToken[] = [
     pattern: /^\s*function\s+(\w+)\s*\(([^)]*)\)/,
   },
   {
-    name: "FUNCTION_REFERENCE",
-    pattern: /^\s*(?<retval>[\w\s,\\[\]]+)\s*=\s*(?<name>[^\\[]+)\s*\((?<args>[^=]*)\)$|^\s*([^\s\\[]+)\s*\(([^=]*)\)$|^\s*([\w,\\[\]]+)\s*=\s*([^\s\\[]+)\s*\(\s*\)$|^\s*([^\s\\[]+)\s*\(\s*\)$/,
+    name: "FUNCTION_REFERENCE_WITHOUT_OUTPUT",
+    pattern: /^\s*(?<name>\w+)\((?<args>[^)]*)\)(?:\s*;|\s*$)/,
+  },
+  {
+    name: "FUNCTION_REFERENCE_WITH_SINGLE_OUTPUT",
+    pattern: /^\s*(?<retval>\w+)\s*=\s*(?<name>\w+)\((?<args>[^)]*)\)\s*;?\s*$/,
+  },
+  {
+    name: "FUNCTION_REFERENCE_WITH_MULTIPLE_OUTPUTS",
+    pattern: /^\s*\[\s*(?<retval>[^\]]+)\s*\]\s*=\s*(?<name>\w+)\((?<args>[^)]*)\)(?:\s*;|\s*$)/,
   },
   {
     name: "ANONYMOUS_FUNCTION",
