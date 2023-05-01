@@ -1,6 +1,10 @@
 # mlang (LSP for Octave)
 This is an implementation of the [Language Server Protocol](https://code.visualstudio.com/api/language-extensions/language-server-extension-guide) for the [Octave](https://octave.org/) programming language.
 
+## Screenshots
+
+![Screenshot](./mlang_screenshot.png)
+
 ## Technologies
 - [Typescript](https://www.typescriptlang.org/)
 - [esbuild](https://esbuild.github.io/)
