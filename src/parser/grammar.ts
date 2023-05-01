@@ -25,11 +25,11 @@ export const GRAMMAR: IToken[] = [
   {
     name: "FUNCTION_DEFINITION_WITH_OUTPUT",
     pattern:
-      /function\s+(\[(?:\s*\w+\s*,)*\s*\w+\s*\])\s*=\s*(\w+)\s*\(([\w\s,]*)\)/,
+      /function\s+(?:\[\s*(?<retval>[\w\s,]*)\s*\])\s*=\s*(?<name>\w+)\s*\((?<args>[\w\s,]*)\)/,
   },
   {
     name: "FUNCTION_DEFINITION_WITHOUT_OUTPUT",
-    pattern: /^\s*function\s+(\w+)\s*\(([^)]*)\)/,
+    pattern: /^\s*function\s+(?<name>\w+)\s*\((?<args>[^)]*)\)/,
   },
   {
     name: "FUNCTION_REFERENCE_WITHOUT_OUTPUT",
@@ -45,31 +45,31 @@ export const GRAMMAR: IToken[] = [
   },
   {
     name: "ANONYMOUS_FUNCTION",
-    pattern: /(\w+)\s*=\s*@\(([^\\)]*)\)/,
+    pattern: /(?<name>\w+)\s*=\s*@\((?<args>[^\\)]*)\)/,
   },
   { name: "END_FUNCTION", pattern: /(endfunction|end)/i },
-  {
-    name: "VARIABLE_DECLARATION",
-    pattern: /(\w+)\s*=\s*(.*)/,
-  },
-  {
-    name: "VARIABLE_REFERENCE",
-    pattern: /(?<!\w)(?!if|while|for|switch)(?!.*\s=\s)(\w+)(?!\()/,
-  },
-  {
-    name: "FOR_LOOP_START",
-    pattern: /^\s*for\s+(\w+)\s*=\s*(\S+)\s*:\s*(\S+)\s*(?::\s*(\S+))?/i,
-  },
-  {
-    name: "FOR_LOOP_END",
-    pattern: /end\s*for/i,
-  },
-  {
-    name: "WHILE_LOOP_START",
-    pattern: /^\s*while\s+(.*)/i,
-  },
-  {
-    name: "WHILE_LOOP_END",
-    pattern: /end\s*while/i,
-  },
+  // {
+  //   name: "VARIABLE_DECLARATION",
+  //   pattern: /(\w+)\s*=\s*(.*)/,
+  // },
+  // {
+  //   name: "VARIABLE_REFERENCE",
+  //   pattern: /(?<!\w)(?!if|while|for|switch)(?!.*\s=\s)(\w+)(?!\()/,
+  // },
+  // {
+  //   name: "FOR_LOOP_START",
+  //   pattern: /^\s*for\s+(\w+)\s*=\s*(\S+)\s*:\s*(\S+)\s*(?::\s*(\S+))?/i,
+  // },
+  // {
+  //   name: "FOR_LOOP_END",
+  //   pattern: /end\s*for/i,
+  // },
+  // {
+  //   name: "WHILE_LOOP_START",
+  //   pattern: /^\s*while\s+(.*)/i,
+  // },
+  // {
+  //   name: "WHILE_LOOP_END",
+  //   pattern: /end\s*while/i,
+  // },
 ];

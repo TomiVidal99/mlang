@@ -43,9 +43,11 @@ export class Parser {
   private variablesDefinitions: IVariableDefinition[];
   private variablesReferences: IVariableReference[];
   private diagnostics: Diagnostic[];
+  private lines: string[];
 
   public constructor(document: TextDocument) {
     this.text = document.getText();
+    this.lines = this.text.split("\n");
     this.uri = document.uri;
     this.functionsDefinitions = [];
     this.functionsReferences = [];
@@ -60,37 +62,26 @@ export class Parser {
     match,
     lineNumber,
     token,
+    line,
   }: {
+    line: string;
     match: RegExpMatchArray;
     token: IToken;
     lineNumber: number;
   }) {
 
-    if (!this.diagnoseKeywordNaming({ match, lineNumber })) return;
-
-    const args = match[token.name === "FUNCTION_DEFINITION_WITHOUT_OUTPUT" ? 2 : 3]
-      .split(",")
-      .map((arg) => arg.trim());
-
-    const output =
-      token.name === "FUNCTION_DEFINITION_WITHOUT_OUTPUT"
-        ? []
-        : match[1]
-          .slice(1, -1)
-          .slice(-1, -1)
-          .split(",")
-          .map((arg) => arg.trim());
+    if (!this.diagnoseKeywordNaming({ line, match, lineNumber })) return;
 
     const functionDefinition: IFunctionDefintion = {
       start: Position.create(
         lineNumber,
         match.index +
-        match[0].indexOf(match[token.name === "FUNCTION_DEFINITION_WITH_OUTPUT" ? 2 : 1])
+        match[0].indexOf(match.groups?.name)
       ),
       type: token.name,
-      arguments: args,
-      output,
-      name: match[token.name === "FUNCTION_DEFINITION_WITH_OUTPUT" ? 2 : 1],
+      arguments: parseMultipleMatchValues(match.groups?.args),
+      output: parseMultipleMatchValues(match.groups?.retval),
+      name: match.groups?.name,
     };
 
     this.functionsDefinitions.push(functionDefinition);
@@ -114,22 +105,49 @@ export class Parser {
     match,
     token,
     lineNumber,
+    line,
   }: {
+    line: string;
     match: RegExpMatchArray;
     token: IToken;
     lineNumber: number;
   }): void {
+    log("visitAnonymousFunctionDefinition: " + JSON.stringify(match));
+    this.diagnoseKeywordNaming({ line, match, lineNumber });
     const functionDefinition: IFunctionDefintion = {
-      start: Position.create(
-        lineNumber - 1,
-        match.index + match[0].indexOf(match[1])
-      ),
-      end: Position.create(lineNumber - 1, match.index + match[0].length),
+      start: Position.create(lineNumber, 0),
+      end: Position.create(lineNumber, 0),
+      // start: Position.create(
+      //   lineNumber - 1,
+      //   match.index + match[0].indexOf(match.groups?.name)
+      // ),
+      // end: Position.create(lineNumber - 1, match.index + match[0].indexOf(match.groups?.name) + match.groups?.name.length),
       name: match[1],
       type: token.name,
-      arguments: match[2].split(",").map((arg) => arg.trim()),
+      arguments: parseMultipleMatchValues(match.groups?.retval),
     };
     this.functionsDefinitions.push(functionDefinition);
+  }
+
+  /**
+   * Sends a diagnostics if there are any statement or loop, etc
+   * that does not have it's corresponding closing keyword
+   */
+  checkClosingBlocks(): void {
+    const funcDef = this.functionsDefinitions.some((def) => !def.end);
+    if (funcDef) {
+      const endline = this.lines.length;
+      const diagnostic: Diagnostic = {
+        severity: DiagnosticSeverity.Error,
+        range: {
+          start: Position.create(endline, 0),
+          end: Position.create(endline, 0)
+        },
+        message: "missing closing keyword",
+        source: "mlang",
+      };
+      this.diagnostics.push(diagnostic);
+    }
   }
 
   private tokenizeText(): void {
@@ -137,7 +155,7 @@ export class Parser {
     for (let lineNumber = 1; lineNumber < lines.length + 1; lineNumber++) {
       const line = lines[lineNumber - 1];
       // ignore comments # or %
-      if (/^\s*[%#].*/.test(line)) return;
+      if (/^\s*[%#].*/.test(line)) continue;
       for (
         let grammarIndex = 0;
         grammarIndex < GRAMMAR.length;
@@ -145,81 +163,74 @@ export class Parser {
       ) {
         const token = GRAMMAR[grammarIndex];
         const match = line.match(token.pattern);
-        if (match) {
-          this.consoleOutputWarning({ match, lineNumber, token });
-          switch (token.name) {
-            case "FUNCTION_DEFINITION_WITH_OUTPUT":
-            case "FUNCTION_DEFINITION_WITHOUT_OUTPUT":
-              this.visitFunctionDefinition({
-                match,
-                token,
-                lineNumber: lineNumber - 1,
-              });
-              break;
-            case "ANONYMOUS_FUNCTION":
-              this.visitAnonymousFunctionDefinition({
-                match,
-                lineNumber,
-                token,
-              });
-              break;
-            case "END_FUNCTION":
-              this.closeFunctionDefintion({ lineNumber });
-              break;
-            case "FUNCTION_REFERENCE_WITHOUT_OUTPUT":
-              log(`without: ${JSON.stringify(match)}`);
-              this.visitFunctionReference({
-                match,
-                lineNumber
-              });
-              break;
-            case "FUNCTION_REFERENCE_WITH_MULTIPLE_OUTPUTS":
-              log(`multiple: ${JSON.stringify(match)}`);
-              this.visitFunctionReference({
-                match,
-                lineNumber
-              });
-              break;
-            case "FUNCTION_REFERENCE_WITH_SINGLE_OUTPUT":
-              log(`single: ${JSON.stringify(match)}`);
-              this.visitFunctionReference({
-                match,
-                lineNumber
-              });
-              break;
+        if (!match) continue;
+        this.consoleOutputWarning({ line, match, lineNumber: lineNumber - 1, token });
+        switch (token.name) {
+          case "FUNCTION_DEFINITION_WITH_OUTPUT":
+          case "FUNCTION_DEFINITION_WITHOUT_OUTPUT":
+            this.visitFunctionDefinition({
+              match,
+              token,
+              lineNumber: lineNumber - 1,
+              line,
+            });
+            break;
+          case "ANONYMOUS_FUNCTION":
+            this.visitAnonymousFunctionDefinition({
+              match,
+              lineNumber: lineNumber - 1,
+              token,
+              line,
+            });
+            break;
+          case "END_FUNCTION":
+            this.closeFunctionDefintion({ lineNumber });
+            break;
+          case "FUNCTION_REFERENCE_WITHOUT_OUTPUT":
+          case "FUNCTION_REFERENCE_WITH_MULTIPLE_OUTPUTS":
+          case "FUNCTION_REFERENCE_WITH_SINGLE_OUTPUT":
+            this.visitFunctionReference({
+              match,
+              lineNumber: lineNumber - 1,
+              line,
+            });
+            break;
 
-            case "WHILE_LOOP_START":
-            case "WHILE_LOOP_END":
-            case "FOR_LOOP_START":
-            case "FOR_LOOP_END":
-            case "VARIABLE_REFERENCE":
-            case "VARIABLE_DECLARATION":
-              break;
-          }
+          case "WHILE_LOOP_START":
+          case "WHILE_LOOP_END":
+          case "FOR_LOOP_START":
+          case "FOR_LOOP_END":
+          case "VARIABLE_REFERENCE":
+          case "VARIABLE_DECLARATION":
+            break;
         }
       }
     }
+
+    this.checkClosingBlocks();
+
   }
 
   /**
    * when a function reference it's met.
    */
   visitFunctionReference(
-    { match, lineNumber}:
+    { line, match, lineNumber }:
       {
+        line: string;
         lineNumber: number;
         match: RegExpMatchArray;
       }): void {
 
-    if (!this.diagnoseKeywordNaming({match, lineNumber})) return;
+    if (!this.diagnoseKeywordNaming({ line, match, lineNumber })) return;
 
-    const args = parseMultipleMatchValues(match.groups?.retval ? match.groups?.retval : "");
-    const outputs = parseMultipleMatchValues(match.groups?.retval ? match.groups?.retval : "");
+    const args = parseMultipleMatchValues(match.groups?.retval);
+    const outputs = parseMultipleMatchValues(match.groups?.retval);
 
     const reference: IFunctionReference = {
       name: match.groups?.name ? match.groups?.name : "ERROR",
-      start: Position.create(lineNumber-1, match.index),
-      end: Position.create(lineNumber-1, match.index + match[0].indexOf(match.groups?.name)),
+      start: Position.create(lineNumber, match.index),
+      end: Position.create(lineNumber, match.index + match[0].indexOf(match.groups?.name)),
     };
     if (args.length > 0) {
       reference.arguments = args;
@@ -256,9 +267,11 @@ export class Parser {
    * Sets a diagnostic for when the line does not 
    * have a ';' no output to console character
    */
-  consoleOutputWarning({ lineNumber, match, token }: { lineNumber: number, match: RegExpMatchArray, token: IToken }): void {
-    if (token.name !== "VARIABLE_DECLARATION" || match[0].trim() === "" || match[0].endsWith(";")) return;
-    const range = Range.create(Position.create(lineNumber, 0), Position.create(lineNumber, match[0].length));
+  consoleOutputWarning({ line, lineNumber, match, token }: { line: string; lineNumber: number, match: RegExpMatchArray, token: IToken }): void {
+    const validTokens = token.name === "FUNCTION_REFERENCE_WITH_SINGLE_OUTPUT" || token.name === "FUNCTION_REFERENCE_WITH_MULTIPLE_OUTPUTS" || token.name === "FUNCTION_REFERENCE_WITHOUT_OUTPUT" || token.name === "VARIABLE_REFERENCE" || token.name === "VARIABLE_DECLARATION" || token.name === "ANONYMOUS_FUNCTION";
+    if (!validTokens || line.trim() === "" || line.endsWith(";")) return;
+    const range = Range.create(Position.create(lineNumber, line.length - 1), Position.create(lineNumber, line.length));
+    // log(`${JSON.stringify(match)}, ${JSON.stringify(range)}`);
     const diagnostic: Diagnostic = {
       severity: DiagnosticSeverity.Warning,
       range: range,
@@ -304,18 +317,18 @@ export class Parser {
   * Checks that the keyword name it's correct. 
   * @returns {boolean} - true if it's a valid name.
   */
-  private diagnoseKeywordNaming({ match, lineNumber }: { match: RegExpMatchArray, lineNumber: number }): boolean {
+  private diagnoseKeywordNaming({ line, match, lineNumber }: { line: string, match: RegExpMatchArray, lineNumber: number }): boolean {
     const validNamingPattern = /^[a-zA-Z][^\s]*$/;
     const isNameValid = validNamingPattern.test(match.groups?.name);
     if (!isNameValid) {
       // sends error diagnostics
       const diagnostic: Diagnostic = {
-        severity: DiagnosticSeverity.Warning,
+        severity: DiagnosticSeverity.Error,
         range: {
-          start: Position.create(lineNumber, match[0].indexOf(match.groups?.name)),
-          end: Position.create(lineNumber, match[0].indexOf(match.groups?.name) + match.groups.name?.length - 1)
+          start: Position.create(lineNumber, line.indexOf(match.groups?.name)),
+          end: Position.create(lineNumber, line.indexOf(match.groups?.name) + match.groups.name?.length - 1)
         },
-        message: "will output to console",
+        message: "wrong naming",
         source: "mlang",
       };
       this.diagnostics.push(diagnostic);
