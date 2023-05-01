@@ -17,18 +17,18 @@ export type TokenNameType =
   | "FUNCTION_REFERENCE_WITH_SINGLE_OUTPUT"
   | "FUNCTION_REFERENCE_WITH_MULTIPLE_OUTPUTS"
   | "FUNCTION_REFERENCE_WITHOUT_OUTPUT"
-  | "FUNCTION_WITH_OUTPUT"
-  | "FUNCTION_WITHOUT_OUTPUT"
+  | "FUNCTION_DEFINITION_WITH_OUTPUT"
+  | "FUNCTION_DEFINITION_WITHOUT_OUTPUT"
   | "ANONYMOUS_FUNCTION";
 
 export const GRAMMAR: IToken[] = [
   {
-    name: "FUNCTION_WITH_OUTPUT",
+    name: "FUNCTION_DEFINITION_WITH_OUTPUT",
     pattern:
       /function\s+(\[(?:\s*\w+\s*,)*\s*\w+\s*\])\s*=\s*(\w+)\s*\(([\w\s,]*)\)/,
   },
   {
-    name: "FUNCTION_WITHOUT_OUTPUT",
+    name: "FUNCTION_DEFINITION_WITHOUT_OUTPUT",
     pattern: /^\s*function\s+(\w+)\s*\(([^)]*)\)/,
   },
   {

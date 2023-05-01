@@ -12,7 +12,6 @@ import {
   DiagnosticSeverity,
   _Connection,
 } from "vscode-languageserver";
-import { sendDiagnostics } from "./sendDiagnostics";
 
 export const readDocuments: string[] = [];
 export const functionsMap = new Map<string, IKeyword>();
@@ -76,7 +75,7 @@ export function updateFunctionList({
   if (diagnostics.length > 0) {
     diagnostics.forEach(([uri, diagnostics]) => {
       // TODO: check why diagnostics are not working
-      sendDiagnostics({ uri, diagnostics });
+      // sendDiagnostics({ uri, diagnostics });
     });
   }
 }
