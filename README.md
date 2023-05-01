@@ -9,6 +9,7 @@ This is an implementation of the [Language Server Protocol](https://code.visuals
 ## Working features
 - Completion _(some keywords, some native functions, user defined functions and files)_
 - goToDefinition _(for user defined functions and files)_
+- goToReference _(for user defined functions)_
 
 ## How to setup in the client
 ### Neovim (lua)
