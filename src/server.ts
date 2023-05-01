@@ -3,11 +3,13 @@ import {
   TextDocuments,
   ProposedFeatures,
   MessageType,
+  PublishDiagnosticsParams,
+  ConnectionError,
 } from "vscode-languageserver/node";
 
 import { TextDocument } from "vscode-languageserver-textdocument";
 import { ISettings } from "./data";
-import { handleOnCompletion, handleOnDefinition, handleOnDidChangeConfiguration, handleOnInitialize, handleOnInitialized } from "./handlers";
+import { handleOnCompletion, handleOnDefinition, handleOnDidChangeConfiguration, handleOnInitialize, handleOnInitialized, handleOnReference } from "./handlers";
 import { DocumentData, updateDocumentData  } from "./utils";
 
 export const connection = createConnection(ProposedFeatures.all);
@@ -32,7 +34,7 @@ connection.onInitialize((params) => handleOnInitialize({ params, connection }));
 connection.onInitialized(() => handleOnInitialized({ connection }));
 // connection.onDidOpenTextDocument((params) => handleDidOpenTextDocument({params}));
 connection.onDefinition((params) => handleOnDefinition({ params, documents }));
-// connection.onReferences((params) => handleOnReference({params}));
+connection.onReferences((params) => handleOnReference({params, documents}));
 connection.onDidChangeConfiguration((change) => handleOnDidChangeConfiguration({ documents, change, connection }));
 documents.onDidClose((e) => {
   // Only keep settings for open documents

@@ -1,10 +1,12 @@
 import { TextDocument } from "vscode-languageserver-textdocument";
 import {
-  FunctionDefinition,
-  getFunctionDefinitions,
+  IKeyword,
 } from "./getFunctionDefinitions";
 import { getPathFromURI } from "./getPathFromURI";
-import { documentData } from "../server";
+import { connection, documentData, log } from "../server";
+import { Parser } from "../parser";
+import { Diagnostic, PublishDiagnosticsParams } from "vscode-languageserver";
+import { formatURI } from "./formatURI";
 
 export function addNewDocument(document: TextDocument): void {
   const data = new DocumentData(document);
@@ -20,6 +22,7 @@ export function updateDocumentData(document: TextDocument): void {
       foundFlag = true;
       data.setDocument(doc);
       data.updateDocumentData();
+      connection.sendDiagnostics(data.getDiagnostics());
     }
   });
   if (!foundFlag) {
@@ -27,22 +30,31 @@ export function updateDocumentData(document: TextDocument): void {
   }
 }
 
-export function getAllFunctionDefinitions(): FunctionDefinition[] {
-  const functions: FunctionDefinition[] = documentData.flatMap((data) =>
+export function getAllFunctionDefinitions(): IKeyword[] {
+  const functions: IKeyword[] = documentData.flatMap((data) =>
     data.getFunctionsDefinitionsNames()
   ).map((d) => d[1]);
   return functions;
 }
 
+export function getAllFunctionReferences(): IKeyword[] {
+  const functions: IKeyword[] = documentData.flatMap((data) =>
+    data.getFunctionsReferencesNames()
+  ).map((d) => d[1]);
+  return functions;
+}
+
 export class DocumentData {
-  private functionsDefinitions: FunctionDefinition[];
-  private functionsReferences: FunctionDefinition[];
+  private functionsDefinitions: IKeyword[];
+  private functionsReferences: IKeyword[];
   private document: TextDocument;
+  private diagnostics: Diagnostic[];
 
   constructor(document: TextDocument) {
     this.functionsDefinitions = [];
     this.functionsReferences = [];
     this.document = document;
+    this.diagnostics = [];
   }
 
   public setDocument(document: TextDocument): void {
@@ -54,7 +66,10 @@ export class DocumentData {
    */
   public updateDocumentData(): void {
     // TODO: get the other data
-    this.functionsDefinitions = getFunctionDefinitions(this.document);
+    const parser = new Parser(this.document);
+    this.functionsDefinitions = parser.getFunctionsDefinitions(); 
+    this.functionsReferences = parser.getFunctionsReferences();
+    this.updateDiagnostics(parser.getDiagnostics());
   }
 
   /**
@@ -71,11 +86,25 @@ export class DocumentData {
     return getPathFromURI(this.document.uri);
   }
 
-  public getFunctionsReferencesNames(): [string, FunctionDefinition][] {
+  public getFunctionsReferencesNames(): [string, IKeyword][] {
     return this.functionsReferences.map((fn) => [fn.name, fn]);
   }
 
-  public getFunctionsDefinitionsNames(): [string, FunctionDefinition][] {
+  public getFunctionsDefinitionsNames(): [string, IKeyword][] {
     return this.functionsDefinitions.map((fn) => [fn.name, fn]);
+  }
+
+  /**
+  * Sends the updated diagnostics to the client.
+  */
+  public updateDiagnostics(diagnostics: Diagnostic[]): void {
+    this.diagnostics = diagnostics;
+  }
+
+  public getDiagnostics(): PublishDiagnosticsParams {
+    return {
+      uri: formatURI(this.document.uri),
+      diagnostics: this.diagnostics
+    };
   }
 }

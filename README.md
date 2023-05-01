@@ -1,6 +1,10 @@
 # mlang (LSP for Octave)
 This is an implementation of the [Language Server Protocol](https://code.visualstudio.com/api/language-extensions/language-server-extension-guide) for the [Octave](https://octave.org/) programming language.
 
+## Screenshots
+
+![Screenshot](./mlang_screenshot.png)
+
 ## Technologies
 - [Typescript](https://www.typescriptlang.org/)
 - [esbuild](https://esbuild.github.io/)
@@ -9,6 +13,7 @@ This is an implementation of the [Language Server Protocol](https://code.visuals
 ## Working features
 - Completion _(some keywords, some native functions, user defined functions and files)_
 - goToDefinition _(for user defined functions and files)_
+- goToReference _(for user defined functions)_
 
 ## How to setup in the client
 ### Neovim (lua)
@@ -37,6 +42,11 @@ end
 ```
 
 ## TODO
+- [ ] consider packages (check if they're installed and offer references).
+- [ ] add auto imports (add the _addpath_ command at the beggining of the file when importing some function, think this better).
+- [ ] check function references in the global path: (linux: ~/.octaverc, windows)
+- [ ] add diagnostics checking for arguments and return values (function references).
+- [ ] add completion for arguments and return values (function references).
 - [ ] add more native completion items (keywords and functions).
 - [ ] optimize esbuild bundle config.
 - [ ] add diagnositics (check when repeated function definitions).

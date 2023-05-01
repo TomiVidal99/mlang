@@ -1,6 +1,39 @@
-import { HandlerResult, Location, ReferenceParams } from "vscode-languageserver";
+import { HandlerResult, Location, ReferenceParams, TextDocuments } from "vscode-languageserver";
+import {formatURI, getAllFunctionReferences, getWordRangeAtPosition} from "../utils";
+import { TextDocument } from "vscode-languageserver-textdocument";
+import { log } from "../server";
 
-export function handleOnReference({ params }: { params: ReferenceParams }): HandlerResult<Location[], void> {
-  return null;
-  // return new Promise((resolve, _reject) => { resolve(void); });
+export function handleOnReference({ params, documents }: { params: ReferenceParams, documents: TextDocuments<TextDocument> }): HandlerResult<Location[], void> {
+  return new Promise((resolve, _reject) => { 
+    const locations: Location[] = [];
+
+    const documentUri = params.textDocument.uri;
+    const position = params.position;
+
+    const document = documents.get(documentUri);
+    if (!document) {
+      return null;
+    }
+
+    const wordRange = getWordRangeAtPosition(document, position);
+    if (!wordRange) {
+      return null;
+    }
+
+    const word = document.getText(wordRange);
+
+    const allFunctionsReferences = getAllFunctionReferences();
+    allFunctionsReferences.forEach((func) => {
+      // log(`func name: ${func.name}, word: ${word}`);
+      if (func.name === word) {
+        const loc: Location = {
+          range: func.range,
+          uri: func.uri
+        };
+        locations.push(loc);
+      }
+    });
+
+    resolve(locations);
+  });
 }

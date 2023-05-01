@@ -6,7 +6,7 @@ import { TextDocument } from "vscode-languageserver-textdocument";
 import { log} from "./server";
 import * as fs from "fs";
 import * as path from "path";
-import { FunctionDefinition, getFunctionDefinitions } from "./utils";
+import { IKeyword, getFunctionDefinitions } from "./utils";
 import {
   Diagnostic,
   DiagnosticSeverity,
@@ -14,7 +14,7 @@ import {
 } from "vscode-languageserver";
 
 export const readDocuments: string[] = [];
-export const functionsMap = new Map<string, FunctionDefinition>();
+export const functionsMap = new Map<string, IKeyword>();
 
 type DiagnosticTupleType = [string, Diagnostic[]];
 
@@ -44,7 +44,7 @@ export function updateFunctionList({
   const diagnostics: DiagnosticTupleType[] = [];
   documents.forEach((doc) => {
     const functions = getFunctionDefinitions(doc);
-    const currentDocFunctionsMap = new Map<string, FunctionDefinition>();
+    const currentDocFunctionsMap = new Map<string, IKeyword>();
     const currentFileDiagnostics: Diagnostic[] = [];
     readDocuments.push(doc.uri);
     functions.forEach((func) => {
@@ -75,7 +75,7 @@ export function updateFunctionList({
   if (diagnostics.length > 0) {
     diagnostics.forEach(([uri, diagnostics]) => {
       // TODO: check why diagnostics are not working
-      sendDiagnostics({ uri, diagnostics });
+      // sendDiagnostics({ uri, diagnostics });
     });
   }
 }
@@ -104,8 +104,8 @@ function checkIfFunctionAlreadyExists({
   functionsInDoc,
   currentFunction,
 }: {
-  functionsInDoc: Map<string, FunctionDefinition>;
-  currentFunction: FunctionDefinition;
+  functionsInDoc: Map<string, IKeyword>;
+  currentFunction: IKeyword;
 }): Diagnostic[] {
   const diagnostics: Diagnostic[] = [];
   functionsInDoc.forEach((func) => {
