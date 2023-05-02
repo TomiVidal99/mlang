@@ -1,12 +1,28 @@
 import { CompletionItem, CompletionItemKind, MarkupKind } from 'vscode-languageserver';
 
 export const completionData: CompletionItem[] = [
-{
+  {
+    label: 'stem',
+    kind: CompletionItemKind.Function,
+    documentation: {
+      kind: MarkupKind.Markdown,
+      value: '[stem function](https://octave.sourceforge.io/octave/function/stem.html)',
+    },
+  },
+  {
+    label: 'plot',
+    kind: CompletionItemKind.Function,
+    documentation: {
+      kind: MarkupKind.Markdown,
+      value: '[plot function](https://octave.sourceforge.io/octave/function/plot.html)',
+    },
+  },
+  {
     label: 'for',
     kind: CompletionItemKind.Keyword,
     documentation: {
       kind: MarkupKind.Markdown,
-      value: '[for loop](https://octave.org/doc/v6.4.0/Control-Statements.html#Control-Statements)',
+      value: '[for loop](https://docs.octave.org/v4.2.0/The-for-Statement.html)',
     },
   },
   {
@@ -14,7 +30,7 @@ export const completionData: CompletionItem[] = [
     kind: CompletionItemKind.Keyword,
     documentation: {
       kind: MarkupKind.Markdown,
-      value: '[while loop](https://octave.org/doc/v6.4.0/Control-Statements.html#Control-Statements)',
+      value: '[while loop](https://docs.octave.org/v4.2.0/The-while-Statement.html)',
     },
   },
   {
@@ -22,7 +38,7 @@ export const completionData: CompletionItem[] = [
     kind: CompletionItemKind.Keyword,
     documentation: {
       kind: MarkupKind.Markdown,
-      value: '[if statement](https://octave.org/doc/v6.4.0/Control-Statements.html#Control-Statements)',
+      value: '[if statement](https://docs.octave.org/v4.2.0/The-if-Statement.html)',
     },
   },
   {
@@ -30,7 +46,7 @@ export const completionData: CompletionItem[] = [
     kind: CompletionItemKind.Keyword,
     documentation: {
       kind: MarkupKind.Markdown,
-      value: '[if statement else clause](https://octave.org/doc/v6.4.0/Control-Statements.html#Control-Statements)',
+      value: '[if statement else clause](https://docs.octave.org/v4.2.0/The-if-Statement.html)',
     },
   },
   {
@@ -38,7 +54,7 @@ export const completionData: CompletionItem[] = [
     kind: CompletionItemKind.Keyword,
     documentation: {
       kind: MarkupKind.Markdown,
-      value: '[if statement elseif clause](https://octave.org/doc/v6.4.0/Control-Statements.html#Control-Statements)',
+      value: '[if statement elseif clause](https://docs.octave.org/v4.2.0/The-if-Statement.html)',
     },
   },
   {
@@ -46,7 +62,7 @@ export const completionData: CompletionItem[] = [
     kind: CompletionItemKind.Keyword,
     documentation: {
       kind: MarkupKind.Markdown,
-      value: '[switch statement](https://octave.org/doc/v6.4.0/Control-Statements.html#Control-Statements)',
+      value: '[switch statement](https://docs.octave.org/v4.2.0/The-switch-Statement.html)',
     },
   },
   {
@@ -54,7 +70,7 @@ export const completionData: CompletionItem[] = [
     kind: CompletionItemKind.Keyword,
     documentation: {
       kind: MarkupKind.Markdown,
-      value: '[switch statement case clause](https://octave.org/doc/v6.4.0/Control-Statements.html#Control-Statements)',
+      value: '[switch statement case clause](https://docs.octave.org/v4.2.0/The-switch-Statement.html#index-case-statement)',
     },
   },
   {
@@ -62,7 +78,7 @@ export const completionData: CompletionItem[] = [
     kind: CompletionItemKind.Keyword,
     documentation: {
       kind: MarkupKind.Markdown,
-      value: '[switch statement otherwise clause](https://octave.org/doc/v6.4.0/Control-Statements.html#Control-Statements)',
+      value: '[switch statement otherwise clause](https://docs.octave.org/v4.2.0/The-switch-Statement.html#index-otherwise-statement)',
     },
   },
   {
@@ -70,7 +86,7 @@ export const completionData: CompletionItem[] = [
     kind: CompletionItemKind.Keyword,
     documentation: {
       kind: MarkupKind.Markdown,
-      value: '[break statement](https://octave.org/doc/v6.4.0/Control-Statements.html#Control-Statements)',
+      value: '[break statement](https://docs.octave.org/v4.2.0/The-break-Statement.html#index-break-statement)',
     },
   },
   {
@@ -78,7 +94,7 @@ export const completionData: CompletionItem[] = [
     kind: CompletionItemKind.Keyword,
     documentation: {
       kind: MarkupKind.Markdown,
-      value: '[continue statement](https://octave.org/doc/v6.4.0/Control-Statements.html#Control-Statements)',
+      value: '[continue statement](https://docs.octave.org/v4.2.0/The-continue-Statement.html#index-continue-statement)',
     },
   },
   {
@@ -86,7 +102,7 @@ export const completionData: CompletionItem[] = [
     kind: CompletionItemKind.Keyword,
     documentation: {
       kind: MarkupKind.Markdown,
-      value: '[return statement](https://octave.org/doc/v6.4.0/Control-Statements.html#Control-Statements)',
+      value: 'return statement',
     },
   },
   {
@@ -94,7 +110,7 @@ export const completionData: CompletionItem[] = [
     kind: CompletionItemKind.Keyword,
     documentation: {
       kind: MarkupKind.Markdown,
-      value: '[block end marker](https://octave.org/doc/v6.4.0/Control-Statements.html#Control-Statements)',
+      value: 'block end marker',
     },
   },
   {
@@ -102,7 +118,7 @@ export const completionData: CompletionItem[] = [
     kind: CompletionItemKind.Keyword,
     documentation: {
       kind: MarkupKind.Markdown,
-      value: '[block end marker](https://docs.octave.org/v4.0.1/Defining-Functions.html)',
+      value: '[block end marker](https://docs.octave.org/v4.2.0/A-Sample-Function-Description.html#A-Sample-Function-Description)',
     },
   },
   {
