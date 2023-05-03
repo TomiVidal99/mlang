@@ -1,5 +1,6 @@
 import { randomUUID } from "crypto";
-import { Position, Range, TextDocument } from "vscode-languageserver";
+import { Position, Range } from "vscode-languageserver";
+import { TextDocument } from "vscode-languageserver-textdocument";
 
 export interface IKeyword {
   id: string;

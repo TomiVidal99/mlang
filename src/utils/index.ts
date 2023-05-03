@@ -6,5 +6,5 @@ export * from "./getPathFromURI";
 export * from "./documentData";
 export * from "./getRangeFrom2Points";
 export * from "./parseMultipleMatchValues";
-export * from "./debounce";
 export * from "./getPathType";
+export * from "./parseToIKeyword";

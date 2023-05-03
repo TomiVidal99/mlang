@@ -1,58 +1,59 @@
 import { Range, Position, Diagnostic, DiagnosticSeverity } from "vscode-languageserver";
 import { GRAMMAR, IToken, TokenNameType } from "./grammar";
-import { IKeyword, addNewDocument, debounce, formatURI, getRangeFrom2Points, parseMultipleMatchValues } from "../utils";
-import { randomUUID } from "crypto";
-import { addDocumentsFromPath, log } from "../server";
+import { parseMultipleMatchValues } from "../utils";
+import { addDocumentsFromPath } from "../server";
 import { TextDocument } from "vscode-languageserver-textdocument";
 
-interface IFunctionDefintion {
+export interface IFunctionDefinition {
   start: Position;
   end?: Position;
   type: TokenNameType;
   name: string;
   arguments?: string[];
   output?: string[];
+  depth: number; // this indicates weather the function it's defined within another function
 }
 
-interface IFunctionReference {
+export interface IFunctionReference {
   start: Position;
   end: Position;
   name: string;
   arguments?: string[];
   output?: string[];
+  depth: number;
 }
 
-interface IVariableDefinition {
+export interface IVariableDefinition {
   start: Position;
   end?: Position;
   type: TokenNameType;
   name: string;
 }
 
-interface IVariableReference {
+export interface IVariableReference {
   start: Position;
   end: Position;
   name: string;
 }
 
 export class Parser {
-  private uri: string;
+  // private uri: string;
   private text: string;
-  private functionsDefinitions: IFunctionDefintion[];
+  private functionsDefinitions: IFunctionDefinition[];
   private functionsReferences: IFunctionReference[];
-  private variablesDefinitions: IVariableDefinition[];
-  private variablesReferences: IVariableReference[];
+  // private variablesDefinitions: IVariableDefinition[];
+  // private variablesReferences: IVariableReference[];
   private diagnostics: Diagnostic[];
   private lines: string[];
 
   public constructor(document: TextDocument) {
     this.text = document.getText();
     this.lines = this.text.split("\n");
-    this.uri = document.uri;
+    // this.uri = document.uri;
     this.functionsDefinitions = [];
     this.functionsReferences = [];
-    this.variablesDefinitions = [];
-    this.variablesReferences = [];
+    // this.variablesDefinitions = [];
+    // this.variablesReferences = [];
     this.diagnostics = [];
 
     this.tokenizeText();
@@ -72,7 +73,7 @@ export class Parser {
 
     if (!this.diagnoseKeywordNaming({ line, match, lineNumber })) return;
 
-    const functionDefinition: IFunctionDefintion = {
+    const functionDefinition: IFunctionDefinition = {
       start: Position.create(
         lineNumber,
         match.index +
@@ -82,6 +83,7 @@ export class Parser {
       arguments: parseMultipleMatchValues(match.groups?.args),
       output: parseMultipleMatchValues(match.groups?.retval),
       name: match.groups?.name,
+      depth: this.helperGetFunctionDefinitionDepth({ lineNumber })
     };
 
     this.functionsDefinitions.push(functionDefinition);
@@ -114,19 +116,60 @@ export class Parser {
   }): void {
     // log("visitAnonymousFunctionDefinition: " + JSON.stringify(match));
     this.diagnoseKeywordNaming({ line, match, lineNumber });
-    const functionDefinition: IFunctionDefintion = {
+    const functionDefinition: IFunctionDefinition = {
       start: Position.create(lineNumber, 0),
       end: Position.create(lineNumber, 0),
-      // start: Position.create(
-      //   lineNumber - 1,
-      //   match.index + match[0].indexOf(match.groups?.name)
-      // ),
-      // end: Position.create(lineNumber - 1, match.index + match[0].indexOf(match.groups?.name) + match.groups?.name.length),
       name: match[1],
       type: token.name,
       arguments: parseMultipleMatchValues(match.groups?.retval),
+      depth: this.helperGetFunctionDefinitionDepth({ lineNumber })
     };
     this.functionsDefinitions.push(functionDefinition);
+  }
+
+  /**
+   * Returns the depth in a function definition of the current function definition.
+   * If it's 0 then it means that the function it's defined at file level.
+   */
+  private helperGetFunctionDefinitionDepth({ lineNumber }: { lineNumber: number }): number {
+    if (this.functionsDefinitions.length === 0) {
+      // case for a definition at file level
+      return 0;
+    }
+    let foundDepthFlag = false;
+    this.functionsDefinitions.forEach((func) => {
+      if (func.end && func.end.line > lineNumber) {
+        foundDepthFlag = true;
+        return func.depth + 1;
+      }
+    });
+    if (!foundDepthFlag) {
+      // this cases occurs when there are multiple definitions not closed with the 'end' keyword
+      return 0;
+    }
+  }
+
+  /**
+   * Returns the depth in scope of a function reference
+   * If it's 0 then it means that the function it's defined at file level.
+   */
+  private helperGetFunctionReferenceDepth({ lineNumber}: { lineNumber: number}): number {
+    if (this.functionsDefinitions.length === 0) {
+      // case for a definition at file level
+      return 0;
+    }
+    let foundDepthFlag = false;
+    for (let i = this.functionsDefinitions.length; i > 0; i--) {
+      const func = this.functionsDefinitions[i-1];
+      if (func.start.line < lineNumber && func.end && func.end.line > lineNumber) {
+        foundDepthFlag = true;
+        return func.depth;
+      }
+    }
+    if (!foundDepthFlag) {
+      // this cases occurs when there are one or more definitions not closed with the 'end' keyword
+      return -1;
+    }
   }
 
   /**
@@ -223,7 +266,7 @@ export class Parser {
       }): void {
 
     if (!this.diagnoseKeywordNaming({ line, match, lineNumber })) return;
-    this.handleReferenceAddPath({match});
+    this.handleReferenceAddPath({ match });
 
     const args = parseMultipleMatchValues(match.groups?.retval);
     const outputs = parseMultipleMatchValues(match.groups?.retval);
@@ -232,6 +275,7 @@ export class Parser {
       name: match.groups?.name ? match.groups?.name : "ERROR",
       start: Position.create(lineNumber, match.index),
       end: Position.create(lineNumber, match.index + match[0].indexOf(match.groups?.name)),
+      depth: this.helperGetFunctionReferenceDepth({lineNumber}),
     };
     if (args.length > 0) {
       reference.arguments = args;
@@ -243,7 +287,7 @@ export class Parser {
     this.functionsReferences.push(reference);
   }
 
-  handleReferenceAddPath({match}: { match: RegExpMatchArray; }): void {
+  handleReferenceAddPath({ match }: { match: RegExpMatchArray; }): void {
     if (match.groups?.name === "addpath") {
       const paths = parseMultipleMatchValues(match.groups?.args);
       // log("addpath found: " + JSON.stringify(paths));
@@ -257,18 +301,9 @@ export class Parser {
    * Returns the functions references of the document
    * TODO: think on how to add arguments and return values checking and completion.
    */
-  getFunctionsReferences(): IKeyword[] {
-    const references: IKeyword[] = this.functionsReferences.map((reference) => {
-      const ref: IKeyword = {
-        id: randomUUID(),
-        name: reference.name,
-        uri: formatURI(this.uri),
-        range: {
-          start: reference.start,
-          end: reference.end,
-        },
-      };
-      return ref;
+  getFunctionsReferences(): IFunctionReference[] {
+    const references: IFunctionReference[] = this.functionsReferences.map((reference) => {
+      return reference;
     });
     return references;
   }
@@ -278,7 +313,7 @@ export class Parser {
    * Sets a diagnostic for when the line does not 
    * have a ';' no output to console character
    */
-  consoleOutputWarning({ line, lineNumber, match, token }: { line: string; lineNumber: number, match: RegExpMatchArray, token: IToken }): void {
+  consoleOutputWarning({ line, lineNumber, token }: { line: string; lineNumber: number, match: RegExpMatchArray, token: IToken }): void {
     const validTokens = token.name === "FUNCTION_REFERENCE_WITH_SINGLE_OUTPUT" || token.name === "FUNCTION_REFERENCE_WITH_MULTIPLE_OUTPUTS" || token.name === "FUNCTION_REFERENCE_WITHOUT_OUTPUT" || token.name === "VARIABLE_REFERENCE" || token.name === "VARIABLE_DECLARATION" || token.name === "ANONYMOUS_FUNCTION";
     if (!validTokens || line.trim() === "" || line.endsWith(";")) return;
     const range = Range.create(Position.create(lineNumber, line.length - 1), Position.create(lineNumber, line.length));
@@ -304,18 +339,12 @@ export class Parser {
   /**
    * Returns all the functions defintions for the current document
    */
-  public getFunctionsDefinitions(): IKeyword[] {
+  public getFunctionsDefinitions(): IFunctionDefinition[] {
     const definitions = this.functionsDefinitions.map((fn) => {
       if (!fn?.end) {
         return;
       }
-      const fnDef: IKeyword = {
-        name: fn.name,
-        id: randomUUID(),
-        uri: this.uri,
-        range: getRangeFrom2Points(fn.start, fn.end),
-      };
-      return fnDef;
+      return fn;
     });
     return definitions;
   }

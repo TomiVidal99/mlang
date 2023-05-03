@@ -19,12 +19,12 @@ export const documentData: DocumentData[] = [];
 
 const documents = new TextDocuments<TextDocument>(TextDocument);
 
-export function log(message: string): void {
+export function log(message: string | object): void {
   // TODO: this is only for dev purposes
   // return;
   connection.sendRequest("window/showMessage", {
     type: MessageType.Info,
-    message,
+    message: typeof(message) === "string" ? message : JSON.stringify(message),
   });
 }
 
@@ -58,7 +58,7 @@ connection.listen();
 export function addDocumentsFromPath(filepath: string | null): TextDocument | null {
   const expandedFilepath = filepath.replace("~", os.homedir());
   const checkedPath = getPathType(expandedFilepath);
-  log("validFilePath: " + expandedFilepath);
+  log("adding path: " + expandedFilepath);
   switch (checkedPath) {
     case "file":
       try {
