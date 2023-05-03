@@ -6,5 +6,3 @@ export * from "./getPathFromURI";
 export * from "./documentData";
 export * from "./getRangeFrom2Points";
 export * from "./parseMultipleMatchValues";
-// export * from "./readInitFile";
-// export * from "./getTextDocumentByPath";
