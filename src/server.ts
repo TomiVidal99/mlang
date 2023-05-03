@@ -31,7 +31,7 @@ export function log(message: string): void {
 // documents.onDidOpen((change) => handleDidOpenFile({change}));
 // documents.onDidSave((change) => handleOnDidSave({change}));
 connection.onInitialize((params) => handleOnInitialize({ params, connection }));
-connection.onInitialized(() => handleOnInitialized({ connection }));
+connection.onInitialized(() => handleOnInitialized({ connection, documents }));
 // connection.onDidOpenTextDocument((params) => handleDidOpenTextDocument({params}));
 connection.onDefinition((params) => handleOnDefinition({ params, documents }));
 connection.onReferences((params) => handleOnReference({params, documents}));

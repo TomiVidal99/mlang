@@ -5,6 +5,7 @@ export interface ISettings {
   maxNumberOfProblems: number;
   maxFilesSearchDepth: number;
   defaultInitFile: string;
+  enableInitFile: boolean;
 }
 
 /**
@@ -32,6 +33,7 @@ export const defaultSettings: ISettings = {
   maxNumberOfProblems: 1000,
   maxFilesSearchDepth: 3,
   defaultInitFile: getDefaultInitFile(),
+  enableInitFile: true,
 };
 
 export let globalSettings: ISettings = defaultSettings;

@@ -1,8 +1,10 @@
-import { DidChangeConfigurationNotification, InitializeParams, InitializeResult, TextDocumentSyncKind, _Connection } from "vscode-languageserver";
+import { DidChangeConfigurationNotification, InitializeParams, InitializeResult, TextDocumentSyncKind, TextDocuments, _Connection } from "vscode-languageserver";
 import { getFilesInWorkspace} from "../managers";
 import { URI } from "vscode-uri";
 import { log } from "../server";
 import { addNewDocument } from "../utils";
+import { globalSettings } from "../data";
+import { TextDocument } from "vscode-languageserver-textdocument";
 
 export let hasConfigurationCapability = false;
 export let hasWorkspaceFolderCapability = false;
@@ -12,7 +14,7 @@ interface IOnInitializeProps {
   params: InitializeParams;
   connection: _Connection;
 }
-export function handleOnInitialize({params, connection}: IOnInitializeProps) {
+export function handleOnInitialize({params, connection }: IOnInitializeProps) {
   const capabilities = params.capabilities;
   const rootUri = params.rootUri;
   const workspace = URI.parse(rootUri).fsPath;
@@ -69,9 +71,10 @@ export function handleOnInitialize({params, connection}: IOnInitializeProps) {
 
 interface IOnInitializedProps {
   connection: _Connection;
+  documents: TextDocuments<TextDocument>
 }
-export function handleOnInitialized({connection}: IOnInitializedProps) {
-  log("initialized");
+export function handleOnInitialized({connection, documents}: IOnInitializedProps) {
+  log("initialized, default settings: " + JSON.stringify(globalSettings));
   if (hasConfigurationCapability) {
     // Register for all configuration changes.
     connection.client.register(
@@ -84,4 +87,11 @@ export function handleOnInitialized({connection}: IOnInitializedProps) {
       connection.console.log("Workspace folder change event received.");
     });
   }
+
+  // has in count the default init file if the configuration enables it
+  if (globalSettings.enableInitFile) {
+    // readInitFile({filepath: globalSettings.defaultInitFile});
+    addNewDocument(documents.get(globalSettings.defaultInitFile));
+  }
+
 }
