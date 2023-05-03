@@ -1,8 +1,8 @@
 import { Range, Position, Diagnostic, DiagnosticSeverity } from "vscode-languageserver";
 import { GRAMMAR, IToken, TokenNameType } from "./grammar";
-import { IKeyword, formatURI, getRangeFrom2Points, parseMultipleMatchValues } from "../utils";
+import { IKeyword, addNewDocument, debounce, formatURI, getRangeFrom2Points, parseMultipleMatchValues } from "../utils";
 import { randomUUID } from "crypto";
-import { log } from "../server";
+import { addDocumentsFromPath, log } from "../server";
 import { TextDocument } from "vscode-languageserver-textdocument";
 
 interface IFunctionDefintion {
@@ -112,7 +112,7 @@ export class Parser {
     token: IToken;
     lineNumber: number;
   }): void {
-    log("visitAnonymousFunctionDefinition: " + JSON.stringify(match));
+    // log("visitAnonymousFunctionDefinition: " + JSON.stringify(match));
     this.diagnoseKeywordNaming({ line, match, lineNumber });
     const functionDefinition: IFunctionDefintion = {
       start: Position.create(lineNumber, 0),
@@ -223,6 +223,7 @@ export class Parser {
       }): void {
 
     if (!this.diagnoseKeywordNaming({ line, match, lineNumber })) return;
+    this.handleReferenceAddPath({match});
 
     const args = parseMultipleMatchValues(match.groups?.retval);
     const outputs = parseMultipleMatchValues(match.groups?.retval);
@@ -240,6 +241,14 @@ export class Parser {
     }
 
     this.functionsReferences.push(reference);
+  }
+
+  handleReferenceAddPath({match}: { match: RegExpMatchArray; }): void {
+    if (match.groups?.name === "addpath") {
+      const paths = parseMultipleMatchValues(match.groups?.args);
+      log("addpath found: " + JSON.stringify(paths));
+      paths.length === 1 ? addDocumentsFromPath(paths[0]) : paths.forEach((p) => {addDocumentsFromPath(p);});
+    }
   }
 
   /**
