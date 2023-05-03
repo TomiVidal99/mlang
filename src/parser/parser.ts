@@ -246,8 +246,10 @@ export class Parser {
   handleReferenceAddPath({match}: { match: RegExpMatchArray; }): void {
     if (match.groups?.name === "addpath") {
       const paths = parseMultipleMatchValues(match.groups?.args);
-      log("addpath found: " + JSON.stringify(paths));
-      paths.length === 1 ? addDocumentsFromPath(paths[0]) : paths.forEach((p) => {addDocumentsFromPath(p);});
+      // log("addpath found: " + JSON.stringify(paths));
+      paths.forEach((p) => {
+        addDocumentsFromPath(p);
+      });
     }
   }
 

@@ -3,8 +3,6 @@ import {
   TextDocuments,
   ProposedFeatures,
   MessageType,
-  PublishDiagnosticsParams,
-  ConnectionError,
 } from "vscode-languageserver/node";
 import * as fs from "fs";
 import * as os from "os";
@@ -12,7 +10,7 @@ import * as os from "os";
 import { TextDocument } from "vscode-languageserver-textdocument";
 import { ISettings } from "./data";
 import { handleOnCompletion, handleOnDefinition, handleOnDidChangeConfiguration, handleOnInitialize, handleOnInitialized, handleOnReference } from "./handlers";
-import { DocumentData, addNewDocument, updateDocumentData  } from "./utils";
+import { DocumentData, addNewDocument, getPathType, updateDocumentData  } from "./utils";
 import { getFilesInWorkspace } from "./managers";
 
 export const connection = createConnection(ProposedFeatures.all);
@@ -57,42 +55,24 @@ documents.listen(connection);
 // Listen on the connection
 connection.listen();
 
-function checkPath(path: string): "file" | "dir" | "none" {
-  try {
-    const stat = fs.statSync(path);
-    if (stat.isFile()) {
-      return 'file';
-    } else if (stat.isDirectory()) {
-      return 'dir';
-    } 
-  } catch (err) {
-    if (err.code === 'ENOENT') {
-      return 'none';
-    } else {
-      throw err;
-    }
-  }
-  return 'none';
-}
-
 export function addDocumentsFromPath(filepath: string | null): TextDocument | null {
-  const checkedPath = checkPath(filepath);
-  const validFilePath = filepath.replace("~", os.homedir());
-  log("validFilePath: " + JSON.stringify(validFilePath));
+  const expandedFilepath = filepath.replace("~", os.homedir());
+  const checkedPath = getPathType(expandedFilepath);
+  log("validFilePath: " + expandedFilepath);
   switch (checkedPath) {
     case "file":
       try {
-        const content = fs.readFileSync(validFilePath, 'utf8');
-        const doc = TextDocument.create(validFilePath, 'text', 1, content);
+        const content = fs.readFileSync(expandedFilepath, 'utf8');
+        const doc = TextDocument.create(expandedFilepath, 'text', 1, content);
         addNewDocument(doc);
-        fs.closeSync(fs.openSync(validFilePath, 'r'));
+        fs.closeSync(fs.openSync(expandedFilepath, 'r'));
         return;
       } catch (e) {
-        log(`ERROR: Failed to create document from path ${validFilePath}: ${e}`);
+        log(`ERROR: Failed to create document from path ${expandedFilepath}: ${e}`);
         return null;
       }
     case "dir":
-      getFilesInWorkspace({workspace: validFilePath}).forEach((doc) => {
+      getFilesInWorkspace({workspace: expandedFilepath}).forEach((doc) => {
         addNewDocument(doc);
       });
       return;
