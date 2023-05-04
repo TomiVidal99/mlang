@@ -46,7 +46,7 @@ export function getAllFunctionReferences(uri?: string): IKeyword[] {
   const functions: IKeyword[] = documentData.flatMap((data) => {
     const isValidDocument = uri && uri === data.getURI();
     const references = data.getFunctionsReferencesNames(isValidDocument);
-    log("isValidDocument: "+ JSON.stringify(isValidDocument) + "\n\nreferences: " + JSON.stringify(references));
+    log("CurrentDoc: " + uri + ", data.getURI(): "+ data.getURI() + "\n\nreferences: " + JSON.stringify(references));
     return references;
   });
   return functions;
@@ -84,7 +84,7 @@ export class DocumentData {
    * Returns the documents uri, formatted with a prefix of 'path://'
    */
   public getURI(): string {
-    return this.document.uri;
+    return formatURI(this.document.uri);
   }
 
   /**
@@ -121,7 +121,7 @@ export class DocumentData {
 
   public getDiagnostics(): PublishDiagnosticsParams {
     return {
-      uri: formatURI(this.document.uri),
+      uri: this.getURI(),
       diagnostics: this.diagnostics
     };
   }

@@ -1,8 +1,8 @@
 import { CompletionItem, CompletionItemKind, MarkupKind, TextDocument, TextDocumentPositionParams, TextDocuments } from "vscode-languageserver";
 import { completionData } from "../data";
-import { log } from "console";
 import * as path from "path";
 import { getAllFunctionDefinitions, getPathFromURI } from "../utils";
+import { log } from "../server";
 
 interface IUpdateCompletionListProps {
   document: TextDocument;

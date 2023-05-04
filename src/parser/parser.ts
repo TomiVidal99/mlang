@@ -302,10 +302,7 @@ export class Parser {
    * TODO: think on how to add arguments and return values checking and completion.
    */
   getFunctionsReferences(): IFunctionReference[] {
-    const references: IFunctionReference[] = this.functionsReferences.map((reference) => {
-      return reference;
-    });
-    return references;
+    return this.functionsReferences;
   }
 
   /**
