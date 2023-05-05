@@ -2,7 +2,7 @@ import { DidChangeConfigurationNotification, InitializeParams, InitializeResult,
 import { getFilesInWorkspace} from "../managers";
 import { URI } from "vscode-uri";
 import { addDocumentsFromPath, log } from "../server";
-import { addNewDocument, debounce } from "../utils";
+import { addNewDocument } from "../utils";
 import { globalSettings } from "../data";
 
 export let hasConfigurationCapability = false;

@@ -337,13 +337,7 @@ export class Parser {
    * Returns all the functions defintions for the current document
    */
   public getFunctionsDefinitions(): IFunctionDefinition[] {
-    const definitions = this.functionsDefinitions.map((fn) => {
-      if (!fn?.end) {
-        return;
-      }
-      return fn;
-    });
-    return definitions;
+    return this.functionsDefinitions.filter((def) => def.end);
   }
 
   public getDiagnostics(): Diagnostic[] {

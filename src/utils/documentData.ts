@@ -31,10 +31,11 @@ export function updateDocumentData(document: TextDocument): void {
   }
 }
 
-export function getAllFunctionDefinitions(uri?: string): IKeyword[] {
-  const functions: IKeyword[] = documentData.flatMap((data) =>
-    data.getFunctionsDefinitionsNames(uri && uri === data.getURI())
-  );
+export function getAllFunctionDefinitions(uri: string): IKeyword[] {
+  const functions: IKeyword[] = documentData.flatMap((data) => {
+    // log("data: " + JSON.stringify(data.getURI()) + "\n\n uri: " + JSON.stringify(uri));
+    return data.getFunctionsDefinitions(uri === data.getURI());
+  });
   return functions;
 }
 
@@ -42,11 +43,11 @@ export function getAllFunctionDefinitions(uri?: string): IKeyword[] {
  * Returns all functions references
  * if given a uri, only returns the valid references for that uri.
  */
-export function getAllFunctionReferences(uri?: string): IKeyword[] {
+export function getAllFunctionReferences(uri: string): IKeyword[] {
   const functions: IKeyword[] = documentData.flatMap((data) => {
     const isValidDocument = uri && uri === data.getURI();
-    const references = data.getFunctionsReferencesNames(isValidDocument);
-    log("CurrentDoc: " + uri + ", data.getURI(): "+ data.getURI() + "\n\nreferences: " + JSON.stringify(references));
+    const references = data.getFunctionsReferences(isValidDocument);
+    // log("CurrentDoc: " + uri + ", data.getURI(): "+ data.getURI() + "\n\nreferences: " + JSON.stringify(references));
     return references;
   });
   return functions;
@@ -76,8 +77,8 @@ export class DocumentData {
     // TODO: get the other data
     const parser = new Parser(this.document);
     this.functionsDefinitions = parser.getFunctionsDefinitions();
-    this.functionsReferences = parser.getFunctionsReferences();
-    this.updateDiagnostics(parser.getDiagnostics());
+    // this.functionsReferences = parser.getFunctionsReferences();
+    // this.updateDiagnostics(parser.getDiagnostics());
   }
 
   /**
@@ -97,19 +98,31 @@ export class DocumentData {
   /**
    * Returns the functions references of the current document
    */
-  public getFunctionsReferencesNames(currentDoc: boolean): IKeyword[] {
-    log("URI: " + JSON.stringify(this.getURI()));
+  public getFunctionsReferences(currentDoc?: boolean): IKeyword[] {
+    // log("URI: " + JSON.stringify(this.getURI()));
     if (currentDoc) {
       return this.functionsReferences.map((fn) => parseToIKeyword(fn, this.getURI()));
     }
     return this.functionsReferences.filter((fn) => fn.depth === 0).map((fn) => parseToIKeyword(fn, this.getURI()));
   }
 
-  public getFunctionsDefinitionsNames(currentDoc: boolean): IKeyword[] {
+  /**
+   * Returns the definitions based on weather the definitions are
+   * local for the current file or the depth it's file level.
+   */
+  public getFunctionsDefinitions(currentDoc?: boolean): IKeyword[] {
     if (currentDoc) {
       return this.functionsDefinitions.map((fn) => parseToIKeyword(fn, this.getURI()));
     }
-    return this.functionsDefinitions.filter((fn) => fn.depth === 0).map((fn) => parseToIKeyword(fn, this.getURI()));
+    const myFunc = this.functionsDefinitions.filter((fn) => {
+      if (fn.depth === 0) {
+        log("myFunc: " + JSON.stringify(myFunc));
+        return true;
+      } else {
+        return false;
+      }
+    }).map((fn) => parseToIKeyword(fn, this.getURI()));
+    return myFunc;
   }
 
   /**

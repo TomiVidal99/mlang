@@ -44,9 +44,9 @@ documents.onDidClose((e) => {
 documents.onDidChangeContent((change) => {
   // validateTextDocument(change.document, hasConfigurationCapability, connection); // detects al CAPS
   // updateCompletionList({document: change.document});
-  updateDocumentData(change.document);
+  // updateDocumentData(change.document); // TODO: this cases infinite duplicates of references and definitions
 });
-connection.onCompletion((params) => handleOnCompletion({documentPosition: params, documents}));
+connection.onCompletion((params) => handleOnCompletion({params: params, documents}));
 
 // Make the text document manager listen on the connection
 // for open, change and close text document events

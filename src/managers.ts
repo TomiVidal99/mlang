@@ -49,7 +49,7 @@ export function updateFunctionList({
     readDocuments.push(doc.uri);
     functions.forEach((func) => {
       // TODO: check if a function defined as a script in a file matches other definitions
-      // (if both file and functin referece have to same name only show one of them)
+      // (if both file and function reference have to same name only show one of them)
       const localDiagnostics = checkIfFunctionAlreadyExists({
         currentFunction: func,
         functionsInDoc: currentDocFunctionsMap,

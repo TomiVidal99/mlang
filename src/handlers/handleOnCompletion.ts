@@ -1,8 +1,8 @@
-import { CompletionItem, CompletionItemKind, MarkupKind, TextDocument, TextDocumentPositionParams, TextDocuments } from "vscode-languageserver";
-import { completionData } from "../data";
+import { CompletionItem, CompletionItemKind, MarkupKind, TextDocumentPositionParams, TextDocuments } from "vscode-languageserver";
 import * as path from "path";
 import { getAllFunctionDefinitions, getPathFromURI } from "../utils";
 import { log } from "../server";
+import { TextDocument } from "vscode-languageserver-textdocument";
 
 interface IUpdateCompletionListProps {
   document: TextDocument;
@@ -13,15 +13,15 @@ export function updateCompletionList({document}: IUpdateCompletionListProps) {
   // updateFunctionList({documents: [document]});
 }
 
-export function handleOnCompletion({documentPosition, documents}: {documentPosition: TextDocumentPositionParams, documents: TextDocuments<TextDocument>}): CompletionItem[] {
-  return [...completionData, ...getFunctionsFromFunctionsMap(), ...getDocumentsToBeExacutable({documents, currentDocument: documentPosition.textDocument.uri})];
+export function handleOnCompletion({params, documents}: {params: TextDocumentPositionParams, documents: TextDocuments<TextDocument>}): CompletionItem[] {
+  return [...getCompletionFunctions({uri: params.textDocument.uri})];
+  // return [...completionData, ...getFunctionsFromFunctionsMap(), ...getDocumentsToBeExecutable({documents, currentDocument: documentPosition.textDocument.uri})];
 }
 
-function getFunctionsFromFunctionsMap(): CompletionItem[] {
+function getCompletionFunctions({uri}: {uri: string}): CompletionItem[] {
   // TODO: fix this to use map
-  const functionsReferences: CompletionItem[] = [];
-  getAllFunctionDefinitions().forEach((val) => {
-    log("test");
+  const completionFuncs: CompletionItem[] = [];
+  getAllFunctionDefinitions(uri).forEach((val) => {
     const newCompletionItem: CompletionItem = {
       label: val.name,
       kind: CompletionItemKind.Function,
@@ -30,15 +30,16 @@ function getFunctionsFromFunctionsMap(): CompletionItem[] {
         value: 'from "' + val.uri + '"',
       },
     };
-    functionsReferences.push(newCompletionItem);
+    completionFuncs.push(newCompletionItem);
   });
-  return functionsReferences;
+  return completionFuncs;
 }
 
-function getDocumentsToBeExacutable({documents, currentDocument}:{documents: TextDocuments<TextDocument>, currentDocument: string}): CompletionItem[] {
+function getDocumentsToBeExecutable({documents, currentDocument}:{documents: TextDocuments<TextDocument>, currentDocument: string}): CompletionItem[] {
   // TODO: fix this to use map
   const documentsReferences: CompletionItem[] = [];
   documents.all().forEach((doc) => {
+    log("currentDocument: " + currentDocument + ", doc.uri: " + doc.uri);
     if (currentDocument === doc.uri) return;
     const newCompletionItem: CompletionItem = {
       label: path.basename(getPathFromURI(doc.uri), ".m"),
