@@ -32,7 +32,10 @@ export async function handleOnDefinition({ params, documents }: IProps ): Promis
     if (func.name === word) {
       // log("func.uri: " + func.uri + "\n\nformatted: " + formatURI(func.uri));
       const loc: Location = {
-        range: func.range,
+        range: {
+          start: func.start,
+          end: func.end,
+        },
         uri: func.uri
       };
       locations.push(loc);

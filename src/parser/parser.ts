@@ -1,10 +1,15 @@
 import { Range, Position, Diagnostic, DiagnosticSeverity } from "vscode-languageserver";
 import { GRAMMAR, IToken, TokenNameType } from "./grammar";
 import { parseMultipleMatchValues } from "../utils";
-import { addDocumentsFromPath } from "../server";
+import { addDocumentsFromPath, log } from "../server";
 import { TextDocument } from "vscode-languageserver-textdocument";
 
+const commentPattern = /^\s*(?!%(?:{|})|#(?:{|}))[#%%].*/;
+
+// TODO: think better how should the end keyword and such close the opened definitions/statements
+
 export interface IFunctionDefinition {
+  uri?: string;
   start: Position;
   end?: Position;
   type: TokenNameType;
@@ -12,6 +17,7 @@ export interface IFunctionDefinition {
   arguments?: string[];
   output?: string[];
   depth: number; // this indicates weather the function it's defined within another function
+  description: string[];
 }
 
 export interface IFunctionReference {
@@ -36,27 +42,72 @@ export interface IVariableReference {
   name: string;
 }
 
+export interface ICommentBlock {
+  start: Position;
+  end?: Position;
+}
+
+// TODO: maybe just use an array of lines?
+export interface IErrorLines {
+  lineNumber: number;
+}
+
 export class Parser {
-  // private uri: string;
   private text: string;
   private functionsDefinitions: IFunctionDefinition[];
   private functionsReferences: IFunctionReference[];
+  private potentialErrorLines: IErrorLines[];
   // private variablesDefinitions: IVariableDefinition[];
   // private variablesReferences: IVariableReference[];
+  private commentBlocks: ICommentBlock[];
   private diagnostics: Diagnostic[];
   private lines: string[];
 
   public constructor(document: TextDocument) {
     this.text = document.getText();
     this.lines = this.text.split("\n");
-    // this.uri = document.uri;
     this.functionsDefinitions = [];
     this.functionsReferences = [];
+    this.commentBlocks = [];
+    this.potentialErrorLines = [];
     // this.variablesDefinitions = [];
     // this.variablesReferences = [];
     this.diagnostics = [];
 
     this.tokenizeText();
+  }
+
+  private visitCommentBlock({match, lineNumber, start}: {match: RegExpMatchArray, lineNumber: number, start: boolean}): void {
+    // starts the creation of a block
+    if (start) {
+      const block: ICommentBlock = {
+        start: Position.create(lineNumber, 0),
+      };
+      this.commentBlocks.push(block);
+      return;
+    }
+
+    // error if closing never opened block
+    if (this.commentBlocks.length === 0) {
+      const diagnostic: Diagnostic = {
+        range: {
+          start: Position.create(lineNumber, 0),
+          end: Position.create(lineNumber, 0),
+        },
+        message: "TypeError: need to open a comment block before closing it",
+        severity: DiagnosticSeverity.Error,
+      };
+      this.diagnostics.push(diagnostic);
+      return;
+    }
+
+    // close the block
+    this.commentBlocks.forEach((block) => {
+      if (!block.end) {
+        block.end = Position.create(lineNumber, 0);
+        return;
+      }
+    });
   }
 
   private visitFunctionDefinition({
@@ -77,16 +128,30 @@ export class Parser {
       start: Position.create(
         lineNumber,
         match.index +
-        match[0].indexOf(match.groups?.name)
+          match[0].indexOf(match.groups?.name)
       ),
       type: token.name,
       arguments: parseMultipleMatchValues(match.groups?.args),
       output: parseMultipleMatchValues(match.groups?.retval),
       name: match.groups?.name,
-      depth: this.helperGetFunctionDefinitionDepth({ lineNumber })
+      depth: this.helperGetFunctionDefinitionDepth({ lineNumber }),
+      description: this.helperGetFunctionDefinitionDescription({lineNumber: lineNumber}),
     };
 
     this.functionsDefinitions.push(functionDefinition);
+  }
+
+  /**
+   * Returns the commented lines after the function definition
+   */
+  helperGetFunctionDefinitionDescription({lineNumber}: {lineNumber: number}): string[] {
+    const lines: string[] = [this.lines[lineNumber]];
+    let currentLine = lineNumber+1;
+    while (this.lines.length > currentLine && commentPattern.test(this.lines[currentLine])) {
+      lines.push(this.lines[currentLine]);
+      currentLine++;
+    }
+    return lines;
   }
 
   private closeFunctionDefintion({ lineNumber }: { lineNumber: number }): void {
@@ -122,7 +187,8 @@ export class Parser {
       name: match[1],
       type: token.name,
       arguments: parseMultipleMatchValues(match.groups?.retval),
-      depth: this.helperGetFunctionDefinitionDepth({ lineNumber })
+      depth: this.helperGetFunctionDefinitionDepth({ lineNumber }),
+      description: this.helperGetFunctionDefinitionDescription({lineNumber: lineNumber}),
     };
     this.functionsDefinitions.push(functionDefinition);
   }
@@ -138,7 +204,7 @@ export class Parser {
     }
     let foundDepthFlag = false;
     this.functionsDefinitions.forEach((func) => {
-      if (func.end && func.end.line > lineNumber) {
+      if (!func.end || func.end.line > lineNumber) {
         foundDepthFlag = true;
         return func.depth + 1;
       }
@@ -177,8 +243,12 @@ export class Parser {
    * that does not have it's corresponding closing keyword
    */
   checkClosingBlocks(): void {
-    const funcDef = this.functionsDefinitions.some((def) => !def.end);
-    if (funcDef) {
+    this.sendDiagnositcError(this.functionsDefinitions.some((def) => !def.end), "missing closing keyword");
+    this.sendDiagnositcError(this.commentBlocks.some((block) => !block.end), "missing closing comment block '%} or #}'");
+  }
+
+  private sendDiagnositcError(condition: boolean, message: string): void {
+    if (condition) {
       const endline = this.lines.length;
       const diagnostic: Diagnostic = {
         severity: DiagnosticSeverity.Error,
@@ -186,7 +256,7 @@ export class Parser {
           start: Position.create(endline, 0),
           end: Position.create(endline, 0)
         },
-        message: "missing closing keyword",
+        message,
         source: "mlang",
       };
       this.diagnostics.push(diagnostic);
@@ -198,7 +268,7 @@ export class Parser {
     for (let lineNumber = 1; lineNumber < lines.length + 1; lineNumber++) {
       const line = lines[lineNumber - 1];
       // ignore comments # or %
-      if (/^\s*[%#].*/.test(line)) continue;
+      if (commentPattern.test(line)) continue;
       for (
         let grammarIndex = 0;
         grammarIndex < GRAMMAR.length;
@@ -206,10 +276,14 @@ export class Parser {
       ) {
         const token = GRAMMAR[grammarIndex];
         const match = line.match(token.pattern);
-        if (!match) continue;
+        if (!match) {
+          // this.potentialErrorLines.push({lineNumber: lineNumber-1});
+          continue;
+        }
         this.consoleOutputWarning({ line, match, lineNumber: lineNumber - 1, token });
         switch (token.name) {
-          case "FUNCTION_DEFINITION_WITH_OUTPUT":
+          case "FUNCTION_DEFINITION_WITH_SINGLE_OUTPUT":
+          case "FUNCTION_DEFINITION_WITH_MULTIPLE_OUTPUT":
           case "FUNCTION_DEFINITION_WITHOUT_OUTPUT":
             this.visitFunctionDefinition({
               match,
@@ -226,9 +300,6 @@ export class Parser {
               line,
             });
             break;
-          case "END_FUNCTION":
-            this.closeFunctionDefintion({ lineNumber });
-            break;
           case "FUNCTION_REFERENCE_WITHOUT_OUTPUT":
           case "FUNCTION_REFERENCE_WITH_MULTIPLE_OUTPUTS":
           case "FUNCTION_REFERENCE_WITH_SINGLE_OUTPUT":
@@ -239,19 +310,66 @@ export class Parser {
             });
             break;
 
-          case "WHILE_LOOP_START":
-          case "WHILE_LOOP_END":
-          case "FOR_LOOP_START":
-          case "FOR_LOOP_END":
+          case "COMMON_KEYWORDS":
+          case "DO_STATEMENT":
+          case "UNTIL_STATEMENT":
+          case "IF_STATEMENT_START":
+          case "ELSE_STATEMENT":
+          case "ELSE_IF_STATEMENT":
+          case "WHILE_STATEMENT_START":
+          case "FOR_STATEMENT_START":
           case "VARIABLE_REFERENCE":
           case "VARIABLE_DECLARATION":
             break;
+
+          case "END":
+            this.closeFunctionDefintion({ lineNumber });
+            break;
+
+          case "COMMENT_BLOCK_START":
+            this.visitCommentBlock({match, lineNumber: lineNumber-1, start: true});
+            break;
+          case "COMMENT_BLOCK_END":
+            this.visitCommentBlock({match, lineNumber: lineNumber-1, start: false});
+            break;
+
+          default:
+          // case "ANY":
+            // this should be the last item in the list
+            // if execute it should warn that the current line did not match any token
+            // thus conclude that the line has an error
+            // TODO: maybe i dont need this?
+            // this.potentialErrorLines.push({lineNumber: lineNumber-1});
+          break;
         }
       }
     }
 
     this.checkClosingBlocks();
+    // this.cleanUpPotentialErrorLines();
+    // log(JSON.stringify(this.commentBlocks));
 
+  }
+
+  // Removes the lines that are commented
+  private cleanUpPotentialErrorLines(): void {
+    this.potentialErrorLines.forEach((line) => {
+      this.commentBlocks.forEach((block) => {
+        if (block.end && block.start.line < line.lineNumber && block.end.line > line.lineNumber) {
+          return;
+        }
+      });
+      const diagnostic: Diagnostic = {
+        severity: DiagnosticSeverity.Error,
+        range: {
+          start: Position.create(line.lineNumber, 1),
+          end: Position.create(line.lineNumber, 1)
+        },
+        message: "syntax error?",
+        source: "mlang",
+      };
+      this.diagnostics.push(diagnostic);
+    });
   }
 
   /**

@@ -6,7 +6,7 @@ import { TextDocument } from "vscode-languageserver-textdocument";
 import { log} from "./server";
 import * as fs from "fs";
 import * as path from "path";
-import { IKeyword, getFunctionDefinitions } from "./utils";
+import { IKeyword, formatURI, getFunctionDefinitions } from "./utils";
 import {
   Diagnostic,
   DiagnosticSeverity,
@@ -27,7 +27,7 @@ export function getFilesInWorkspace({
   // log(`name: ${workspace}`);
   const documents = files.map((file) => {
     // log(`file (${i}): ${file}`);
-    const uri = path.resolve(file);
+    const uri = formatURI(path.resolve(file));
     const content = fs.readFileSync(file, "utf-8");
     const document = TextDocument.create(uri, "octave", 1, content);
     return document;

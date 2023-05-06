@@ -8,3 +8,4 @@ export * from "./getRangeFrom2Points";
 export * from "./parseMultipleMatchValues";
 export * from "./getPathType";
 export * from "./parseToIKeyword";
+export * from "./getFunctionReferenceMessage";

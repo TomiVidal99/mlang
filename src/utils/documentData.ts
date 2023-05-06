@@ -6,7 +6,6 @@ import { getPathFromURI } from "./getPathFromURI";
 import { connection, documentData, log } from "../server";
 import { IFunctionDefinition, IFunctionReference, Parser } from "../parser";
 import { Diagnostic, PublishDiagnosticsParams } from "vscode-languageserver";
-import { formatURI } from "./formatURI";
 import { parseToIKeyword } from "./parseToIKeyword";
 
 export function addNewDocument(document: TextDocument): void {
@@ -17,26 +16,31 @@ export function addNewDocument(document: TextDocument): void {
 
 export function updateDocumentData(document: TextDocument): void {
   let foundFlag = false;
-  const doc = TextDocument.create(getPathFromURI(document.uri), document.languageId, document.version, document.getText());
+  // const doc = TextDocument.create(document.uri, document.languageId, document.version, document.getText());
   documentData.forEach((data) => {
-    if (data.getURI() === doc.uri) {
+    if (data.getURI() === document.uri) {
       foundFlag = true;
-      data.setDocument(doc);
+      data.setDocument(document);
       data.updateDocumentData();
       connection.sendDiagnostics(data.getDiagnostics());
     }
   });
   if (!foundFlag) {
-    addNewDocument(doc);
+    addNewDocument(document);
   }
 }
 
-export function getAllFunctionDefinitions(uri: string): IKeyword[] {
-  const functions: IKeyword[] = documentData.flatMap((data) => {
-    // log("data: " + JSON.stringify(data.getURI()) + "\n\n uri: " + JSON.stringify(uri));
-    return data.getFunctionsDefinitions(uri === data.getURI());
+export function getAllFunctionDefinitions(uri: string): IFunctionDefinition[] {
+  const d = documentData.flatMap((data) => { 
+    return data.getFunctionsDefinitions(uri === data.getURI()).map((def) => {
+      return {
+        ...def,
+        uri: data.getURI(),
+      };
+    });
   });
-  return functions;
+  // log("d: " + JSON.stringify(d));
+  return d;
 }
 
 /**
@@ -44,13 +48,7 @@ export function getAllFunctionDefinitions(uri: string): IKeyword[] {
  * if given a uri, only returns the valid references for that uri.
  */
 export function getAllFunctionReferences(uri: string): IKeyword[] {
-  const functions: IKeyword[] = documentData.flatMap((data) => {
-    const isValidDocument = uri && uri === data.getURI();
-    const references = data.getFunctionsReferences(isValidDocument);
-    // log("CurrentDoc: " + uri + ", data.getURI(): "+ data.getURI() + "\n\nreferences: " + JSON.stringify(references));
-    return references;
-  });
-  return functions;
+  return documentData.flatMap((data) => data.getFunctionsReferences(uri && uri === data.getURI()));
 }
 
 export class DocumentData {
@@ -77,15 +75,15 @@ export class DocumentData {
     // TODO: get the other data
     const parser = new Parser(this.document);
     this.functionsDefinitions = parser.getFunctionsDefinitions();
-    // this.functionsReferences = parser.getFunctionsReferences();
-    // this.updateDiagnostics(parser.getDiagnostics());
+    this.functionsReferences = parser.getFunctionsReferences();
+    this.updateDiagnostics(parser.getDiagnostics());
   }
 
   /**
    * Returns the documents uri, formatted with a prefix of 'path://'
    */
   public getURI(): string {
-    return formatURI(this.document.uri);
+    return this.document.uri;
   }
 
   /**
@@ -110,19 +108,11 @@ export class DocumentData {
    * Returns the definitions based on weather the definitions are
    * local for the current file or the depth it's file level.
    */
-  public getFunctionsDefinitions(currentDoc?: boolean): IKeyword[] {
+  public getFunctionsDefinitions(currentDoc?: boolean): IFunctionDefinition[] {
     if (currentDoc) {
-      return this.functionsDefinitions.map((fn) => parseToIKeyword(fn, this.getURI()));
-    }
-    const myFunc = this.functionsDefinitions.filter((fn) => {
-      if (fn.depth === 0) {
-        log("myFunc: " + JSON.stringify(myFunc));
-        return true;
-      } else {
-        return false;
-      }
-    }).map((fn) => parseToIKeyword(fn, this.getURI()));
-    return myFunc;
+      return this.functionsDefinitions;
+    } 
+    return this.functionsDefinitions.filter((fn) => fn.depth === 0);
   }
 
   /**

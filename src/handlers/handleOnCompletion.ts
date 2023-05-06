@@ -1,8 +1,8 @@
 import { CompletionItem, CompletionItemKind, MarkupKind, TextDocumentPositionParams, TextDocuments } from "vscode-languageserver";
 import * as path from "path";
-import { getAllFunctionDefinitions, getPathFromURI } from "../utils";
+import { getAllFunctionDefinitions, getFunctionReferenceMessage, getPathFromURI } from "../utils";
 import { log } from "../server";
-import { TextDocument } from "vscode-languageserver-textdocument";
+import { Position, TextDocument } from "vscode-languageserver-textdocument";
 
 interface IUpdateCompletionListProps {
   document: TextDocument;
@@ -14,20 +14,22 @@ export function updateCompletionList({document}: IUpdateCompletionListProps) {
 }
 
 export function handleOnCompletion({params, documents}: {params: TextDocumentPositionParams, documents: TextDocuments<TextDocument>}): CompletionItem[] {
-  return [...getCompletionFunctions({uri: params.textDocument.uri})];
+  return [...getCompletionFunctions({uri: params.textDocument.uri, position: params.position})];
   // return [...completionData, ...getFunctionsFromFunctionsMap(), ...getDocumentsToBeExecutable({documents, currentDocument: documentPosition.textDocument.uri})];
 }
 
-function getCompletionFunctions({uri}: {uri: string}): CompletionItem[] {
+function getCompletionFunctions({uri, position}: {uri: string, position: Position}): CompletionItem[] {
+  // TODO: have in count the current position to import in the right context
   // TODO: fix this to use map
   const completionFuncs: CompletionItem[] = [];
-  getAllFunctionDefinitions(uri).forEach((val) => {
+  getAllFunctionDefinitions(uri).forEach((funcDef) => {
     const newCompletionItem: CompletionItem = {
-      label: val.name,
+      label: funcDef.name,
       kind: CompletionItemKind.Function,
       documentation: {
         kind: MarkupKind.Markdown,
-        value: 'from "' + val.uri + '"',
+        // value: 'from "' + val.uri + '"',
+        value: getFunctionReferenceMessage(funcDef),
       },
     };
     completionFuncs.push(newCompletionItem);

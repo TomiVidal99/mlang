@@ -10,7 +10,7 @@ import * as os from "os";
 import { TextDocument } from "vscode-languageserver-textdocument";
 import { ISettings } from "./data";
 import { handleOnCompletion, handleOnDefinition, handleOnDidChangeConfiguration, handleOnInitialize, handleOnInitialized, handleOnReference } from "./handlers";
-import { DocumentData, addNewDocument, getPathType, updateDocumentData  } from "./utils";
+import { DocumentData, addNewDocument, formatURI, getPathType, updateDocumentData  } from "./utils";
 import { getFilesInWorkspace } from "./managers";
 
 export const connection = createConnection(ProposedFeatures.all);
@@ -44,7 +44,7 @@ documents.onDidClose((e) => {
 documents.onDidChangeContent((change) => {
   // validateTextDocument(change.document, hasConfigurationCapability, connection); // detects al CAPS
   // updateCompletionList({document: change.document});
-  // updateDocumentData(change.document); // TODO: this cases infinite duplicates of references and definitions
+  updateDocumentData(change.document); // TODO: this cases infinite duplicates of references and definitions
 });
 connection.onCompletion((params) => handleOnCompletion({params: params, documents}));
 
@@ -63,7 +63,7 @@ export function addDocumentsFromPath(filepath: string | null): TextDocument | nu
     case "file":
       try {
         const content = fs.readFileSync(expandedFilepath, 'utf8');
-        const doc = TextDocument.create(expandedFilepath, 'text', 1, content);
+        const doc = TextDocument.create(formatURI(expandedFilepath), 'octave', 1, content);
         addNewDocument(doc);
         fs.closeSync(fs.openSync(expandedFilepath, 'r'));
         return;
