@@ -62,5 +62,8 @@ end
 Clone the repository and install the node dependencies with ```$ yarn```. Then modify the files in the _"src"_ folder. After you should be able to compile the server with ```$ yarn compile```
 Also consider running ```$ yarn watch``` to compile after every change you make.
 
+### *Reference* or *Keyword* not found
+If a reference or a keyword it's not found and it should because it's defined by default by the language you simply add it in _'./src/data/completionData.ts'_ if it's a **function**, if it's a **keyword** _'./src/parser/grammar.ts'_ in `COMMON_GRAMMAR`
+
 ## Contributors
 - [Tomás Vidal](https://github.com/TomiVidal99)
