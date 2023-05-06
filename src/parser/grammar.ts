@@ -1,8 +1,18 @@
 // IMPORTANT: the regex that have groups that returns values should be named like so:
 // (?<GROUP_NAME>mypattern)
 
+import { completionData } from "../data";
+
 // TODO: arguments need to change to consider default values
 // TODO: add end keyword for other methods, else it messes up the other definitions
+
+const COMMON_KEYWORDS = [
+  "break",
+  "continue",
+  "return",
+  "exit",
+  ...completionData.map((data) => data.label)
+];
 
 export interface IToken {
   name: TokenNameType;
@@ -10,7 +20,8 @@ export interface IToken {
 }
 
 export type TokenNameType =
-  // | "ANY"
+  | "ANY"
+  | "FILE_REFERENCE"
   | "END"
   | "COMMON_KEYWORDS"
   | "COMMENT_BLOCK_START"
@@ -36,41 +47,41 @@ export const GRAMMAR: IToken[] = [
   {
     name: "FUNCTION_DEFINITION_WITH_MULTIPLE_OUTPUT",
     pattern:
-      /function\s+(?:\[\s*(?<retval>[\w\s,]*)\s*\])\s*=\s*(?<name>\w+)\s*\((?<args>[^)]*)\)/,
+      /function\s+(?:\[\s*(?<retval>[\w\s,]*)\s*\])\s*=\s*(?<name>\w+)\s*\((?<args>.*?)\)/,
   },
   {
     name: "FUNCTION_DEFINITION_WITH_SINGLE_OUTPUT",
     pattern:
-      /function\s+(?<retval>\w+)\s*=\s*(?<name>\w+)\s*\((?<args>[^)]*)\)/,
+      /function\s+(?<retval>\w+)\s*=\s*(?<name>\w+)\s*\((?<args>.*?)\)/,
   },
   {
     name: "FUNCTION_DEFINITION_WITHOUT_OUTPUT",
-    pattern: /^\s*function\s+(?<name>\w+)\s*\((?<args>[^)]*)\)/,
+    pattern: /^\s*function\s+(?<name>\w+)\s*\((?<args>.*?)\)/,
   },
   {
     name: "FUNCTION_REFERENCE_WITHOUT_OUTPUT",
-    pattern: /^\s*(?<name>\w+)\((?<args>[^)]*)\)(?:\s*;|\s*$)/,
+    pattern: /^\s*(?<name>\w+)\((?<args>.*?)\)(?:\s*;|\s*$)/,
   },
   {
     name: "FUNCTION_REFERENCE_WITH_SINGLE_OUTPUT",
-    pattern: /^\s*(?<retval>\w+)\s*=\s*(?<name>\w+)\((?<args>[^)]*)\)\s*;?\s*$/,
+    pattern: /^\s*(?<retval>\w+)\s*=\s*(?<name>\w+)\((?<args>.*?)\)\s*;?\s*$/,
   },
   {
     name: "FUNCTION_REFERENCE_WITH_MULTIPLE_OUTPUTS",
-    pattern: /^\s*\[\s*(?<retval>[^\]]+)\s*\]\s*=\s*(?<name>\w+)\((?<args>[^)]*)\)(?:\s*;|\s*$)/,
+    pattern: /^\s*\[\s*(?<retval>[^\]]+)\s*\]\s*=\s*(?<name>\w+)\((?<args>.*?)\)(?:\s*;|\s*$)/,
   },
   {
     name: "ANONYMOUS_FUNCTION",
-    pattern: /(?<name>\w+)\s*=\s*@\((?<args>[^\\)]*)\)/,
+    pattern: /(?<name>\w+)\s*=\s*@\((?<args>.*?)\)/,
   },
-  {
-    name: "VARIABLE_DECLARATION",
-    pattern: /(\w+)\s*=\s*(.*)/,
-  },
-  {
-    name: "VARIABLE_REFERENCE",
-    pattern: /(?<!\w)(?!if|while|for|switch)(?!.*\s=\s)(\w+)(?!\()/,
-  },
+  // {
+  //   name: "VARIABLE_DECLARATION",
+  //   pattern: /(\w+)\s*=\s*(.*)/,
+  // },
+  // {
+  //   name: "VARIABLE_REFERENCE",
+  //   pattern: /(?<!\w)(?!if|while|for|switch)(?!.*\s=\s)(\w+)(?!\()/,
+  // },
   {
     name: "FOR_STATEMENT_START",
     pattern: /^\s*(for).*/,
@@ -97,7 +108,7 @@ export const GRAMMAR: IToken[] = [
   },
   {
     name: "COMMON_KEYWORDS",
-    pattern: /^\s*(break|continue)\b\s*;?\s*$/,
+    pattern: new RegExp(`^\\s*(${COMMON_KEYWORDS.join("|")})\\b\\s*;?\\s*`),
   },
   {
     name: "COMMENT_BLOCK_START",
@@ -107,8 +118,12 @@ export const GRAMMAR: IToken[] = [
     name: "COMMENT_BLOCK_END",
     pattern: /^\s*(break|continue)\b\s*;?\s*$/,
   },
-  // {
-  //   name: "ANY",
-  //   pattern: /.*/,
-  // },
+  {
+    name: "FILE_REFERENCE",
+    pattern: /^\s*(?<name>[a-zA-Z_]+)\s*(?:;|\(\)|\(\);)?\s*$/,
+  },
+  {
+    name: "ANY",
+    pattern: /\S+/,
+  },
 ];

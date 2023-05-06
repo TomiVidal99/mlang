@@ -1,12 +1,11 @@
 import { TextDocument } from "vscode-languageserver-textdocument";
-import {
-  IKeyword,
-} from "./getFunctionDefinitions";
+import { IKeyword } from "./getFunctionDefinitions";
 import { getPathFromURI } from "./getPathFromURI";
-import { connection, documentData, log } from "../server";
+import { documentData } from "../server";
 import { IFunctionDefinition, IFunctionReference, Parser } from "../parser";
 import { Diagnostic, PublishDiagnosticsParams } from "vscode-languageserver";
 import { parseToIKeyword } from "./parseToIKeyword";
+import * as path from "path";
 
 export function addNewDocument(document: TextDocument): void {
   const data = new DocumentData(document);
@@ -22,7 +21,7 @@ export function updateDocumentData(document: TextDocument): void {
       foundFlag = true;
       data.setDocument(document);
       data.updateDocumentData();
-      connection.sendDiagnostics(data.getDiagnostics());
+      // connection.sendDiagnostics(data.getDiagnostics());
     }
   });
   if (!foundFlag) {
@@ -30,14 +29,20 @@ export function updateDocumentData(document: TextDocument): void {
   }
 }
 
-export function getAllFunctionDefinitions(uri: string): IFunctionDefinition[] {
-  const d = documentData.flatMap((data) => { 
-    return data.getFunctionsDefinitions(uri === data.getURI()).map((def) => {
-      return {
-        ...def,
-        uri: data.getURI(),
-      };
-    });
+export function getAllFunctionDefinitions(
+  uri: string,
+): IFunctionDefinition[] {
+  const d = documentData.flatMap((data) => {
+    return data
+      .getFunctionsDefinitions(
+        uri === data.getURI()
+      )
+      .map((def) => {
+        return {
+          ...def,
+          uri: data.getURI(),
+        };
+      });
   });
   // log("d: " + JSON.stringify(d));
   return d;
@@ -48,7 +53,9 @@ export function getAllFunctionDefinitions(uri: string): IFunctionDefinition[] {
  * if given a uri, only returns the valid references for that uri.
  */
 export function getAllFunctionReferences(uri: string): IKeyword[] {
-  return documentData.flatMap((data) => data.getFunctionsReferences(uri && uri === data.getURI()));
+  return documentData.flatMap((data) =>
+    data.getFunctionsReferences(uri && uri === data.getURI())
+  );
 }
 
 export class DocumentData {
@@ -56,6 +63,7 @@ export class DocumentData {
   private functionsReferences: IFunctionReference[];
   private document: TextDocument;
   private diagnostics: Diagnostic[];
+  private parser: Parser;
 
   constructor(document: TextDocument) {
     this.functionsDefinitions = [];
@@ -73,10 +81,10 @@ export class DocumentData {
    */
   public updateDocumentData(): void {
     // TODO: get the other data
-    const parser = new Parser(this.document);
-    this.functionsDefinitions = parser.getFunctionsDefinitions();
-    this.functionsReferences = parser.getFunctionsReferences();
-    this.updateDiagnostics(parser.getDiagnostics());
+    this.parser = new Parser(this.document);
+    this.functionsDefinitions = this.parser.getFunctionsDefinitions();
+    this.functionsReferences = this.parser.getFunctionsReferences();
+    this.updateDiagnostics(this.parser.getDiagnostics());
   }
 
   /**
@@ -99,9 +107,13 @@ export class DocumentData {
   public getFunctionsReferences(currentDoc?: boolean): IKeyword[] {
     // log("URI: " + JSON.stringify(this.getURI()));
     if (currentDoc) {
-      return this.functionsReferences.map((fn) => parseToIKeyword(fn, this.getURI()));
+      return this.functionsReferences.map((fn) =>
+        parseToIKeyword(fn, this.getURI())
+      );
     }
-    return this.functionsReferences.filter((fn) => fn.depth === 0).map((fn) => parseToIKeyword(fn, this.getURI()));
+    return this.functionsReferences
+      .filter((fn) => fn.depth === 0)
+      .map((fn) => parseToIKeyword(fn, this.getURI()));
   }
 
   /**
@@ -111,21 +123,45 @@ export class DocumentData {
   public getFunctionsDefinitions(currentDoc?: boolean): IFunctionDefinition[] {
     if (currentDoc) {
       return this.functionsDefinitions;
-    } 
+    }
     return this.functionsDefinitions.filter((fn) => fn.depth === 0);
   }
 
   /**
-  * Sends the updated diagnostics to the client.
-  */
-  public updateDiagnostics(diagnostics: Diagnostic[]): void {
+   * Sends the updated diagnostics to the client.
+   */
+  private updateDiagnostics(diagnostics: Diagnostic[]): void {
     this.diagnostics = diagnostics;
   }
 
-  public getDiagnostics(): PublishDiagnosticsParams {
+  public getDiagnostics({
+    allFilesInProject,
+    functionsDefinitions,
+  }: {
+    allFilesInProject: string[];
+    functionsDefinitions: string[];
+  }): PublishDiagnosticsParams {
     return {
       uri: this.getURI(),
-      diagnostics: this.diagnostics
+      diagnostics: [
+        ...this.diagnostics,
+        ...this.parser.validateReferences({
+          uris: allFilesInProject,
+          functionsDefinitions,
+          variablesDefinitions: [],
+        }),
+      ],
     };
+  }
+
+  /**
+   * Returns the content of the document splitted by '\n'
+   */
+  public getLines(): string[] {
+    return this.parser.getLines();
+  }
+
+  public getFileName(): string {
+    return path.basename(this.getDocumentPath(), ".m");
   }
 }

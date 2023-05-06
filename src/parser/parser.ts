@@ -1,12 +1,22 @@
-import { Range, Position, Diagnostic, DiagnosticSeverity } from "vscode-languageserver";
+import {
+  Range,
+  Position,
+  Diagnostic,
+  DiagnosticSeverity,
+} from "vscode-languageserver";
 import { GRAMMAR, IToken, TokenNameType } from "./grammar";
 import { parseMultipleMatchValues } from "../utils";
-import { addDocumentsFromPath, log } from "../server";
+import { addDocumentsFromPath, documentData, log } from "../server";
 import { TextDocument } from "vscode-languageserver-textdocument";
 
 const commentPattern = /^\s*(?!%(?:{|})|#(?:{|}))[#%%].*/;
 
 // TODO: think better how should the end keyword and such close the opened definitions/statements
+
+export interface IFileReference {
+  lineNumber: number;
+  name: string;
+}
 
 export interface IFunctionDefinition {
   uri?: string;
@@ -57,6 +67,7 @@ export class Parser {
   private functionsDefinitions: IFunctionDefinition[];
   private functionsReferences: IFunctionReference[];
   private potentialErrorLines: IErrorLines[];
+  private fileReferences: IFileReference[];
   // private variablesDefinitions: IVariableDefinition[];
   // private variablesReferences: IVariableReference[];
   private commentBlocks: ICommentBlock[];
@@ -70,6 +81,7 @@ export class Parser {
     this.functionsReferences = [];
     this.commentBlocks = [];
     this.potentialErrorLines = [];
+    this.fileReferences = [];
     // this.variablesDefinitions = [];
     // this.variablesReferences = [];
     this.diagnostics = [];
@@ -77,7 +89,15 @@ export class Parser {
     this.tokenizeText();
   }
 
-  private visitCommentBlock({match, lineNumber, start}: {match: RegExpMatchArray, lineNumber: number, start: boolean}): void {
+  private visitCommentBlock({
+    match,
+    lineNumber,
+    start,
+  }: {
+    match: RegExpMatchArray;
+    lineNumber: number;
+    start: boolean;
+  }): void {
     // starts the creation of a block
     if (start) {
       const block: ICommentBlock = {
@@ -121,21 +141,21 @@ export class Parser {
     token: IToken;
     lineNumber: number;
   }) {
-
     if (!this.diagnoseKeywordNaming({ line, match, lineNumber })) return;
 
     const functionDefinition: IFunctionDefinition = {
       start: Position.create(
         lineNumber,
-        match.index +
-          match[0].indexOf(match.groups?.name)
+        match.index + match[0].indexOf(match.groups?.name)
       ),
       type: token.name,
       arguments: parseMultipleMatchValues(match.groups?.args),
       output: parseMultipleMatchValues(match.groups?.retval),
       name: match.groups?.name,
       depth: this.helperGetFunctionDefinitionDepth({ lineNumber }),
-      description: this.helperGetFunctionDefinitionDescription({lineNumber: lineNumber}),
+      description: this.helperGetFunctionDefinitionDescription({
+        lineNumber: lineNumber,
+      }),
     };
 
     this.functionsDefinitions.push(functionDefinition);
@@ -144,10 +164,17 @@ export class Parser {
   /**
    * Returns the commented lines after the function definition
    */
-  helperGetFunctionDefinitionDescription({lineNumber}: {lineNumber: number}): string[] {
+  helperGetFunctionDefinitionDescription({
+    lineNumber,
+  }: {
+    lineNumber: number;
+  }): string[] {
     const lines: string[] = [this.lines[lineNumber]];
-    let currentLine = lineNumber+1;
-    while (this.lines.length > currentLine && commentPattern.test(this.lines[currentLine])) {
+    let currentLine = lineNumber + 1;
+    while (
+      this.lines.length > currentLine &&
+      commentPattern.test(this.lines[currentLine])
+    ) {
       lines.push(this.lines[currentLine]);
       currentLine++;
     }
@@ -162,9 +189,13 @@ export class Parser {
         return;
       }
     }
-    // TODO: should add diagnostics here
-    console.error(
-      `Error: No matching opening function definition for at line ${lineNumber}`
+    this.sendDiagnositcError(
+      true,
+      "closing never opened expression",
+      Range.create(
+        Position.create(lineNumber, 1),
+        Position.create(lineNumber, 1)
+      )
     );
   }
 
@@ -188,7 +219,9 @@ export class Parser {
       type: token.name,
       arguments: parseMultipleMatchValues(match.groups?.retval),
       depth: this.helperGetFunctionDefinitionDepth({ lineNumber }),
-      description: this.helperGetFunctionDefinitionDescription({lineNumber: lineNumber}),
+      description: this.helperGetFunctionDefinitionDescription({
+        lineNumber: lineNumber,
+      }),
     };
     this.functionsDefinitions.push(functionDefinition);
   }
@@ -197,7 +230,11 @@ export class Parser {
    * Returns the depth in a function definition of the current function definition.
    * If it's 0 then it means that the function it's defined at file level.
    */
-  private helperGetFunctionDefinitionDepth({ lineNumber }: { lineNumber: number }): number {
+  private helperGetFunctionDefinitionDepth({
+    lineNumber,
+  }: {
+    lineNumber: number;
+  }): number {
     if (this.functionsDefinitions.length === 0) {
       // case for a definition at file level
       return 0;
@@ -219,15 +256,23 @@ export class Parser {
    * Returns the depth in scope of a function reference
    * If it's 0 then it means that the function it's defined at file level.
    */
-  private helperGetFunctionReferenceDepth({ lineNumber}: { lineNumber: number}): number {
+  private helperGetFunctionReferenceDepth({
+    lineNumber,
+  }: {
+    lineNumber: number;
+  }): number {
     if (this.functionsDefinitions.length === 0) {
       // case for a definition at file level
       return 0;
     }
     let foundDepthFlag = false;
     for (let i = this.functionsDefinitions.length; i > 0; i--) {
-      const func = this.functionsDefinitions[i-1];
-      if (func.start.line < lineNumber && func.end && func.end.line > lineNumber) {
+      const func = this.functionsDefinitions[i - 1];
+      if (
+        func.start.line < lineNumber &&
+        func.end &&
+        func.end.line > lineNumber
+      ) {
         foundDepthFlag = true;
         return func.depth;
       }
@@ -243,19 +288,31 @@ export class Parser {
    * that does not have it's corresponding closing keyword
    */
   checkClosingBlocks(): void {
-    this.sendDiagnositcError(this.functionsDefinitions.some((def) => !def.end), "missing closing keyword");
-    this.sendDiagnositcError(this.commentBlocks.some((block) => !block.end), "missing closing comment block '%} or #}'");
+    this.sendDiagnositcError(
+      this.functionsDefinitions.some((def) => !def.end),
+      "missing closing keyword"
+    );
+    this.sendDiagnositcError(
+      this.commentBlocks.some((block) => !block.end),
+      "missing closing comment block '%} or #}'"
+    );
   }
 
-  private sendDiagnositcError(condition: boolean, message: string): void {
+  private sendDiagnositcError(
+    condition: boolean,
+    message: string,
+    range?: Range
+  ): void {
     if (condition) {
       const endline = this.lines.length;
       const diagnostic: Diagnostic = {
         severity: DiagnosticSeverity.Error,
-        range: {
-          start: Position.create(endline, 0),
-          end: Position.create(endline, 0)
-        },
+        range: range
+          ? range
+          : {
+            start: Position.create(endline, 0),
+            end: Position.create(endline, 0),
+          },
         message,
         source: "mlang",
       };
@@ -280,7 +337,12 @@ export class Parser {
           // this.potentialErrorLines.push({lineNumber: lineNumber-1});
           continue;
         }
-        this.consoleOutputWarning({ line, match, lineNumber: lineNumber - 1, token });
+        this.consoleOutputWarning({
+          line,
+          match,
+          lineNumber: lineNumber - 1,
+          token,
+        });
         switch (token.name) {
           case "FUNCTION_DEFINITION_WITH_SINGLE_OUTPUT":
           case "FUNCTION_DEFINITION_WITH_MULTIPLE_OUTPUT":
@@ -327,35 +389,115 @@ export class Parser {
             break;
 
           case "COMMENT_BLOCK_START":
-            this.visitCommentBlock({match, lineNumber: lineNumber-1, start: true});
+            this.visitCommentBlock({
+              match,
+              lineNumber: lineNumber - 1,
+              start: true,
+            });
             break;
           case "COMMENT_BLOCK_END":
-            this.visitCommentBlock({match, lineNumber: lineNumber-1, start: false});
+            this.visitCommentBlock({
+              match,
+              lineNumber: lineNumber - 1,
+              start: false,
+            });
             break;
 
-          default:
-          // case "ANY":
+          case "FILE_REFERENCE":
+            this.visitFileReference({ match, lineNumber: lineNumber - 1 });
+            break;
+
+          case "ANY":
             // this should be the last item in the list
             // if execute it should warn that the current line did not match any token
             // thus conclude that the line has an error
             // TODO: maybe i dont need this?
-            // this.potentialErrorLines.push({lineNumber: lineNumber-1});
-          break;
+            this.potentialErrorLines.push({lineNumber: lineNumber-1});
+            break;
         }
+        // log("matched: " + JSON.stringify(token.name));
+        break;
       }
     }
 
     this.checkClosingBlocks();
-    // this.cleanUpPotentialErrorLines();
+    this.cleanUpPotentialErrorLines();
     // log(JSON.stringify(this.commentBlocks));
+  }
 
+  /**
+   * It check that the references to function, variables and files are correct.
+   */
+  public validateReferences({
+    uris,
+    functionsDefinitions,
+    variablesDefinitions,
+  }: {
+    uris: string[];
+    functionsDefinitions: string[];
+    variablesDefinitions: string[];
+  }): Diagnostic[] {
+    // TODO: maybe add indication of possible references that matches the wrongly typed text
+    const localDiagnostics: Diagnostic[] = [];
+    // validate file references
+    localDiagnostics.push(
+      ...this.fileReferences
+        .filter((ref) => !uris.includes(ref.name))
+        .map((ref) => {
+          return {
+            range: Range.create(
+              Position.create(ref.lineNumber, 0),
+              Position.create(ref.lineNumber, 0)
+            ),
+            message: `reference not found: '${ref.name}' at line ${(
+              ref.lineNumber + 1
+            ).toString()}`,
+            severity: DiagnosticSeverity.Error,
+            source: "mlang",
+          } as Diagnostic;
+        }),
+      ...this.functionsReferences
+      .filter((ref) => !functionsDefinitions.includes(ref.name))
+      .map((ref) => {
+          return {
+            range: Range.create(
+              Position.create(ref.start.line, 0),
+              Position.create(ref.start.line, 0)
+            ),
+            message: `reference not found: '${ref.name}' at line ${(
+              ref.start.line + 1
+            ).toString()}`,
+            severity: DiagnosticSeverity.Error,
+            source: "mlang",
+          } as Diagnostic;
+        }),
+    );
+
+    return localDiagnostics;
+  }
+
+  private visitFileReference({
+    match,
+    lineNumber,
+  }: {
+    match: RegExpMatchArray;
+    lineNumber: number;
+  }): void {
+    this.fileReferences.push({
+      name: match.groups?.name,
+      lineNumber,
+    });
   }
 
   // Removes the lines that are commented
   private cleanUpPotentialErrorLines(): void {
     this.potentialErrorLines.forEach((line) => {
       this.commentBlocks.forEach((block) => {
-        if (block.end && block.start.line < line.lineNumber && block.end.line > line.lineNumber) {
+        if (
+          block.end &&
+          block.start.line < line.lineNumber &&
+          block.end.line > line.lineNumber
+        ) {
           return;
         }
       });
@@ -363,7 +505,7 @@ export class Parser {
         severity: DiagnosticSeverity.Error,
         range: {
           start: Position.create(line.lineNumber, 1),
-          end: Position.create(line.lineNumber, 1)
+          end: Position.create(line.lineNumber, 1),
         },
         message: "syntax error?",
         source: "mlang",
@@ -375,16 +517,17 @@ export class Parser {
   /**
    * when a function reference it's met.
    */
-  visitFunctionReference(
-    { line, match, lineNumber }:
-      {
-        line: string;
-        lineNumber: number;
-        match: RegExpMatchArray;
-      }): void {
-
+  visitFunctionReference({
+    line,
+    match,
+    lineNumber,
+  }: {
+    line: string;
+    lineNumber: number;
+    match: RegExpMatchArray;
+  }): void {
     if (!this.diagnoseKeywordNaming({ line, match, lineNumber })) return;
-    this.handleReferenceAddPath({ match });
+    this.handleReferenceAddPath({ match, lineNumber });
 
     const args = parseMultipleMatchValues(match.groups?.retval);
     const outputs = parseMultipleMatchValues(match.groups?.retval);
@@ -392,8 +535,11 @@ export class Parser {
     const reference: IFunctionReference = {
       name: match.groups?.name ? match.groups?.name : "ERROR",
       start: Position.create(lineNumber, match.index),
-      end: Position.create(lineNumber, match.index + match[0].indexOf(match.groups?.name)),
-      depth: this.helperGetFunctionReferenceDepth({lineNumber}),
+      end: Position.create(
+        lineNumber,
+        match.index + match[0].indexOf(match.groups?.name)
+      ),
+      depth: this.helperGetFunctionReferenceDepth({ lineNumber }),
     };
     if (args.length > 0) {
       reference.arguments = args;
@@ -405,12 +551,19 @@ export class Parser {
     this.functionsReferences.push(reference);
   }
 
-  handleReferenceAddPath({ match }: { match: RegExpMatchArray; }): void {
+  // TODO: fix this, it can handle relative paths well, it's bugs out and shuts the server with call stack exceeded.
+  private handleReferenceAddPath({ match, lineNumber }: { match: RegExpMatchArray, lineNumber: number }): void {
     if (match.groups?.name === "addpath") {
       const paths = parseMultipleMatchValues(match.groups?.args);
       // log("addpath found: " + JSON.stringify(paths));
       paths.forEach((p) => {
-        addDocumentsFromPath(p);
+        p.split(":").forEach((path) => {
+          if (documentData.map((data) => data.getDocumentPath()).includes(path)) return;
+          this.sendDiagnositcError(!addDocumentsFromPath(path), `path '${path}' could not be found`, Range.create(
+            Position.create(lineNumber, 0),
+            Position.create(lineNumber, 0)
+          ));
+        });
       });
     }
   }
@@ -425,16 +578,35 @@ export class Parser {
 
   /**
    * TODO: this should send the diagnostics to an array to be handled later
-   * Sets a diagnostic for when the line does not 
+   * Sets a diagnostic for when the line does not
    * have a ';' no output to console character
    */
-  consoleOutputWarning({ line, lineNumber, token }: { line: string; lineNumber: number, match: RegExpMatchArray, token: IToken }): void {
-    const validTokens = token.name === "FUNCTION_REFERENCE_WITH_SINGLE_OUTPUT" || token.name === "FUNCTION_REFERENCE_WITH_MULTIPLE_OUTPUTS" || token.name === "FUNCTION_REFERENCE_WITHOUT_OUTPUT" || token.name === "VARIABLE_REFERENCE" || token.name === "VARIABLE_DECLARATION" || token.name === "ANONYMOUS_FUNCTION";
+  consoleOutputWarning({
+    line,
+    lineNumber,
+    token,
+    match,
+  }: {
+    line: string;
+    lineNumber: number;
+    match: RegExpMatchArray;
+    token: IToken;
+  }): void {
+    const validTokens =
+      token.name === "FUNCTION_REFERENCE_WITH_SINGLE_OUTPUT" ||
+      token.name === "FUNCTION_REFERENCE_WITH_MULTIPLE_OUTPUTS" ||
+      token.name === "FUNCTION_REFERENCE_WITHOUT_OUTPUT" ||
+      token.name === "VARIABLE_REFERENCE" ||
+      token.name === "VARIABLE_DECLARATION" ||
+      token.name === "ANONYMOUS_FUNCTION";
     if (!validTokens || line.trim() === "" || line.endsWith(";")) return;
-    const range = Range.create(Position.create(lineNumber, line.length - 1), Position.create(lineNumber, line.length));
-    // log(`${JSON.stringify(match)}, ${JSON.stringify(range)}`);
+    const range = Range.create(
+      Position.create(lineNumber, line.length - 1),
+      Position.create(lineNumber, line.length)
+    );
+    // log(`${JSON.stringify(token)}, ${JSON.stringify(match)}`);
     const diagnostic: Diagnostic = {
-      severity: DiagnosticSeverity.Warning,
+      severity: DiagnosticSeverity.Information,
       range: range,
       message: "will output to console",
       source: "mlang",
@@ -463,10 +635,18 @@ export class Parser {
   }
 
   /**
-  * Checks that the keyword name it's correct. 
-  * @returns {boolean} - true if it's a valid name.
-  */
-  private diagnoseKeywordNaming({ line, match, lineNumber }: { line: string, match: RegExpMatchArray, lineNumber: number }): boolean {
+   * Checks that the keyword name it's correct.
+   * @returns {boolean} - true if it's a valid name.
+   */
+  private diagnoseKeywordNaming({
+    line,
+    match,
+    lineNumber,
+  }: {
+    line: string;
+    match: RegExpMatchArray;
+    lineNumber: number;
+  }): boolean {
     const validNamingPattern = /^[a-zA-Z][^\s]*$/;
     const isNameValid = validNamingPattern.test(match.groups?.name);
     if (!isNameValid) {
@@ -475,7 +655,10 @@ export class Parser {
         severity: DiagnosticSeverity.Error,
         range: {
           start: Position.create(lineNumber, line.indexOf(match.groups?.name)),
-          end: Position.create(lineNumber, line.indexOf(match.groups?.name) + match.groups.name?.length - 1)
+          end: Position.create(
+            lineNumber,
+            line.indexOf(match.groups?.name) + match.groups.name?.length - 1
+          ),
         },
         message: "wrong naming",
         source: "mlang",
@@ -485,4 +668,10 @@ export class Parser {
     return isNameValid;
   }
 
+  /**
+   * Returns the text splitted by '\n'
+   */
+  public getLines(): string[] {
+    return this.lines;
+  }
 }

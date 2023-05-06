@@ -2,6 +2,94 @@ import { CompletionItem, CompletionItemKind, MarkupKind } from 'vscode-languages
 
 export const completionData: CompletionItem[] = [
   {
+    label: 'addpath',
+    kind: CompletionItemKind.Function,
+    documentation: {
+      kind: MarkupKind.Markdown,
+      value: 'Add named directories to the function search path.\nIf option is "-begin" or 0 (the default), prepend the directory name to the current path. If option is "-end" or 1, append the directory name to the current path. Directories added to the path must exist.\nIn addition to accepting individual directory arguments, lists of directory names separated by pathsep are also accepted. For example:\n\naddpath ("dir1:/dir2:~/dir3")\n\nFor each directory that is added, and that was not already in the path, addpath checks for the existence of a file named PKG_ADD (note lack of .m extension) and runs it if it exists.\n\nSee also: path, rmpath, genpath, pathdef, savepath, pathsep.\n\n[addpath function](https://octave.sourceforge.io/octave/function/addpath.html)',
+    },
+  },
+  {
+    label: 'argv',
+    kind: CompletionItemKind.Function,
+    documentation: {
+      kind: MarkupKind.Markdown,
+      value: 'Return the command line arguments passed to Octave.\n\nFor example, if you invoked Octave using the command\n\noctave --no-line-editing --silent\n\nargv would return a cell array of strings with the elements --no-line-editing and --silent.\n\nIf you write an executable Octave script, argv will return the list of arguments passed to the script. See ‘Executable Octave Programs’, for an example of how to create an executable Octave script.\n\n[argv function](https://octave.sourceforge.io/octave/function/argv.html)',
+    },
+  },
+  {
+    label: 'hold',
+    kind: CompletionItemKind.Function,
+    documentation: {
+      kind: MarkupKind.Markdown,
+      value: '[hold function](https://octave.sourceforge.io/octave/function/hold.html)',
+    },
+  },
+  {
+    label: 'axis',
+    kind: CompletionItemKind.Function,
+    documentation: {
+      kind: MarkupKind.Markdown,
+      value: '[axis function](https://octave.sourceforge.io/octave/function/axis.html)',
+    },
+  },
+  {
+    label: 'printf',
+    kind: CompletionItemKind.Function,
+    documentation: {
+      kind: MarkupKind.Markdown,
+      value: '[printf function](https://octave.sourceforge.io/octave/function/printf.html)',
+    },
+  },
+  {
+    label: 'figure',
+    kind: CompletionItemKind.Function,
+    documentation: {
+      kind: MarkupKind.Markdown,
+      value: '[figure function](https://octave.sourceforge.io/octave/function/figure.html)',
+    },
+  },
+  {
+    label: 'set',
+    kind: CompletionItemKind.Function,
+    documentation: {
+      kind: MarkupKind.Markdown,
+      value: '[set function](https://octave.sourceforge.io/octave/function/set.html)',
+    },
+  },
+  {
+    label: 'grid',
+    kind: CompletionItemKind.Function,
+    documentation: {
+      kind: MarkupKind.Markdown,
+      value: '[grid function](https://octave.sourceforge.io/octave/function/grid.html)',
+    },
+  },
+  {
+    label: 'clc',
+    kind: CompletionItemKind.Function,
+    documentation: {
+      kind: MarkupKind.Markdown,
+      value: '[clc function](https://octave.sourceforge.io/octave/function/clc.html)',
+    },
+  },
+  {
+    label: 'quit',
+    kind: CompletionItemKind.Function,
+    documentation: {
+      kind: MarkupKind.Markdown,
+      value: '[quit function](https://docs.octave.org/interpreter/Quitting-Octave.html)',
+    },
+  },
+  {
+    label: 'help',
+    kind: CompletionItemKind.Function,
+    documentation: {
+      kind: MarkupKind.Markdown,
+      value: '[help function](https://octave.sourceforge.io/octave/function/help.html)',
+    },
+  },
+  {
     label: 'stem',
     kind: CompletionItemKind.Function,
     documentation: {
