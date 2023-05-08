@@ -1,12 +1,12 @@
 import {
   DidChangeConfigurationParams,
-  TextDocument,
   TextDocuments,
   _Connection,
 } from "vscode-languageserver";
 import { ISettings, defaultSettings, updateGlobalSettings } from "../data";
 import { documentSettings } from "../server";
 import { hasConfigurationCapability, validateTextDocument } from ".";
+import { TextDocument } from "vscode-languageserver-textdocument";
 
 interface IOnDidChangeConfigurationProps {
   change: DidChangeConfigurationParams;

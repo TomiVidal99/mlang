@@ -42,24 +42,26 @@ end
 ```
 
 ## TODO
+- [ ] fix: that file references not need _()_ to be called.
 - [ ] consider packages (check if they're installed and offer references).
 - [ ] add auto imports (add the _addpath_ command at the beggining of the file when importing some function, think this better).
-- [ ] check function references in the global path: (linux: ~/.octaverc, windows)
 - [ ] add diagnostics checking for arguments and return values (function references).
 - [ ] add completion for arguments and return values (function references).
 - [ ] add more native completion items (keywords and functions).
+- [ ] add more and better description to completion items.
+- [ ] add hover capability.
 - [ ] optimize esbuild bundle config.
-- [ ] add diagnositics (check when repeated function definitions).
+- [ ] check when repeated function definitions.
 - [ ] make tests.
 - [ ] add husky (for linting before commit).
-- [ ] key words completion.
-- [ ] syntax checking.
 - [ ] formatting.
-- [ ] linting for imports.
 
 ## How to contribute?
 Clone the repository and install the node dependencies with ```$ yarn```. Then modify the files in the _"src"_ folder. After you should be able to compile the server with ```$ yarn compile```
 Also consider running ```$ yarn watch``` to compile after every change you make.
+
+### *Reference* or *Keyword* not found
+If a reference or a keyword it's not found and it should because it's defined by default by the language you simply add it in _'./src/data/completionData.ts'_ if it's a **function**, if it's a **keyword** _'./src/parser/grammar.ts'_ in `COMMON_GRAMMAR`
 
 ## Contributors
 - [Tomás Vidal](https://github.com/TomiVidal99)

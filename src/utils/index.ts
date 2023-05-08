@@ -6,3 +6,7 @@ export * from "./getPathFromURI";
 export * from "./documentData";
 export * from "./getRangeFrom2Points";
 export * from "./parseMultipleMatchValues";
+export * from "./getPathType";
+export * from "./parseToIKeyword";
+export * from "./getFunctionReferenceMessage";
+export * from "./checkIfPathExists";

@@ -1,5 +1,5 @@
 import { DidOpenTextDocumentParams, TextDocumentChangeEvent } from "vscode-languageserver";
-import { readDocuments, updateFunctionList } from "../managers";
+import { readDocuments } from "../managers";
 import { TextDocument } from "vscode-languageserver-textdocument";
 import { log } from "../server";
 

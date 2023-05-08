@@ -1,6 +1,5 @@
-import { TextDocument, TextDocumentChangeEvent } from "vscode-languageserver";
-import { updateFunctionList } from "../managers";
-import { log } from "console";
+import { TextDocumentChangeEvent } from "vscode-languageserver";
+import { TextDocument } from "vscode-languageserver-textdocument";
 
 export function handleOnDidSave({change}: {change: TextDocumentChangeEvent<TextDocument>}): void {
   const document = change.document;
