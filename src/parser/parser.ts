@@ -62,11 +62,19 @@ export interface IErrorLines {
   lineNumber: number;
 }
 
+export type StatementType = "IF" | "WHILE" | "FOR" | "DO";
+export interface IStatements {
+  type: StatementType;
+  start: Position;
+  end?: Position;
+}
+
 export class Parser {
   private text: string;
   private functionsDefinitions: IFunctionDefinition[];
   private functionsReferences: IFunctionReference[];
   private potentialErrorLines: IErrorLines[];
+  private statements: IStatements[];
   private fileReferences: IFileReference[];
   // private variablesDefinitions: IVariableDefinition[];
   // private variablesReferences: IVariableReference[];
@@ -78,6 +86,7 @@ export class Parser {
   public constructor(document: TextDocument) {
     this.text = document.getText();
     this.lines = this.text.split("\n");
+    this.statements = [];
     this.functionsDefinitions = [];
     this.functionsReferences = [];
     this.commentBlocks = [];
@@ -92,7 +101,6 @@ export class Parser {
   }
 
   private visitCommentBlock({
-    match,
     lineNumber,
     start,
   }: {
@@ -152,7 +160,10 @@ export class Parser {
         .includes(match.groups?.name),
       `the function '${match.groups.name
       }' has already been defined. line ${lineNumber.toString()}`,
-      Range.create(Position.create(lineNumber,0), Position.create(lineNumber, 0))
+      Range.create(
+        Position.create(lineNumber, 0),
+        Position.create(lineNumber, 0)
+      )
     );
 
     const functionDefinition: IFunctionDefinition = {
@@ -193,9 +204,19 @@ export class Parser {
     return lines;
   }
 
-  private closeFunctionDefintion({ lineNumber }: { lineNumber: number }): void {
-    for (let i = this.functionsDefinitions.length - 1; i >= 0; i--) {
-      const currentFunctionDef = this.functionsDefinitions[i];
+  /**
+   * Handles the closing of the functions and statements defintions.
+   * TODO: maybe optimize for the cases of endfunction, endfor, etc?
+   * TODO: maybe when parsing the document just have one array with all the defintions
+   * so i dont have to perform this ordering?
+   */
+  private closeDefinitions({ lineNumber }: { lineNumber: number }): void {
+    const orderedDefinitions = [
+      ...this.functionsDefinitions,
+      ...this.statements,
+    ].sort((a, b) => a.start.line - b.start.line);
+    for (let i = orderedDefinitions.length - 1; i >= 0; i--) {
+      const currentFunctionDef = orderedDefinitions[i];
       if (!currentFunctionDef.end) {
         currentFunctionDef.end = Position.create(lineNumber, 0);
         return;
@@ -301,6 +322,10 @@ export class Parser {
    */
   checkClosingBlocks(): void {
     this.sendDiagnositcError(
+      this.statements.some((def) => !def.end),
+      "missing closing keyword"
+    );
+    this.sendDiagnositcError(
       this.functionsDefinitions.some((def) => !def.end),
       "missing closing keyword"
     );
@@ -384,20 +409,44 @@ export class Parser {
             });
             break;
 
-          case "COMMON_KEYWORDS":
-          case "DO_STATEMENT":
-          case "UNTIL_STATEMENT":
           case "IF_STATEMENT_START":
+            this.visitStatementStart({
+              type: "IF",
+              match,
+              lineNumber: lineNumber - 1,
+            });
+            break;
+          case "WHILE_STATEMENT_START":
+            this.visitStatementStart({
+              type: "WHILE",
+              match,
+              lineNumber: lineNumber - 1,
+            });
+            break;
+          case "FOR_STATEMENT_START":
+            this.visitStatementStart({
+              type: "FOR",
+              match,
+              lineNumber: lineNumber - 1,
+            });
+            break;
+          case "DO_STATEMENT":
+            this.visitStatementStart({
+              type: "DO",
+              match,
+              lineNumber: lineNumber - 1,
+            });
+            break;
+
+          case "COMMON_KEYWORDS":
           case "ELSE_STATEMENT":
           case "ELSE_IF_STATEMENT":
-          case "WHILE_STATEMENT_START":
-          case "FOR_STATEMENT_START":
           case "VARIABLE_REFERENCE":
           case "VARIABLE_DECLARATION":
             break;
 
           case "END":
-            this.closeFunctionDefintion({ lineNumber });
+            this.closeDefinitions({ lineNumber: lineNumber - 1 });
             break;
 
           case "COMMENT_BLOCK_START":
@@ -438,17 +487,35 @@ export class Parser {
   }
 
   /**
+   * Creates the references when an statement it's made, mainly to check if
+   * the grammar it's correct.
+   */
+  visitStatementStart({
+    type,
+    lineNumber,
+  }: {
+    type: StatementType;
+    match: RegExpMatchArray;
+    lineNumber: number;
+  }): void {
+    this.statements.push({
+      type,
+      start: Position.create(lineNumber, 0),
+    } as IStatements);
+  }
+
+  /**
    * It check that the references to function, variables and files are correct.
    */
   public validateReferences({
     uris,
     functionsDefinitions,
-    variablesDefinitions,
-  }: {
-    uris: string[];
-    functionsDefinitions: string[];
-    variablesDefinitions: string[];
-  }): Diagnostic[] {
+  }: // variablesDefinitions,
+    {
+      uris: string[];
+      functionsDefinitions: string[];
+      variablesDefinitions: string[];
+    }): Diagnostic[] {
     // TODO: maybe add indication of possible references that matches the wrongly typed text
     const localDiagnostics: Diagnostic[] = [];
     // validate file references
@@ -620,7 +687,6 @@ export class Parser {
     line,
     lineNumber,
     token,
-    match,
   }: {
     line: string;
     lineNumber: number;

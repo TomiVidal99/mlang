@@ -7,6 +7,7 @@ import { completionData } from "../data";
 // TODO: add end keyword for other methods, else it messes up the other definitions
 
 const COMMON_KEYWORDS = [
+  "do",
   "break",
   "continue",
   "return",
@@ -27,7 +28,6 @@ export type TokenNameType =
   | "COMMENT_BLOCK_START"
   | "COMMENT_BLOCK_END"
   | "DO_STATEMENT"
-  | "UNTIL_STATEMENT"
   | "IF_STATEMENT_START"
   | "ELSE_STATEMENT"
   | "ELSE_IF_STATEMENT"
@@ -83,6 +83,10 @@ export const GRAMMAR: IToken[] = [
   //   pattern: /(?<!\w)(?!if|while|for|switch)(?!.*\s=\s)(\w+)(?!\()/,
   // },
   {
+    name: "DO_STATEMENT",
+    pattern: /^\s*(do).*/,
+  },
+  {
     name: "FOR_STATEMENT_START",
     pattern: /^\s*(for).*/,
   },
@@ -104,7 +108,7 @@ export const GRAMMAR: IToken[] = [
   },
   {
     name: "END",
-    pattern: /^\s*(end|endfunction|endwhile|endif|endfor)\b/,
+    pattern: /^\s*(end|endfunction|endwhile|endif|endfor|until)\b/,
   },
   {
     name: "COMMON_KEYWORDS",
