@@ -5,7 +5,6 @@ import {
   MessageType,
 } from "vscode-languageserver/node";
 import * as fs from "fs";
-import * as os from "os";
 import * as path from "path";
 
 import { TextDocument } from "vscode-languageserver-textdocument";
@@ -23,12 +22,10 @@ import {
   DocumentData,
   addNewDocument,
   formatURI,
-  getPathFromURI,
   getPathType,
   updateDocumentData,
 } from "./utils";
 import { getAllMFiles } from "./managers";
-import { IFunctionDefinition } from "./parser";
 
 const CHANGE_CONTENT_DELAY_MS = 150;
 let onChangeContentDelay: NodeJS.Timer | undefined;
