@@ -6,7 +6,7 @@ import {
 } from "vscode-languageserver";
 import { GRAMMAR, IToken, TokenNameType } from "./grammar";
 import { checkIfPathExists, parseMultipleMatchValues } from "../utils";
-import { getAllFilepathsFromPath } from "../server";
+import { getAllFilepathsFromPath, log } from "../server";
 import { TextDocument } from "vscode-languageserver-textdocument";
 
 const commentPattern = /^\s*(?!%(?:{|})|#(?:{|}))[#%%].*/;
@@ -438,9 +438,16 @@ export class Parser {
             });
             break;
 
-          case "COMMON_KEYWORDS":
           case "ELSE_STATEMENT":
           case "ELSE_IF_STATEMENT":
+            // TODO: should check that elseif its after else
+              this.sendDiagnositcError(
+                this.statements.filter((s) => !s.end && s.start.line < lineNumber-1).length === 0,
+                `missing if before calling '${match[0]}' at line ${(lineNumber-1).toString()}`,
+                Range.create(Position.create(lineNumber-1, 0), Position.create(lineNumber-1,0))
+              );
+            break;
+          case "COMMON_KEYWORDS":
           case "VARIABLE_REFERENCE":
           case "VARIABLE_DECLARATION":
             break;
