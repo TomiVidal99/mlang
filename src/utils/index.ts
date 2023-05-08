@@ -9,3 +9,4 @@ export * from "./parseMultipleMatchValues";
 export * from "./getPathType";
 export * from "./parseToIKeyword";
 export * from "./getFunctionReferenceMessage";
+export * from "./checkIfPathExists";

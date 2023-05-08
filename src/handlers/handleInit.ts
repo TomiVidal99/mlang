@@ -1,8 +1,7 @@
-import { DidChangeConfigurationNotification, InitializeParams, InitializeResult, TextDocumentSyncKind, TextDocuments, _Connection } from "vscode-languageserver";
+import { DidChangeConfigurationNotification, InitializeParams, InitializeResult, InitializedParams, TextDocumentSyncKind, _Connection } from "vscode-languageserver";
 import { getFilesInWorkspace} from "../managers";
 import { URI } from "vscode-uri";
 import { addDocumentsFromPath, log } from "../server";
-import { addNewDocument } from "../utils";
 import { globalSettings } from "../data";
 
 export let hasConfigurationCapability = false;
@@ -18,10 +17,6 @@ export function handleOnInitialize({params, connection }: IOnInitializeProps) {
   const rootUri = params.rootUri;
   const workspace = URI.parse(rootUri).fsPath;
   const documentsInWorkspace = getFilesInWorkspace({workspace});
-
-  documentsInWorkspace.forEach((doc) => {
-    addNewDocument(doc);
-  });
 
   // fills the list of function references, to goToReference and goToDefinition
   // updateFunctionList({documents: documentsInWorkspace});
@@ -65,13 +60,22 @@ export function handleOnInitialize({params, connection }: IOnInitializeProps) {
       },
     };
   }
+
   return result;
 }
 
 interface IOnInitializedProps {
   connection: _Connection;
+  params: InitializedParams;
 }
-export function handleOnInitialized({connection }: IOnInitializedProps) {
+export function handleOnInitialized({ params, connection }: IOnInitializedProps) {
+  // const rootUri = params.rootUri;
+  // const workspace = URI.parse(rootUri).fsPath;
+  // const documentsInWorkspace = getFilesInWorkspace({workspace});
+  // documentsInWorkspace.forEach((doc) => {
+  //   addNewDocument(doc);
+  // });
+
   log("initialized, default settings: " + JSON.stringify(globalSettings));
   if (hasConfigurationCapability) {
     // Register for all configuration changes.
@@ -89,7 +93,7 @@ export function handleOnInitialized({connection }: IOnInitializedProps) {
   // has in count the default init file if the configuration enables it
   if (globalSettings.enableInitFile) {
     // const debounced = debounce(function() {
-      addDocumentsFromPath(globalSettings?.defaultInitFile);
+    addDocumentsFromPath(globalSettings.defaultInitFile);
       // log("InitFileEnabled: " + JSON.stringify(globalSettings.defaultInitFile) + "\n\nFILE:" + JSON.stringify(initFile));
       // if (initFile) {
       //   addNewDocument(initFile);

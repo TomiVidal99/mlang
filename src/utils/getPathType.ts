@@ -8,7 +8,6 @@ import * as fs from "fs";
 export function getPathType(path: string): "file" | "dir" | "none" {
   try {
     const stats = fs.lstatSync(path);
-
     if (stats.isFile()) {
       return "file";
     } else if (stats.isDirectory()) {
@@ -18,7 +17,6 @@ export function getPathType(path: string): "file" | "dir" | "none" {
       // log("symlink: " + JSON.stringify(targetPath));
       if (fs.existsSync(targetPath)) {
         const targetStats = fs.statSync(targetPath);
-
         if (targetStats.isFile()) {
           return "file";
         } else if (targetStats.isDirectory()) {

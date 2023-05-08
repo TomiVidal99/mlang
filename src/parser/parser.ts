@@ -5,8 +5,8 @@ import {
   DiagnosticSeverity,
 } from "vscode-languageserver";
 import { GRAMMAR, IToken, TokenNameType } from "./grammar";
-import { parseMultipleMatchValues } from "../utils";
-import { addDocumentsFromPath, documentData, log } from "../server";
+import { checkIfPathExists, parseMultipleMatchValues } from "../utils";
+import { getAllFilepathsFromPath } from "../server";
 import { TextDocument } from "vscode-languageserver-textdocument";
 
 const commentPattern = /^\s*(?!%(?:{|})|#(?:{|}))[#%%].*/;
@@ -70,6 +70,7 @@ export class Parser {
   private fileReferences: IFileReference[];
   // private variablesDefinitions: IVariableDefinition[];
   // private variablesReferences: IVariableReference[];
+  private addedPaths: string[];
   private commentBlocks: ICommentBlock[];
   private diagnostics: Diagnostic[];
   private lines: string[];
@@ -82,6 +83,7 @@ export class Parser {
     this.commentBlocks = [];
     this.potentialErrorLines = [];
     this.fileReferences = [];
+    this.addedPaths = [];
     // this.variablesDefinitions = [];
     // this.variablesReferences = [];
     this.diagnostics = [];
@@ -142,6 +144,16 @@ export class Parser {
     lineNumber: number;
   }) {
     if (!this.diagnoseKeywordNaming({ line, match, lineNumber })) return;
+
+    // check if the function has already been defined
+    this.sendDiagnositcError(
+      this.functionsDefinitions
+        .map((def) => def.name)
+        .includes(match.groups?.name),
+      `the function '${match.groups.name
+      }' has already been defined. line ${lineNumber.toString()}`,
+      Range.create(Position.create(lineNumber,0), Position.create(lineNumber, 0))
+    );
 
     const functionDefinition: IFunctionDefinition = {
       start: Position.create(
@@ -412,7 +424,7 @@ export class Parser {
             // if execute it should warn that the current line did not match any token
             // thus conclude that the line has an error
             // TODO: maybe i dont need this?
-            this.potentialErrorLines.push({lineNumber: lineNumber-1});
+            this.potentialErrorLines.push({ lineNumber: lineNumber - 1 });
             break;
         }
         // log("matched: " + JSON.stringify(token.name));
@@ -457,8 +469,12 @@ export class Parser {
           } as Diagnostic;
         }),
       ...this.functionsReferences
-      .filter((ref) => !functionsDefinitions.includes(ref.name))
-      .map((ref) => {
+        .filter(
+          (ref) =>
+            functionsDefinitions.length === 0 ||
+            !functionsDefinitions.includes(ref.name)
+        )
+        .map((ref) => {
           return {
             range: Range.create(
               Position.create(ref.start.line, 0),
@@ -470,7 +486,7 @@ export class Parser {
             severity: DiagnosticSeverity.Error,
             source: "mlang",
           } as Diagnostic;
-        }),
+        })
     );
 
     return localDiagnostics;
@@ -533,7 +549,7 @@ export class Parser {
     const outputs = parseMultipleMatchValues(match.groups?.retval);
 
     const reference: IFunctionReference = {
-      name: match.groups?.name ? match.groups?.name : "ERROR",
+      name: match.groups?.name,
       start: Position.create(lineNumber, match.index),
       end: Position.create(
         lineNumber,
@@ -552,20 +568,39 @@ export class Parser {
   }
 
   // TODO: fix this, it can handle relative paths well, it's bugs out and shuts the server with call stack exceeded.
-  private handleReferenceAddPath({ match, lineNumber }: { match: RegExpMatchArray, lineNumber: number }): void {
+  private handleReferenceAddPath({
+    match,
+    lineNumber,
+  }: {
+    match: RegExpMatchArray;
+    lineNumber: number;
+  }): void {
     if (match.groups?.name === "addpath") {
       const paths = parseMultipleMatchValues(match.groups?.args);
-      // log("addpath found: " + JSON.stringify(paths));
       paths.forEach((p) => {
         p.split(":").forEach((path) => {
-          if (documentData.map((data) => data.getDocumentPath()).includes(path)) return;
-          this.sendDiagnositcError(!addDocumentsFromPath(path), `path '${path}' could not be found`, Range.create(
-            Position.create(lineNumber, 0),
-            Position.create(lineNumber, 0)
-          ));
+          const pathExists = checkIfPathExists(path);
+          if (pathExists) {
+            this.addedPaths.push(path);
+          }
+          this.sendDiagnositcError(
+            !pathExists,
+            `path '${path}' could not be found`,
+            Range.create(
+              Position.create(lineNumber, 0),
+              Position.create(lineNumber, 0)
+            )
+          );
         });
       });
     }
+  }
+
+  /**
+   * Returns the paths referenced in the document.
+   */
+  public getAddedPaths(): string[] {
+    return this.addedPaths.flatMap((p) => getAllFilepathsFromPath(p));
   }
 
   /**

@@ -1,7 +1,7 @@
 import { TextDocument } from "vscode-languageserver-textdocument";
 import { IKeyword } from "./getFunctionDefinitions";
 import { getPathFromURI } from "./getPathFromURI";
-import { documentData } from "../server";
+import { addDocumentsFromPath, documentData } from "../server";
 import { IFunctionDefinition, IFunctionReference, Parser } from "../parser";
 import { Diagnostic, PublishDiagnosticsParams } from "vscode-languageserver";
 import { parseToIKeyword } from "./parseToIKeyword";
@@ -11,6 +11,12 @@ export function addNewDocument(document: TextDocument): void {
   const data = new DocumentData(document);
   data.updateDocumentData();
   documentData.push(data);
+  data.getLocallyReferencedPaths().forEach((p) => {
+    // this must be executed after pushing data to the documentData array
+    // TODO: consider when the path it's updated and the document it's not longer considered.
+    // what happens when multiple files references to the same files?
+    addDocumentsFromPath(p);
+  });
 }
 
 export function updateDocumentData(document: TextDocument): void {
@@ -112,7 +118,7 @@ export class DocumentData {
       );
     }
     return this.functionsReferences
-      .filter((fn) => fn.depth === 0)
+      .filter((fn) => fn.depth <= 0)
       .map((fn) => parseToIKeyword(fn, this.getURI()));
   }
 
@@ -164,4 +170,28 @@ export class DocumentData {
   public getFileName(): string {
     return path.basename(this.getDocumentPath(), ".m");
   }
+
+  public getLocallyReferencedPaths(): string[] {
+    return this.parser.getAddedPaths();
+  }
+
+  /**
+  * Returns the directory of the current document.
+  */
+  public getDocumentDirectory(): string {
+    return path.dirname(this.getDocumentPath());
+  }
+
+  /**
+  * Returns weather the current document references a path or not
+  */
+  public referencesHasThisPath(path: string): boolean {
+    return this.getLocallyReferencedPaths().includes(path);
+  }
+
+  public getExportedFunctions(): IFunctionDefinition[] {
+    // log(`file ${this.getFileName()}: ${JSON.stringify(this.getFunctionsDefinitions().map((def) => def.name))}`);
+    return this.getFunctionsDefinitions().filter((def) => def.name === this.getFileName());
+  }
+
 }

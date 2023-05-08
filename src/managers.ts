@@ -29,7 +29,7 @@ export function getFilesInWorkspace({
   return documents;
 }
 
-function getAllMFiles(rootDir: string): string[] {
+export function getAllMFiles(rootDir: string): string[] {
   const files: string[] = [];
 
   function traverseDir(currentDir: string) {

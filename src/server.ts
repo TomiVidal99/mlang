@@ -23,12 +23,14 @@ import {
   DocumentData,
   addNewDocument,
   formatURI,
+  getPathFromURI,
   getPathType,
   updateDocumentData,
 } from "./utils";
-import { getFilesInWorkspace } from "./managers";
+import { getAllMFiles } from "./managers";
+import { IFunctionDefinition } from "./parser";
 
-const CHANGE_CONTENT_DELAY_MS = 300;
+const CHANGE_CONTENT_DELAY_MS = 150;
 let onChangeContentDelay: NodeJS.Timer | undefined;
 
 export const connection = createConnection(ProposedFeatures.all);
@@ -50,13 +52,22 @@ export function log(message: string | object): void {
 // documents.onDidOpen((change) => handleDidOpenFile({change}));
 // documents.onDidSave((change) => handleOnDidSave({change}));
 connection.onInitialize((params) => handleOnInitialize({ params, connection }));
-connection.onInitialized(() => handleOnInitialized({ connection }));
+connection.onInitialized((params) =>
+  handleOnInitialized({ params, connection })
+);
 // connection.onDidOpenTextDocument((params) => handleDidOpenTextDocument({params}));
 connection.onDefinition((params) => handleOnDefinition({ params, documents }));
 connection.onReferences((params) => handleOnReference({ params, documents }));
 connection.onDidChangeConfiguration((change) =>
   handleOnDidChangeConfiguration({ documents, change, connection })
 );
+connection.workspace.onDidDeleteFiles((event) => {
+  documentData.forEach((data) => {
+    if (event.files.map((f) => f.uri).includes(data.getURI())) {
+      documentData.splice(documentData.indexOf(data), 1);
+    }
+  });
+});
 documents.onDidClose((e) => {
   // Only keep settings for open documents
   documentSettings.delete(e.document.uri);
@@ -73,7 +84,7 @@ documents.onDidChangeContent((change) => {
 
   onChangeContentDelay = setTimeout(async () => {
     updateDocumentData(change.document);
-    updatePostParsingDiagnostics(change.document.uri);
+    updatePostParsingDiagnostics();
   }, CHANGE_CONTENT_DELAY_MS);
 });
 connection.onCompletion((params) => handleOnCompletion({ params: params }));
@@ -85,39 +96,48 @@ documents.listen(connection);
 // Listen on the connection
 connection.listen();
 
-export function addDocumentsFromPath(filepath: string | null): boolean {
-  const expandedFilepath = path.resolve(filepath).replace("~", os.homedir());
-  log("expandedFilepath: " + expandedFilepath);
+export function getAllFilepathsFromPath(p: string): string[] {
+  let expandedFilepath = p;
+  if (p.startsWith('~')) {
+    expandedFilepath = expandedFilepath.replace('~', process.env.HOME || '');
+  }
+  expandedFilepath = path.resolve(expandedFilepath);
   const checkedPath = getPathType(expandedFilepath);
-  log("adding path: " + expandedFilepath);
   switch (checkedPath) {
     case "file":
       try {
-        const content = fs.readFileSync(expandedFilepath, "utf8");
-        const doc = TextDocument.create(
-          formatURI(expandedFilepath),
-          "octave",
-          1,
-          content
-        );
-        addNewDocument(doc);
-        fs.closeSync(fs.openSync(expandedFilepath, "r"));
-        return true;
+        return [expandedFilepath];
       } catch (e) {
         log(
           `ERROR: Failed to create document from path ${expandedFilepath}: ${e}`
         );
-        return false;
+        return [];
       }
     case "dir":
-      getFilesInWorkspace({ workspace: expandedFilepath }).forEach((doc) => {
-        addNewDocument(doc);
-      });
-      return true;
+      return getAllMFiles(expandedFilepath);
     case "none":
       log("ERROR: NONE");
-      return false;
+      return [];
   }
+}
+
+export function addDocumentsFromPath(filepath: string | null): void {
+  getAllFilepathsFromPath(filepath)
+    .filter(
+      (filepath) =>
+        !documentData.map((data) => data.getDocumentPath()).includes(filepath)
+    )
+    .forEach((filepath) => {
+      // log(filepath);
+      const content = fs.readFileSync(filepath, "utf8");
+      const doc = TextDocument.create(
+        formatURI(filepath),
+        "octave",
+        1,
+        content
+      );
+      addNewDocument(doc);
+    });
 }
 
 export function getAllFilesInProject(): string[] {
@@ -129,15 +149,16 @@ export function getAllFilesInProject(): string[] {
 
 /**
  * Checks that references are ok, else send diagnostics.
+ * TODO: distinguish between reference does not exist and should import the reference
  */
-function updatePostParsingDiagnostics(uri: string): void {
+function updatePostParsingDiagnostics(): void {
   const allFilesInProject = getAllFilesInProject();
   documentData.forEach((data) => {
     connection.sendDiagnostics(
       data.getDiagnostics({
         allFilesInProject,
         functionsDefinitions: [
-          // ...getValidFunctionsReferencesNames(),
+          ...getValidFunctionsReferencesNames(data),
           ...completionData.map((data) => data.label),
           ...getDocumentsToBeExecutable({ currentDocument: data.getURI() }).map(
             (item) => item.label
@@ -149,15 +170,26 @@ function updatePostParsingDiagnostics(uri: string): void {
 }
 
 // TODO: make this
-function getValidFunctionsReferencesNames(): string[] {
-  const localDefinitions: string[] = [];
-  // const localDefinitions = documentData.flatMap((data) =>
-  //   data
-  //     .getFunctionsReferences()
-  //     .filter((ref) => ref.name === path.basename(data.getFileName()))
-  //     .map((ref) => ref.name)
-  // );
-  // log("documentData: " + JSON.stringify(documentData.map((data) => data.getDocumentPath())));
-  // log("localDefinitions: " + JSON.stringify(localDefinitions));
-  return [...localDefinitions];
+function getValidFunctionsReferencesNames(currentDoc: DocumentData): string[] {
+  // const localDefinitions: string[] = [];
+  const defs = [
+    ...documentData
+      .filter((d) =>
+        currentDoc
+          .getFunctionsReferences()
+          .map((ref) => ref.name)
+          .includes(d.getFileName())
+      )
+      .flatMap((d) =>
+        d
+          .getFunctionsDefinitions()
+          .filter((ref) => ref.depth === 0)
+          .map((ref) => ref.name)
+      ),
+    ...currentDoc.getFunctionsDefinitions().map((def) => def.name),
+    ...documentData.flatMap((data) =>
+      data.getExportedFunctions().map((ref) => ref.name)
+    ),
+  ];
+  return [...defs];
 }
