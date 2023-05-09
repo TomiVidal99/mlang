@@ -6,12 +6,14 @@ import {
 } from "vscode-languageserver";
 import { GRAMMAR, IToken, TokenNameType } from "./grammar";
 import { checkIfPathExists, parseMultipleMatchValues } from "../utils";
-import { getAllFilepathsFromPath, log } from "../server";
+import { getAllFilepathsFromPath } from "../server";
 import { TextDocument } from "vscode-languageserver-textdocument";
 
 const commentPattern = /^\s*(?!%(?:{|})|#(?:{|}))[#%%].*/;
 
 // TODO: think better how should the end keyword and such close the opened definitions/statements
+
+export type StatementType = "IF" | "WHILE" | "FOR" | "DO" | "FUNCTION";
 
 export interface IFileReference {
   lineNumber: number;
@@ -22,7 +24,7 @@ export interface IFunctionDefinition {
   uri?: string;
   start: Position;
   end?: Position;
-  type: TokenNameType;
+  type: StatementType;
   name: string;
   arguments?: string[];
   output?: string[];
@@ -62,7 +64,6 @@ export interface IErrorLines {
   lineNumber: number;
 }
 
-export type StatementType = "IF" | "WHILE" | "FOR" | "DO";
 export interface IStatements {
   type: StatementType;
   start: Position;
@@ -143,12 +144,10 @@ export class Parser {
   private visitFunctionDefinition({
     match,
     lineNumber,
-    token,
     line,
   }: {
     line: string;
     match: RegExpMatchArray;
-    token: IToken;
     lineNumber: number;
   }) {
     if (!this.diagnoseKeywordNaming({ line, match, lineNumber })) return;
@@ -171,7 +170,7 @@ export class Parser {
         lineNumber,
         match.index + match[0].indexOf(match.groups?.name)
       ),
-      type: token.name,
+      type: "FUNCTION",
       arguments: parseMultipleMatchValues(match.groups?.args),
       output: parseMultipleMatchValues(match.groups?.retval),
       name: match.groups?.name,
@@ -210,15 +209,25 @@ export class Parser {
    * TODO: maybe when parsing the document just have one array with all the defintions
    * so i dont have to perform this ordering?
    */
-  private closeDefinitions({ lineNumber }: { lineNumber: number }): void {
+  private closeDefinitions({ lineNumber, match }: { lineNumber: number, match: RegExpMatchArray }): void {
     const orderedDefinitions = [
       ...this.functionsDefinitions,
       ...this.statements,
     ].sort((a, b) => a.start.line - b.start.line);
     for (let i = orderedDefinitions.length - 1; i >= 0; i--) {
-      const currentFunctionDef = orderedDefinitions[i];
-      if (!currentFunctionDef.end) {
-        currentFunctionDef.end = Position.create(lineNumber, 0);
+      const currentDef = orderedDefinitions[i];
+      if (
+        !currentDef.end &&
+        (
+          /^\s*end\s*$/.test(match[0]) ||
+          currentDef.type === "FUNCTION" && match[0].includes("endfunction") ||
+          currentDef.type === "IF" && match[0].includes("endif") ||
+          currentDef.type === "DO" && match[0].includes("until") ||
+          currentDef.type === "FOR" && match[0].includes("endfor") ||
+          currentDef.type === "WHILE" && match[0].includes("endwhile")
+        )
+      ) {
+        currentDef.end = Position.create(lineNumber, 0);
         return;
       }
     }
@@ -234,13 +243,11 @@ export class Parser {
 
   private visitAnonymousFunctionDefinition({
     match,
-    token,
     lineNumber,
     line,
   }: {
     line: string;
     match: RegExpMatchArray;
-    token: IToken;
     lineNumber: number;
   }): void {
     // log("visitAnonymousFunctionDefinition: " + JSON.stringify(match));
@@ -249,7 +256,7 @@ export class Parser {
       start: Position.create(lineNumber, 0),
       end: Position.create(lineNumber, 0),
       name: match[1],
-      type: token.name,
+      type: "IF",
       arguments: parseMultipleMatchValues(match.groups?.retval),
       depth: this.helperGetFunctionDefinitionDepth({ lineNumber }),
       description: this.helperGetFunctionDefinitionDescription({
@@ -386,7 +393,6 @@ export class Parser {
           case "FUNCTION_DEFINITION_WITHOUT_OUTPUT":
             this.visitFunctionDefinition({
               match,
-              token,
               lineNumber: lineNumber - 1,
               line,
             });
@@ -395,7 +401,6 @@ export class Parser {
             this.visitAnonymousFunctionDefinition({
               match,
               lineNumber: lineNumber - 1,
-              token,
               line,
             });
             break;
@@ -441,11 +446,18 @@ export class Parser {
           case "ELSE_STATEMENT":
           case "ELSE_IF_STATEMENT":
             // TODO: should check that elseif its after else
-              this.sendDiagnositcError(
-                this.statements.filter((s) => !s.end && s.start.line < lineNumber-1).length === 0,
-                `missing if before calling '${match[0]}' at line ${(lineNumber-1).toString()}`,
-                Range.create(Position.create(lineNumber-1, 0), Position.create(lineNumber-1,0))
-              );
+            this.sendDiagnositcError(
+              this.statements.filter(
+                (s) => !s.end && s.start.line < lineNumber - 1
+              ).length === 0,
+              `missing if before calling '${match[0]}' at line ${(
+                lineNumber - 1
+              ).toString()}`,
+              Range.create(
+                Position.create(lineNumber - 1, 0),
+                Position.create(lineNumber - 1, 0)
+              )
+            );
             break;
           case "COMMON_KEYWORDS":
           case "VARIABLE_REFERENCE":
@@ -453,7 +465,7 @@ export class Parser {
             break;
 
           case "END":
-            this.closeDefinitions({ lineNumber: lineNumber - 1 });
+            this.closeDefinitions({ lineNumber: lineNumber - 1, match });
             break;
 
           case "COMMENT_BLOCK_START":

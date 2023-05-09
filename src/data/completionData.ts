@@ -2,11 +2,51 @@ import { CompletionItem, CompletionItemKind, MarkupKind } from 'vscode-languages
 
 export const completionData: CompletionItem[] = [
   {
+    label: 'inputParser',
+    kind: CompletionItemKind.Function,
+    documentation: {
+      kind: MarkupKind.Markdown,
+      value: "Not documented \n\n[inputParser function](https://octave.sourceforge.io/octave/function/inputParser.html)",
+    },
+  },
+  {
+    label: 'pol2cart',
+    kind: CompletionItemKind.Function,
+    documentation: {
+      kind: MarkupKind.Markdown,
+      value: " __[x, y] = pol2cart (theta, r)__\n __[x, y, z] = pol2cart (theta, r, z)__\n __[x, y] = pol2cart (P)__\n __[x, y, z] = pol2cart (P)__\n __C = pol2cart (…)__\n    Transform polar or cylindrical coordinates to Cartesian coordinates.\n    The inputs theta, r, (and z) must be the same shape, or scalar. If called with a single matrix argument then each row of P represents the polar/(cylindrical) coordinate (theta, r (, z)).\n    theta describes the angle relative to the positive x-axis.\n    r is the distance to the z-axis (0, 0, z).\n    If only a single return argument is requested then return a matrix C where each row represents one Cartesian coordinate (x, y (, z)).\n    See also: cart2pol, sph2cart, cart2sph. \n\n[pol2cart function](https://octave.sourceforge.io/octave/function/pol2cart.html)",
+    },
+  },
+  {
+    label: 'deg2rad',
+    kind: CompletionItemKind.Function,
+    documentation: {
+      kind: MarkupKind.Markdown,
+      value: " __rad = deg2rad (deg)__\n    Convert degrees to radians.\n    The input deg must be a scalar, vector, or N-dimensional array of double or single floating point values. deg may be complex in which case the real and imaginary components are converted separately.\n    The output rad is the same size and shape as deg with degrees converted to radians using the conversion constant pi/180.\n    Example:\n    deg2rad ([0, 90, 180, 270, 360])\n      ⇒  0.00000   1.57080   3.14159   4.71239   6.28319\n    See also: rad2deg. \n\n[deg2rad function](https://octave.sourceforge.io/octave/function/deg2rad.html)",
+    },
+  },
+  {
+    label: 'length',
+    kind: CompletionItemKind.Function,
+    documentation: {
+      kind: MarkupKind.Markdown,
+      value: ' __length (a)__\n    Return the length of the object a.\n    The length is 0 for empty objects, 1 for scalars, and the number of elements for vectors. For matrix or N-dimensional objects, the length is the number of elements along the largest dimension (equivalent to max (size (a))).\n    See also: numel, size. \n\n[length function](https://octave.sourceforge.io/octave/function/length.html)',
+    },
+  },
+  {
+    label: 'struct',
+    kind: CompletionItemKind.Function,
+    documentation: {
+      kind: MarkupKind.Markdown,
+      value: '  __s = struct ()__\n __s = struct (field1, value1, field2, value2, …)__\n __s = struct (obj)__\n    Create a scalar or array structure and initialize its values.\n    The field1, field2, … variables are strings specifying the names of the fields and the value1, value2, … variables can be of any type.\n    If the values are cell arrays, create a structure array and initialize its values. The dimensions of each cell array of values must match. Singleton cells and non-cell values are repeated so that they fill the entire array. If the cells are empty, create an empty structure array with the specified field names.\n    If the argument is an object, return the underlying struct.\n    Observe that the syntax is optimized for struct arrays. Consider the following examples:\n    struct ("foo", 1)\n     ⇒ scalar structure containing the fields:\n       foo =  1\n    struct ("foo", {})\n     ⇒ 0x0 struct array containing the fields:\n       foo\n    struct ("foo", { {} })\n     ⇒ scalar structure containing the fields:\n       foo = {}(0x0)\n    struct ("foo", {1, 2, 3})\n     ⇒ 1x3 struct array containing the fields:\n       foo\n    The first case is an ordinary scalar struct—one field, one value. The second produces an empty struct array with one field and no values, since being passed an empty cell array of struct array values. When the value is a cell array containing a single entry, this becomes a scalar struct with that single entry as the value of the field. That single entry happens to be an empty cell array.\n    Finally, if the value is a non-scalar cell array, then struct produces a struct array.\n    See also: cell2struct, fieldnames, getfield, setfield, rmfield, isfield, orderfields, isstruct, structfun. \n\n[struct function](https://octave.sourceforge.io/octave/function/struct.html)',
+    },
+  },
+  {
     label: 'addpath',
     kind: CompletionItemKind.Function,
     documentation: {
       kind: MarkupKind.Markdown,
-      value: 'Add named directories to the function search path.\nIf option is "-begin" or 0 (the default), prepend the directory name to the current path. If option is "-end" or 1, append the directory name to the current path. Directories added to the path must exist.\nIn addition to accepting individual directory arguments, lists of directory names separated by pathsep are also accepted. For example:\n\naddpath ("dir1:/dir2:~/dir3")\n\nFor each directory that is added, and that was not already in the path, addpath checks for the existence of a file named PKG_ADD (note lack of .m extension) and runs it if it exists.\n\nSee also: path, rmpath, genpath, pathdef, savepath, pathsep.\n\n[addpath function](https://octave.sourceforge.io/octave/function/addpath.html)',
+      value: ' __addpath (dir1, …)__\n __addpath (dir1, …, option)__\n    Add named directories to the function search path.\n    If option is "-begin" or 0 (the default), prepend the directory name to the current path. If option is "-end" or 1, append the directory name to the current path. Directories added to the path must exist.\n    In addition to accepting individual directory arguments, lists of directory names separated by pathsep are also accepted. For example:\n    addpath ("dir1:/dir2:~/dir3")\n    For each directory that is added, and that was not already in the path, addpath checks for the existence of a file named PKG_ADD (note lack of .m extension) and runs it if it exists.\n    See also: path, rmpath, genpath, pathdef, savepath, pathsep. \n\n[addpath function](https://octave.sourceforge.io/octave/function/addpath.html)',
     },
   },
   {
