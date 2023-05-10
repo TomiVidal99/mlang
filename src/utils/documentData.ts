@@ -1,8 +1,8 @@
 import { TextDocument } from "vscode-languageserver-textdocument";
 import { IKeyword } from "./getFunctionDefinitions";
 import { getPathFromURI } from "./getPathFromURI";
-import { addDocumentsFromPath, documentData } from "../server";
-import { IFunctionDefinition, IFunctionReference, Parser } from "../parser";
+import { addDocumentsFromPath, documentData, log } from "../server";
+import { IFunctionDefinition, IFunctionReference, IVariableDefinition, Parser } from "../parser";
 import { Diagnostic, PublishDiagnosticsParams } from "vscode-languageserver";
 import { parseToIKeyword } from "./parseToIKeyword";
 import * as path from "path";
@@ -33,6 +33,20 @@ export function updateDocumentData(document: TextDocument): void {
   if (!foundFlag) {
     addNewDocument(document);
   }
+}
+
+/**
+ * Gets the variable definitions of all the documents registered.
+ */
+export function getAllVariableDefinitions(): IVariableDefinition[] {
+  return documentData.flatMap((data) => data.getVariableDefinitions().map(
+    (d) => {
+      return {
+        uri: data.getURI(),
+        ...d,
+      } as IVariableDefinition;
+    }
+  ));
 }
 
 export function getAllFunctionDefinitions(
@@ -91,6 +105,14 @@ export class DocumentData {
     this.functionsDefinitions = this.parser.getFunctionsDefinitions();
     this.functionsReferences = this.parser.getFunctionsReferences();
     this.updateDiagnostics(this.parser.getDiagnostics());
+    log(JSON.stringify(this.parser.getVariableDefinitions()));
+  }
+
+  /**
+   * Returns the variable definitions of the document.
+   */
+  public getVariableDefinitions(): IVariableDefinition[] {
+    return this.parser.getVariableDefinitions();
   }
 
   /**

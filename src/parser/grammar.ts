@@ -74,10 +74,11 @@ export const GRAMMAR: IToken[] = [
     name: "ANONYMOUS_FUNCTION",
     pattern: /(?<name>\w+)\s*=\s*@\((?<args>.*?)\)/,
   },
-  // {
-  //   name: "VARIABLE_DECLARATION",
-  //   pattern: /(\w+)\s*=\s*(.*)/,
-  // },
+  {
+    name: "VARIABLE_DECLARATION",
+    pattern: /(?<name>\w+)\s*=\s*(?<content>.*)/,
+  },
+  // TODO: maybe remove this?
   // {
   //   name: "VARIABLE_REFERENCE",
   //   pattern: /(?<!\w)(?!if|while|for|switch)(?!.*\s=\s)(\w+)(?!\()/,

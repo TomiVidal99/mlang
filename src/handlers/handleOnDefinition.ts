@@ -1,7 +1,6 @@
 import { Location, Position, Range, TextDocument, TextDocuments } from "vscode-languageserver";
-import { formatURI, getAllFunctionDefinitions, getPathFromURI, getWordRangeAtPosition } from "../utils";
+import { getAllFunctionDefinitions, getAllVariableDefinitions, getPathFromURI, getWordRangeAtPosition } from "../utils";
 import * as path from "path";
-import { log } from "../server";
 
 interface IProps {
   params: any;
@@ -37,6 +36,23 @@ export async function handleOnDefinition({ params, documents }: IProps ): Promis
           end: func.end,
         },
         uri: func.uri
+      };
+      locations.push(loc);
+    }
+  });
+
+  // handle variable definitions
+  const allVariablesDefinitions = getAllVariableDefinitions();
+  // log(JSON.stringify(allVariablesDefinitions));
+  allVariablesDefinitions.forEach((variable) => {
+    if (variable.name === word) {
+      // log("func.uri: " + func.uri + "\n\nformatted: " + formatURI(func.uri));
+      const loc: Location = {
+        range: {
+          start: variable.start,
+          end: variable.end,
+        },
+        uri: variable.uri
       };
       locations.push(loc);
     }

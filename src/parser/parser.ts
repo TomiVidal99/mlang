@@ -3,11 +3,13 @@ import {
   Position,
   Diagnostic,
   DiagnosticSeverity,
+  LinkedEditingRangeRequest,
 } from "vscode-languageserver";
 import { GRAMMAR, IToken, TokenNameType } from "./grammar";
 import { checkIfPathExists, parseMultipleMatchValues } from "../utils";
 import { getAllFilepathsFromPath } from "../server";
 import { TextDocument } from "vscode-languageserver-textdocument";
+import { group } from "console";
 
 const commentPattern = /^\s*(?!%(?:{|})|#(?:{|}))[#%%].*/;
 
@@ -42,10 +44,11 @@ export interface IFunctionReference {
 }
 
 export interface IVariableDefinition {
+  uri?: string;
   start: Position;
   end?: Position;
-  type: TokenNameType;
   name: string;
+  content: string[];
 }
 
 export interface IVariableReference {
@@ -77,8 +80,8 @@ export class Parser {
   private potentialErrorLines: IErrorLines[];
   private statements: IStatements[];
   private fileReferences: IFileReference[];
-  // private variablesDefinitions: IVariableDefinition[];
-  // private variablesReferences: IVariableReference[];
+  private variablesDefinitions: IVariableDefinition[];
+  private variablesReferences: IVariableReference[];
   private addedPaths: string[];
   private commentBlocks: ICommentBlock[];
   private diagnostics: Diagnostic[];
@@ -94,8 +97,8 @@ export class Parser {
     this.potentialErrorLines = [];
     this.fileReferences = [];
     this.addedPaths = [];
-    // this.variablesDefinitions = [];
-    // this.variablesReferences = [];
+    this.variablesDefinitions = [];
+    this.variablesReferences = [];
     this.diagnostics = [];
 
     this.tokenizeText();
@@ -141,6 +144,27 @@ export class Parser {
     });
   }
 
+  /**
+   * If finds a repeated name function or variable it sends a diagnostic.
+   */
+  private checkRepetedDefinition(name: string, lineNumber: number): boolean {
+    for (let i = 0; i < this.functionsDefinitions.length; i++) {
+      const f = this.functionsDefinitions[i];
+      if (f.name === name) {
+        this.sendDiagnositcError(
+          true,
+          `the name '${name}' it's already being used to define the function at (${(f.start.line+1).toString()}, ${f.start.character.toString()}). at line ${lineNumber.toString()}`,
+          Range.create(
+            Position.create(lineNumber, 0),
+            Position.create(lineNumber, 0)
+          )
+        );
+        return true;
+      }
+    }
+    return false;
+  }
+
   private visitFunctionDefinition({
     match,
     lineNumber,
@@ -150,20 +174,12 @@ export class Parser {
     match: RegExpMatchArray;
     lineNumber: number;
   }) {
-    if (!this.diagnoseKeywordNaming({ line, match, lineNumber })) return;
+    if (
+      !this.diagnoseKeywordNaming({ line, match, lineNumber }) ||
+      this.checkRepetedDefinition(match.groups?.name, lineNumber)
+    )
+      return;
 
-    // check if the function has already been defined
-    this.sendDiagnositcError(
-      this.functionsDefinitions
-        .map((def) => def.name)
-        .includes(match.groups?.name),
-      `the function '${match.groups.name
-      }' has already been defined. line ${lineNumber.toString()}`,
-      Range.create(
-        Position.create(lineNumber, 0),
-        Position.create(lineNumber, 0)
-      )
-    );
 
     const functionDefinition: IFunctionDefinition = {
       start: Position.create(
@@ -209,7 +225,13 @@ export class Parser {
    * TODO: maybe when parsing the document just have one array with all the defintions
    * so i dont have to perform this ordering?
    */
-  private closeDefinitions({ lineNumber, match }: { lineNumber: number, match: RegExpMatchArray }): void {
+  private closeDefinitions({
+    lineNumber,
+    match,
+  }: {
+    lineNumber: number;
+    match: RegExpMatchArray;
+  }): void {
     const orderedDefinitions = [
       ...this.functionsDefinitions,
       ...this.statements,
@@ -218,14 +240,13 @@ export class Parser {
       const currentDef = orderedDefinitions[i];
       if (
         !currentDef.end &&
-        (
-          /^\s*end\s*$/.test(match[0]) ||
-          currentDef.type === "FUNCTION" && match[0].includes("endfunction") ||
-          currentDef.type === "IF" && match[0].includes("endif") ||
-          currentDef.type === "DO" && match[0].includes("until") ||
-          currentDef.type === "FOR" && match[0].includes("endfor") ||
-          currentDef.type === "WHILE" && match[0].includes("endwhile")
-        )
+        (/^\s*end\s*$/.test(match[0]) ||
+          (currentDef.type === "FUNCTION" &&
+            match[0].includes("endfunction")) ||
+          (currentDef.type === "IF" && match[0].includes("endif")) ||
+          (currentDef.type === "DO" && match[0].includes("until")) ||
+          (currentDef.type === "FOR" && match[0].includes("endfor")) ||
+          (currentDef.type === "WHILE" && match[0].includes("endwhile")))
       ) {
         currentDef.end = Position.create(lineNumber, 0);
         return;
@@ -459,9 +480,15 @@ export class Parser {
               )
             );
             break;
+          case "VARIABLE_DECLARATION":
+            this.visitVariableDefinition({
+              match,
+              lineNumber: lineNumber - 1,
+            });
+            break;
+
           case "COMMON_KEYWORDS":
           case "VARIABLE_REFERENCE":
-          case "VARIABLE_DECLARATION":
             break;
 
           case "END":
@@ -503,6 +530,28 @@ export class Parser {
     this.checkClosingBlocks();
     this.cleanUpPotentialErrorLines();
     // log(JSON.stringify(this.commentBlocks));
+  }
+
+  /**
+   * Creates the variables definitions
+   */
+  private visitVariableDefinition({
+    match,
+    lineNumber,
+  }: {
+    match: RegExpMatchArray;
+    lineNumber: number;
+  }) {
+    if (this.checkRepetedDefinition(match.groups?.name, lineNumber)) return;
+    this.variablesDefinitions.push({
+      start: Position.create(lineNumber, 0),
+      name: match.groups?.name,
+      content: match.groups?.content.split(","),
+    } as IVariableDefinition);
+  }
+
+  public getVariableDefinitions(): IVariableDefinition[] {
+    return this.variablesDefinitions;
   }
 
   /**

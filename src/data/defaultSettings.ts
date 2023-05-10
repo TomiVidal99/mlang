@@ -33,7 +33,7 @@ export const defaultSettings: ISettings = {
   maxNumberOfProblems: 1000,
   maxFilesSearchDepth: 3,
   defaultInitFile: getDefaultInitFile(),
-  enableInitFile: true,
+  enableInitFile: false,
 };
 
 export let globalSettings: ISettings = defaultSettings;
