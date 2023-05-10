@@ -2,6 +2,14 @@ import { CompletionItem, CompletionItemKind, MarkupKind } from 'vscode-languages
 
 export const completionData: CompletionItem[] = [
   {
+    label: 'quad',
+    kind: CompletionItemKind.Function,
+    documentation: {
+      kind: MarkupKind.Markdown,
+      value: ": q = quad (f, a, b)\n: q = quad (f, a, b, tol)\n: q = quad (f, a, b, tol, sing)\n: [q, ier, nfun, err] = quad (…)\n    Numerically evaluate the integral of f from a to b using Fortran routines from QUADPACK.\n    f is a function handle, inline function, or a string containing the name of the function to evaluate. The function must have the form y = f (x) where y and x are scalars.\n    a and b are the lower and upper limits of integration. Either or both may be infinite.\n    The optional argument tol is a vector that specifies the desired accuracy of the result. The first element of the vector is the desired absolute tolerance, and the second element is the desired relative tolerance. To choose a relative test only, set the absolute tolerance to zero. To choose an absolute test only, set the relative tolerance to zero. Both tolerances default to sqrt (eps) or approximately 1.5e^{-8}.\n    The optional argument sing is a vector of values at which the integrand is known to be singular.\n    The result of the integration is returned in q.\n    ier contains an integer error code (0 indicates a successful integration).\n    nfun indicates the number of function evaluations that were made.\n    err contains an estimate of the error in the solution.\n    The function quad_options can set other optional parameters for quad.\n    Note: because quad is written in Fortran it cannot be called recursively. This prevents its use in integrating over more than one variable by routines dblquad and triplequad.\n    See also: quad_options, quadv, quadl, quadgk, quadcc, trapz, dblquad, triplequad. \n\n[quad function](https://octave.sourceforge.io/octave/function/quad.html)",
+    },
+  },
+  {
     label: 'inputParser',
     kind: CompletionItemKind.Function,
     documentation: {
