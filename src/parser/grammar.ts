@@ -6,6 +6,31 @@ import { completionData } from "../data";
 // TODO: arguments need to change to consider default values
 // TODO: add end keyword for other methods, else it messes up the other definitions
 
+export type BasicTypes =
+  "VARIABLE" |
+  "NUMBER" |
+  "STRING" |
+  "VECTOR";
+
+export interface IBasicTypes {
+  name: BasicTypes;
+  pattern: RegExp;
+}
+export const BASIC_TYPES: IBasicTypes[] = [
+  {
+    name: "VECTOR",
+    pattern: /^\[(?<start>[\w.]+|[+-]?\d+(?:\.\d+)?(?:e[+-]?\d+)?)\s*:\s*(?<step>[\w.]+|[+-]?\d+(?:\.\d+)?(?:e[+-]?\d+)?)?\s*:\s*(?<end>[\w.]+|[+-]?\d+(?:\.\d+)?(?:e[+-]?\d+)?)](?<math_expr>(?:(?:[\\+\-\\*\\/]\s*)?(?:[\w.]+|[+-]?\d+(?:\.\d+)?(?:e[+-]?\d+)?))*)$/,
+  },
+  {
+    name: "STRING",
+    pattern: /^".*"$/,
+  },
+  {
+    name: "NUMBER",
+    pattern: /^".*"$/,
+  },
+];
+
 const COMMON_KEYWORDS = [
   "do",
   "break",

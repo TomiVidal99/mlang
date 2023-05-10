@@ -3,13 +3,11 @@ import {
   Position,
   Diagnostic,
   DiagnosticSeverity,
-  LinkedEditingRangeRequest,
 } from "vscode-languageserver";
-import { GRAMMAR, IToken, TokenNameType } from "./grammar";
+import { GRAMMAR, IToken } from "./grammar";
 import { checkIfPathExists, parseMultipleMatchValues } from "../utils";
 import { getAllFilepathsFromPath } from "../server";
 import { TextDocument } from "vscode-languageserver-textdocument";
-import { group } from "console";
 
 const commentPattern = /^\s*(?!%(?:{|})|#(?:{|}))[#%%].*/;
 
@@ -278,13 +276,25 @@ export class Parser {
       end: Position.create(lineNumber, 0),
       name: match[1],
       type: "IF",
-      arguments: parseMultipleMatchValues(match.groups?.retval),
+      arguments: this.checkValidFunctionArguments(parseMultipleMatchValues(match.groups?.retval)),
       depth: this.helperGetFunctionDefinitionDepth({ lineNumber }),
       description: this.helperGetFunctionDefinitionDescription({
         lineNumber: lineNumber,
       }),
     };
     this.functionsDefinitions.push(functionDefinition);
+  }
+
+
+  /**
+   * Sends a diagnostic if the provided arguments are not valid
+   * TODO
+   */
+  private checkValidFunctionArguments(args: string[]): string[] {
+    return args;
+    // args.map((arg) => {
+    //   if (arg)
+    // });
   }
 
   /**

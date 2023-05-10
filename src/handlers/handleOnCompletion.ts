@@ -8,6 +8,7 @@ import {
 import * as path from "path";
 import {
   getAllFunctionDefinitions,
+  getAllVariableDefinitions,
   getFunctionReferenceMessage,
   getPathFromURI,
 } from "../utils";
@@ -33,6 +34,7 @@ export function handleOnCompletion({
 }): CompletionItem[] {
   return [
     ...completionData,
+    ...getCompletionVariables(),
     ...getCompletionFunctions({
       uri: params.textDocument.uri,
       position: params.position,
@@ -41,6 +43,16 @@ export function handleOnCompletion({
       currentDocument: params.textDocument.uri,
     }),
   ];
+}
+
+function getCompletionVariables(): CompletionItem[] {
+  return getAllVariableDefinitions().map((v) => {
+    return {
+      label: v.name,
+      documentation: `from: ${getPathFromURI(v.uri)}`,
+      kind: CompletionItemKind.Variable,
+    } as CompletionItem;
+  });
 }
 
 function getCompletionFunctions({
