@@ -38,7 +38,7 @@ const documents = new TextDocuments<TextDocument>(TextDocument);
 
 export function log(message: string | object): void {
   // TODO: this is only for dev purposes
-  // return;
+  return;
   connection.sendRequest("window/showMessage", {
     type: MessageType.Info,
     message: typeof message === "string" ? message : JSON.stringify(message),

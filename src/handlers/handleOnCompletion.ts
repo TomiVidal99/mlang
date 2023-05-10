@@ -49,7 +49,7 @@ function getCompletionVariables(): CompletionItem[] {
   return getAllVariableDefinitions().map((v) => {
     return {
       label: v.name,
-      documentation: `from: ${getPathFromURI(v.uri)}`,
+      documentation: `${v.lineContent}\n\nfrom: ${getPathFromURI(v.uri)}`,
       kind: CompletionItemKind.Variable,
     } as CompletionItem;
   });

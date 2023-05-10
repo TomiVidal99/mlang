@@ -39,7 +39,9 @@ export function updateDocumentData(document: TextDocument): void {
  * Gets the variable definitions of all the documents registered.
  */
 export function getAllVariableDefinitions(): IVariableDefinition[] {
-  return documentData.flatMap((data) => data.getVariableDefinitions().map(
+  return documentData.flatMap((data) => data.getVariableDefinitions()
+    .filter((d) => d.depth <= 0)
+    .map(
     (d) => {
       return {
         uri: data.getURI(),
@@ -105,7 +107,6 @@ export class DocumentData {
     this.functionsDefinitions = this.parser.getFunctionsDefinitions();
     this.functionsReferences = this.parser.getFunctionsReferences();
     this.updateDiagnostics(this.parser.getDiagnostics());
-    log(JSON.stringify(this.parser.getVariableDefinitions()));
   }
 
   /**

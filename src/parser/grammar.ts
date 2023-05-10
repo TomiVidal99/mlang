@@ -101,7 +101,7 @@ export const GRAMMAR: IToken[] = [
   },
   {
     name: "VARIABLE_DECLARATION",
-    pattern: /(?<name>\w+)\s*=\s*(?<content>.*)/,
+    pattern: /^\s*(?<name>\w+)\s*=\s*(?<content>.*)/,
   },
   // TODO: maybe remove this?
   // {

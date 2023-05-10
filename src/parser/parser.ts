@@ -42,11 +42,13 @@ export interface IFunctionReference {
 }
 
 export interface IVariableDefinition {
+  depth: number;
   uri?: string;
   start: Position;
   end?: Position;
   name: string;
   content: string[];
+  lineContent: string;
 }
 
 export interface IVariableReference {
@@ -66,6 +68,7 @@ export interface IErrorLines {
 }
 
 export interface IStatements {
+  depth: number;
   type: StatementType;
   start: Position;
   end?: Position;
@@ -553,11 +556,45 @@ export class Parser {
     lineNumber: number;
   }) {
     if (this.checkRepetedDefinition(match.groups?.name, lineNumber)) return;
-    this.variablesDefinitions.push({
+    const def: IVariableDefinition = {
+      depth: this.helperGetVariableDefinitionDepth({lineNumber}),
       start: Position.create(lineNumber, 0),
       name: match.groups?.name,
       content: match.groups?.content.split(","),
-    } as IVariableDefinition);
+      lineContent: match[0],
+    };
+    this.variablesDefinitions.push(def);
+  }
+
+  private helperGetVariableDefinitionDepth({
+    lineNumber,
+  }: {
+    lineNumber: number;
+  }): number {
+    if (this.functionsDefinitions.length === 0 && this.statements.length === 0) {
+      // case for a definition at file level
+      return 0;
+    }
+    const allScopes = [
+      ...this.functionsDefinitions,
+      ...this.statements
+    ].sort((a, b) => a.start.line - b.start.line);
+    let foundDepthFlag = false;
+    for (let i = allScopes.length; i > 0; i--) {
+      const func = allScopes[i - 1];
+      if (
+        func.start.line < lineNumber &&
+        func.end &&
+        func.end.line > lineNumber
+      ) {
+        foundDepthFlag = true;
+        return func.depth;
+      }
+    }
+    if (!foundDepthFlag) {
+      // this cases occurs when there are one or more definitions not closed with the 'end' keyword
+      return -1;
+    }
   }
 
   public getVariableDefinitions(): IVariableDefinition[] {
@@ -576,10 +613,30 @@ export class Parser {
     match: RegExpMatchArray;
     lineNumber: number;
   }): void {
-    this.statements.push({
+    const statement: IStatements = {
+      depth: this.helperGetStatementDepth(),
       type,
       start: Position.create(lineNumber, 0),
-    } as IStatements);
+    };
+    this.statements.push(statement);
+  }
+
+  /**
+   * Returns the depth of the current statement
+   */
+  private helperGetStatementDepth(): number {
+    const allScopes = [
+      ...this.functionsDefinitions,
+      ...this.statements
+    ].sort((a, b) => a.start.line - b.start.line);
+
+    let currentDef = 0;
+    allScopes.forEach((def) => {
+      if (def?.end) return;
+      currentDef++;
+    });
+
+    return currentDef;
   }
 
   /**
