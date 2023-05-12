@@ -1,7 +1,7 @@
 import { TextDocument } from "vscode-languageserver-textdocument";
 import { IKeyword } from "./getFunctionDefinitions";
 import { getPathFromURI } from "./getPathFromURI";
-import { addDocumentsFromPath, documentData, log } from "../server";
+import { addDocumentsFromPath, documentData } from "../server";
 import { IFunctionDefinition, IFunctionReference, IVariableDefinition, Parser } from "../parser";
 import { Diagnostic, PublishDiagnosticsParams } from "vscode-languageserver";
 import { parseToIKeyword } from "./parseToIKeyword";
@@ -27,6 +27,7 @@ export function updateDocumentData(document: TextDocument): void {
       foundFlag = true;
       data.setDocument(document);
       data.updateDocumentData();
+
       // connection.sendDiagnostics(data.getDiagnostics());
     }
   });

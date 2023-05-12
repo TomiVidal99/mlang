@@ -3,7 +3,6 @@ import {
   CompletionItemKind,
   MarkupKind,
   TextDocumentPositionParams,
-  TextDocuments,
 } from "vscode-languageserver";
 import * as path from "path";
 import {
@@ -88,11 +87,12 @@ export function getDocumentsToBeExecutable({
   // TODO: fix this to use map
   const documentsReferences: CompletionItem[] = [];
   documentData.forEach((data) => {
-    // log("currentDocument: " + currentDocument + ", doc.uri: " + data.getURI());
+    log("currentDocument: " + currentDocument + ", doc.uri: " + data.getURI());
     if (currentDocument === data.getURI() || data.getDocumentPath() === defaultSettings.defaultInitFile) return;
     const newCompletionItem: CompletionItem = {
       label: path.basename(data.getDocumentPath(), ".m"),
       kind: CompletionItemKind.File,
+      // TODO: this throws an error
       // documentation: {
       //   kind: MarkupKind.Markdown,
       //   value: `file: "${getPathFromURI(data.getDocumentPath())}"\n\n${data.getLines().splice(0, PREVIEW_LINES)}`,

@@ -47,7 +47,7 @@ export interface IToken {
 
 export type TokenNameType =
   | "ANY"
-  | "FILE_REFERENCE"
+  | "REFERENCE"
   | "END"
   | "COMMON_KEYWORDS"
   | "COMMENT_BLOCK_START"
@@ -58,7 +58,6 @@ export type TokenNameType =
   | "ELSE_IF_STATEMENT"
   | "WHILE_STATEMENT_START"
   | "FOR_STATEMENT_START"
-  | "VARIABLE_REFERENCE"
   | "VARIABLE_DECLARATION"
   | "FUNCTION_REFERENCE_WITH_SINGLE_OUTPUT"
   | "FUNCTION_REFERENCE_WITH_MULTIPLE_OUTPUTS"
@@ -103,11 +102,6 @@ export const GRAMMAR: IToken[] = [
     name: "VARIABLE_DECLARATION",
     pattern: /^\s*(?<name>\w+)\s*=\s*(?<content>.*)/,
   },
-  // TODO: maybe remove this?
-  // {
-  //   name: "VARIABLE_REFERENCE",
-  //   pattern: /(?<!\w)(?!if|while|for|switch)(?!.*\s=\s)(\w+)(?!\()/,
-  // },
   {
     name: "DO_STATEMENT",
     pattern: /^\s*(do).*/,
@@ -149,8 +143,8 @@ export const GRAMMAR: IToken[] = [
     pattern: /^\s*(break|continue)\b\s*;?\s*$/,
   },
   {
-    name: "FILE_REFERENCE",
-    pattern: /^\s*(?<name>[a-zA-Z_]+)\s*(?:;|\(\)|\(\);)?\s*$/,
+    name: "REFERENCE",
+    pattern: /^\s*(?<name>[a-zA-Z_-]+)\s*(?:;|\(\)|\(\);)?\s*$/,
   },
   {
     name: "ANY",

@@ -6,7 +6,7 @@ import {
 } from "vscode-languageserver";
 import { GRAMMAR, IToken } from "./grammar";
 import { checkIfPathExists, parseMultipleMatchValues } from "../utils";
-import { getAllFilepathsFromPath } from "../server";
+import { getAllFilepathsFromPath, log } from "../server";
 import { TextDocument } from "vscode-languageserver-textdocument";
 
 const commentPattern = /^\s*(?!%(?:{|})|#(?:{|}))[#%%].*/;
@@ -15,7 +15,7 @@ const commentPattern = /^\s*(?!%(?:{|})|#(?:{|}))[#%%].*/;
 
 export type StatementType = "IF" | "WHILE" | "FOR" | "DO" | "FUNCTION";
 
-export interface IFileReference {
+export interface IReference {
   lineNumber: number;
   name: string;
 }
@@ -51,12 +51,6 @@ export interface IVariableDefinition {
   lineContent: string;
 }
 
-export interface IVariableReference {
-  start: Position;
-  end: Position;
-  name: string;
-}
-
 export interface ICommentBlock {
   start: Position;
   end?: Position;
@@ -80,9 +74,8 @@ export class Parser {
   private functionsReferences: IFunctionReference[];
   private potentialErrorLines: IErrorLines[];
   private statements: IStatements[];
-  private fileReferences: IFileReference[];
+  private references: IReference[];
   private variablesDefinitions: IVariableDefinition[];
-  private variablesReferences: IVariableReference[];
   private addedPaths: string[];
   private commentBlocks: ICommentBlock[];
   private diagnostics: Diagnostic[];
@@ -96,10 +89,9 @@ export class Parser {
     this.functionsReferences = [];
     this.commentBlocks = [];
     this.potentialErrorLines = [];
-    this.fileReferences = [];
+    this.references = [];
     this.addedPaths = [];
     this.variablesDefinitions = [];
-    this.variablesReferences = [];
     this.diagnostics = [];
 
     this.tokenizeText();
@@ -191,7 +183,7 @@ export class Parser {
       arguments: parseMultipleMatchValues(match.groups?.args),
       output: parseMultipleMatchValues(match.groups?.retval),
       name: match.groups?.name,
-      depth: this.helperGetFunctionDefinitionDepth({ lineNumber }),
+      depth: this.helperGetFunctionDefinitionDepth(),
       description: this.helperGetFunctionDefinitionDescription({
         lineNumber: lineNumber,
       }),
@@ -280,7 +272,7 @@ export class Parser {
       name: match[1],
       type: "IF",
       arguments: this.checkValidFunctionArguments(parseMultipleMatchValues(match.groups?.retval)),
-      depth: this.helperGetFunctionDefinitionDepth({ lineNumber }),
+      depth: this.helperGetFunctionDefinitionDepth(),
       description: this.helperGetFunctionDefinitionDescription({
         lineNumber: lineNumber,
       }),
@@ -304,26 +296,12 @@ export class Parser {
    * Returns the depth in a function definition of the current function definition.
    * If it's 0 then it means that the function it's defined at file level.
    */
-  private helperGetFunctionDefinitionDepth({
-    lineNumber,
-  }: {
-    lineNumber: number;
-  }): number {
+  private helperGetFunctionDefinitionDepth(): number {
     if (this.functionsDefinitions.length === 0) {
       // case for a definition at file level
       return 0;
     }
-    let foundDepthFlag = false;
-    this.functionsDefinitions.forEach((func) => {
-      if (!func.end || func.end.line > lineNumber) {
-        foundDepthFlag = true;
-        return func.depth + 1;
-      }
-    });
-    if (!foundDepthFlag) {
-      // this cases occurs when there are multiple definitions not closed with the 'end' keyword
-      return 0;
-    }
+    return this.functionsDefinitions.filter((d) => !d.end).length;
   }
 
   /**
@@ -501,7 +479,6 @@ export class Parser {
             break;
 
           case "COMMON_KEYWORDS":
-          case "VARIABLE_REFERENCE":
             break;
 
           case "END":
@@ -523,8 +500,8 @@ export class Parser {
             });
             break;
 
-          case "FILE_REFERENCE":
-            this.visitFileReference({ match, lineNumber: lineNumber - 1 });
+          case "REFERENCE":
+            this.visitReference({ match, lineNumber: lineNumber - 1 });
             break;
 
           case "ANY":
@@ -557,44 +534,13 @@ export class Parser {
   }) {
     if (this.checkRepetedDefinition(match.groups?.name, lineNumber)) return;
     const def: IVariableDefinition = {
-      depth: this.helperGetVariableDefinitionDepth({lineNumber}),
+      depth: this.helperGetFunctionDefinitionDepth(),
       start: Position.create(lineNumber, 0),
       name: match.groups?.name,
       content: match.groups?.content.split(","),
       lineContent: match[0],
     };
     this.variablesDefinitions.push(def);
-  }
-
-  private helperGetVariableDefinitionDepth({
-    lineNumber,
-  }: {
-    lineNumber: number;
-  }): number {
-    if (this.functionsDefinitions.length === 0 && this.statements.length === 0) {
-      // case for a definition at file level
-      return 0;
-    }
-    const allScopes = [
-      ...this.functionsDefinitions,
-      ...this.statements
-    ].sort((a, b) => a.start.line - b.start.line);
-    let foundDepthFlag = false;
-    for (let i = allScopes.length; i > 0; i--) {
-      const func = allScopes[i - 1];
-      if (
-        func.start.line < lineNumber &&
-        func.end &&
-        func.end.line > lineNumber
-      ) {
-        foundDepthFlag = true;
-        return func.depth;
-      }
-    }
-    if (!foundDepthFlag) {
-      // this cases occurs when there are one or more definitions not closed with the 'end' keyword
-      return -1;
-    }
   }
 
   public getVariableDefinitions(): IVariableDefinition[] {
@@ -655,7 +601,7 @@ export class Parser {
     const localDiagnostics: Diagnostic[] = [];
     // validate file references
     localDiagnostics.push(
-      ...this.fileReferences
+      ...this.references
         .filter((ref) => !uris.includes(ref.name))
         .map((ref) => {
           return {
@@ -694,14 +640,15 @@ export class Parser {
     return localDiagnostics;
   }
 
-  private visitFileReference({
+  private visitReference({
     match,
     lineNumber,
   }: {
     match: RegExpMatchArray;
     lineNumber: number;
   }): void {
-    this.fileReferences.push({
+    log("visiting file reference: " + JSON.stringify(match));
+    this.references.push({
       name: match.groups?.name,
       lineNumber,
     });
@@ -778,10 +725,12 @@ export class Parser {
     lineNumber: number;
   }): void {
     if (match.groups?.name === "addpath") {
+      log("FOUND PATH: " + match.groups.args);
       const paths = parseMultipleMatchValues(match.groups?.args);
       paths.forEach((p) => {
         p.split(":").forEach((path) => {
           const pathExists = checkIfPathExists(path);
+          log(`does ${path} exits? ${JSON.stringify(pathExists)}`);
           if (pathExists) {
             this.addedPaths.push(path);
           }
@@ -832,7 +781,6 @@ export class Parser {
       token.name === "FUNCTION_REFERENCE_WITH_SINGLE_OUTPUT" ||
       token.name === "FUNCTION_REFERENCE_WITH_MULTIPLE_OUTPUTS" ||
       token.name === "FUNCTION_REFERENCE_WITHOUT_OUTPUT" ||
-      token.name === "VARIABLE_REFERENCE" ||
       token.name === "VARIABLE_DECLARATION" ||
       token.name === "ANONYMOUS_FUNCTION";
     if (!validTokens || line.trim() === "" || line.endsWith(";")) return;
