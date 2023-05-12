@@ -142,6 +142,8 @@ export const GRAMMAR: IToken[] = [
     name: "COMMENT_BLOCK_END",
     pattern: /^\s*(break|continue)\b\s*;?\s*$/,
   },
+  // it's hard to distinguish between references, because there's not really a diference between them
+  // thats why all references are treated the same way.
   {
     name: "REFERENCE",
     pattern: /^\s*(?<name>[a-zA-Z_-]+)\s*(?:;|\(\)|\(\);)?\s*$/,
