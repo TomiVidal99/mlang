@@ -8,7 +8,7 @@ import * as fs from "fs";
 import * as path from "path";
 
 import { TextDocument } from "vscode-languageserver-textdocument";
-import { ISettings, completionData } from "./data";
+import { ISettings, completionData, globalSettings } from "./data";
 import {
   getDocumentsToBeExecutable,
   handleOnCompletion,
@@ -82,6 +82,7 @@ documents.onDidChangeContent((change) => {
   onChangeContentDelay = setTimeout(async () => {
     updateDocumentData(change.document);
     updatePostParsingDiagnostics();
+    cleanUnreferencedDocuments();
   }, CHANGE_CONTENT_DELAY_MS);
 });
 connection.onCompletion((params) => handleOnCompletion({ params: params }));
@@ -144,6 +145,22 @@ export function getAllFilesInProject(): string[] {
   return files;
 }
 
+function getAllVariableDefinitions(currentDoc: DocumentData): string[] {
+  return documentData
+    .filter((d) =>
+      currentDoc
+      .getVariableDefinitions()
+      .map((ref) => ref.name)
+      .includes(d.getFileName())
+    )
+    .flatMap((d) =>
+      d
+      .getVariableDefinitions()
+      .filter((ref) => ref.depth === 0)
+      .map((ref) => ref.name)
+    );
+}
+
 /**
  * Checks that references are ok, else send diagnostics.
  * TODO: distinguish between reference does not exist and should import the reference
@@ -153,6 +170,7 @@ function updatePostParsingDiagnostics(): void {
   documentData.forEach((data) => {
     connection.sendDiagnostics(
       data.getDiagnostics({
+        variablesDefinitions: getAllVariableDefinitions(data),
         allFilesInProject,
         functionsDefinitions: [
           ...getValidFunctionsReferencesNames(data),
@@ -189,4 +207,23 @@ function getValidFunctionsReferencesNames(currentDoc: DocumentData): string[] {
     ),
   ];
   return [...defs];
+}
+
+/**
+  * Checks that all documents are referencing to the listed documents.
+  * if any document in the list it's not referenced will be removed.
+  */
+function cleanUnreferencedDocuments(): void {
+  const referencedPaths = documentData.flatMap((data) => data.getLocallyReferencedPaths());
+  if (globalSettings.enableInitFile && globalSettings.defaultInitFile) {
+    referencedPaths.push(...getAllFilepathsFromPath(globalSettings.defaultInitFile));
+  }
+  documentData.forEach((data) => {
+    if (!referencedPaths.includes(data.getDocumentPath())) {
+      // log(`the doc ${data.getDocumentPath()} should not be referenced.`);
+      documentData.splice(documentData.indexOf(data), 1);
+    }
+  });
+
+  log(JSON.stringify(documentData.map((d) => d.getFileName())));
 }

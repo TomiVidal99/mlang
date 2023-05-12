@@ -592,7 +592,8 @@ export class Parser {
   public validateReferences({
     uris,
     functionsDefinitions,
-  }: // variablesDefinitions,
+    variablesDefinitions,
+  }:
     {
       uris: string[];
       functionsDefinitions: string[];
@@ -607,7 +608,7 @@ export class Parser {
         .filter(
           (ref) =>
             !uris.includes(ref.name) &&
-            !this.variablesDefinitions.map((d) => d.name).includes(ref.name)
+            !variablesDefinitions.includes(ref.name)
         )
         .map((ref) => {
           return {

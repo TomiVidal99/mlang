@@ -1,7 +1,7 @@
 import { TextDocument } from "vscode-languageserver-textdocument";
 import { IKeyword } from "./getFunctionDefinitions";
 import { getPathFromURI } from "./getPathFromURI";
-import { addDocumentsFromPath, documentData } from "../server";
+import { addDocumentsFromPath, documentData, log } from "../server";
 import { IFunctionDefinition, IFunctionReference, IVariableDefinition, Parser } from "../parser";
 import { Diagnostic, PublishDiagnosticsParams } from "vscode-languageserver";
 import { parseToIKeyword } from "./parseToIKeyword";
@@ -11,6 +11,7 @@ export function addNewDocument(document: TextDocument): void {
   const data = new DocumentData(document);
   data.updateDocumentData();
   documentData.push(data);
+  log("adding: " + data.getDocumentPath());
   data.postUpdateHooks();
 }
 
@@ -161,9 +162,11 @@ export class DocumentData {
   public getDiagnostics({
     allFilesInProject,
     functionsDefinitions,
+    variablesDefinitions
   }: {
     allFilesInProject: string[];
     functionsDefinitions: string[];
+    variablesDefinitions: string[];
   }): PublishDiagnosticsParams {
     return {
       uri: this.getURI(),
@@ -172,7 +175,7 @@ export class DocumentData {
         ...this.parser.validateReferences({
           uris: allFilesInProject,
           functionsDefinitions,
-          variablesDefinitions: [],
+          variablesDefinitions,
         }),
       ],
     };
@@ -189,7 +192,7 @@ export class DocumentData {
     return path.basename(this.getDocumentPath(), ".m");
   }
 
-  private getLocallyReferencedPaths(): string[] {
+  public getLocallyReferencedPaths(): string[] {
     return this.parser.getAddedPaths();
   }
 
