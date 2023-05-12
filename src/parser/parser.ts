@@ -146,7 +146,9 @@ export class Parser {
       if (f.name === name) {
         this.sendDiagnositcError(
           true,
-          `the name '${name}' it's already being used to define the function at (${(f.start.line+1).toString()}, ${f.start.character.toString()}). at line ${lineNumber.toString()}`,
+          `the name '${name}' it's already being used to define the function at (${(
+            f.start.line + 1
+          ).toString()}, ${f.start.character.toString()}). at line ${lineNumber.toString()}`,
           Range.create(
             Position.create(lineNumber, 0),
             Position.create(lineNumber, 0)
@@ -172,7 +174,6 @@ export class Parser {
       this.checkRepetedDefinition(match.groups?.name, lineNumber)
     )
       return;
-
 
     const functionDefinition: IFunctionDefinition = {
       start: Position.create(
@@ -271,7 +272,9 @@ export class Parser {
       end: Position.create(lineNumber, 0),
       name: match[1],
       type: "IF",
-      arguments: this.checkValidFunctionArguments(parseMultipleMatchValues(match.groups?.retval)),
+      arguments: this.checkValidFunctionArguments(
+        parseMultipleMatchValues(match.groups?.retval)
+      ),
       depth: this.helperGetFunctionDefinitionDepth(),
       description: this.helperGetFunctionDefinitionDescription({
         lineNumber: lineNumber,
@@ -279,7 +282,6 @@ export class Parser {
     };
     this.functionsDefinitions.push(functionDefinition);
   }
-
 
   /**
    * Sends a diagnostic if the provided arguments are not valid
@@ -571,10 +573,9 @@ export class Parser {
    * Returns the depth of the current statement
    */
   private helperGetStatementDepth(): number {
-    const allScopes = [
-      ...this.functionsDefinitions,
-      ...this.statements
-    ].sort((a, b) => a.start.line - b.start.line);
+    const allScopes = [...this.functionsDefinitions, ...this.statements].sort(
+      (a, b) => a.start.line - b.start.line
+    );
 
     let currentDef = 0;
     allScopes.forEach((def) => {
@@ -598,11 +599,16 @@ export class Parser {
       variablesDefinitions: string[];
     }): Diagnostic[] {
     // TODO: maybe add indication of possible references that matches the wrongly typed text
+    // TODO: optimize this.
     const localDiagnostics: Diagnostic[] = [];
     // validate file references
     localDiagnostics.push(
       ...this.references
-        .filter((ref) => !uris.includes(ref.name))
+        .filter(
+          (ref) =>
+            !uris.includes(ref.name) &&
+            !this.variablesDefinitions.map((d) => d.name).includes(ref.name)
+        )
         .map((ref) => {
           return {
             range: Range.create(
@@ -655,17 +661,17 @@ export class Parser {
   }
 
   // Removes the lines that are commented
+  // TODO: consider comment blocks
   private cleanUpPotentialErrorLines(): void {
     this.potentialErrorLines.forEach((line) => {
-      this.commentBlocks.forEach((block) => {
-        if (
-          block.end &&
-          block.start.line < line.lineNumber &&
-          block.end.line > line.lineNumber
-        ) {
-          return;
-        }
-      });
+      // this.commentBlocks.forEach((block) => {
+      // if (
+      //   block.end &&
+      //   block.start.line < line.lineNumber &&
+      //   block.end.line > line.lineNumber
+      // ) {
+      //   return;
+      // }
       const diagnostic: Diagnostic = {
         severity: DiagnosticSeverity.Error,
         range: {
@@ -676,6 +682,7 @@ export class Parser {
         source: "mlang",
       };
       this.diagnostics.push(diagnostic);
+      // });
     });
   }
 
@@ -778,6 +785,7 @@ export class Parser {
     token: IToken;
   }): void {
     const validTokens =
+      token.name === "REFERENCE" ||
       token.name === "FUNCTION_REFERENCE_WITH_SINGLE_OUTPUT" ||
       token.name === "FUNCTION_REFERENCE_WITH_MULTIPLE_OUTPUTS" ||
       token.name === "FUNCTION_REFERENCE_WITHOUT_OUTPUT" ||

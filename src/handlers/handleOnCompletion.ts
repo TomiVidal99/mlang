@@ -4,14 +4,13 @@ import {
   MarkupKind,
   TextDocumentPositionParams,
 } from "vscode-languageserver";
-import * as path from "path";
 import {
   getAllFunctionDefinitions,
   getAllVariableDefinitions,
   getFunctionReferenceMessage,
   getPathFromURI,
 } from "../utils";
-import { documentData, log } from "../server";
+import { documentData } from "../server";
 import { Position, TextDocument } from "vscode-languageserver-textdocument";
 import { completionData, defaultSettings } from "../data";
 
@@ -68,6 +67,7 @@ function getCompletionFunctions({
     const newCompletionItem: CompletionItem = {
       label: funcDef.name,
       kind: CompletionItemKind.Function,
+      insertText: `${funcDef.name}()`, // TODO: make this completion complaint with the arguments
       documentation: {
         kind: MarkupKind.Markdown,
         // value: 'from "' + val.uri + '"',
@@ -87,11 +87,12 @@ export function getDocumentsToBeExecutable({
   // TODO: fix this to use map
   const documentsReferences: CompletionItem[] = [];
   documentData.forEach((data) => {
-    log("currentDocument: " + currentDocument + ", doc.uri: " + data.getURI());
+    // log("currentDocument: " + currentDocument + ", doc.uri: " + data.getURI());
     if (currentDocument === data.getURI() || data.getDocumentPath() === defaultSettings.defaultInitFile) return;
     const newCompletionItem: CompletionItem = {
-      label: path.basename(data.getDocumentPath(), ".m"),
+      label: data.getFileName(),
       kind: CompletionItemKind.File,
+      insertText: `${data.getFileName()};`
       // TODO: this throws an error
       // documentation: {
       //   kind: MarkupKind.Markdown,
