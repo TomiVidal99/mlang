@@ -11,12 +11,7 @@ export function addNewDocument(document: TextDocument): void {
   const data = new DocumentData(document);
   data.updateDocumentData();
   documentData.push(data);
-  data.getLocallyReferencedPaths().forEach((p) => {
-    // this must be executed after pushing data to the documentData array
-    // TODO: consider when the path it's updated and the document it's not longer considered.
-    // what happens when multiple files references to the same files?
-    addDocumentsFromPath(p);
-  });
+  data.postUpdateHooks();
 }
 
 export function updateDocumentData(document: TextDocument): void {
@@ -27,8 +22,7 @@ export function updateDocumentData(document: TextDocument): void {
       foundFlag = true;
       data.setDocument(document);
       data.updateDocumentData();
-
-      // connection.sendDiagnostics(data.getDiagnostics());
+      data.postUpdateHooks();
     }
   });
   if (!foundFlag) {
@@ -195,7 +189,7 @@ export class DocumentData {
     return path.basename(this.getDocumentPath(), ".m");
   }
 
-  public getLocallyReferencedPaths(): string[] {
+  private getLocallyReferencedPaths(): string[] {
     return this.parser.getAddedPaths();
   }
 
@@ -216,6 +210,18 @@ export class DocumentData {
   public getExportedFunctions(): IFunctionDefinition[] {
     // log(`file ${this.getFileName()}: ${JSON.stringify(this.getFunctionsDefinitions().map((def) => def.name))}`);
     return this.getFunctionsDefinitions().filter((def) => def.name === this.getFileName());
+  }
+
+  /**
+  * Methods that must be ran after updating the document and pushing it to the array.
+  */
+  public postUpdateHooks(): void {
+    this.getLocallyReferencedPaths().forEach((p) => {
+    // this must be executed after pushing data to the documentData array
+    // TODO: consider when the path it's updated and the document it's not longer considered.
+    // what happens when multiple files references to the same files?
+    addDocumentsFromPath(p);
+  });
   }
 
 }
