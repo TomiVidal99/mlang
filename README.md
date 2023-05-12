@@ -49,6 +49,7 @@ end
 
 ## TODO
 
+- [ ] add loading progress display.
 - [ ] fix: that file references not need _()_ to be called.
 - [ ] consider packages (check if they're installed and offer references).
 - [ ] add auto imports (add the _addpath_ command at the beggining of the file when importing some function, think this better).
