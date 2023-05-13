@@ -49,6 +49,7 @@ end
 
 ## TODO
 
+- [ ] implement global settings and add custom user settings.
 - [ ] consider comment blocks.
 - [ ] add loading progress display.
 - [ ] fix: that file references not need _()_ to be called.
