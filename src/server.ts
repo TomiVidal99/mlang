@@ -80,9 +80,14 @@ documents.onDidChangeContent((change) => {
   // log(JSON.stringify(documentData.map((d) => d.getDocumentPath())));
 
   onChangeContentDelay = setTimeout(async () => {
-    updateDocumentData(change.document);
+    updateDocumentData(change.document, (data) => {
+      // TODO: maybe think of a better way to handle this case
+      // this is because the update of the diagnostics for references and such
+      // must be ran after the document has read all the other files
+      cleanUnreferencedDocuments(change.document.uri);
+      data.postUpdateHooks();
+    });
     updatePostParsingDiagnostics();
-    cleanUnreferencedDocuments();
   }, CHANGE_CONTENT_DELAY_MS);
 });
 connection.onCompletion((params) => handleOnCompletion({ params: params }));
@@ -184,10 +189,22 @@ function updatePostParsingDiagnostics(): void {
   });
 }
 
-// TODO: make this
 function getValidFunctionsReferencesNames(currentDoc: DocumentData): string[] {
   // const localDefinitions: string[] = [];
-  const defs = [
+  return [
+    ...documentData
+      .filter((d) =>
+        currentDoc
+          .getReferences()
+          .map((ref) => ref.name)
+          .includes(d.getFileName())
+      )
+      .flatMap((d) =>
+        d
+          .getFunctionsDefinitions()
+          .filter((ref) => ref.depth === 0)
+          .map((ref) => ref.name)
+      ),
     ...documentData
       .filter((d) =>
         currentDoc
@@ -206,22 +223,23 @@ function getValidFunctionsReferencesNames(currentDoc: DocumentData): string[] {
       data.getExportedFunctions().map((ref) => ref.name)
     ),
   ];
-  return [...defs];
 }
 
 /**
   * Checks that all documents are referencing to the listed documents.
   * if any document in the list it's not referenced will be removed.
   */
-function cleanUnreferencedDocuments(): void {
+function cleanUnreferencedDocuments(currentDocumentURI: string): void {
   const referencedPaths = documentData.flatMap((data) => data.getLocallyReferencedPaths());
   if (globalSettings.enableInitFile && globalSettings.defaultInitFile) {
     referencedPaths.push(...getAllFilepathsFromPath(globalSettings.defaultInitFile));
   }
   documentData.forEach((data) => {
-    if (!referencedPaths.includes(data.getDocumentPath())) {
+    if (data.getURI() !== currentDocumentURI && !referencedPaths.includes(data.getDocumentPath())) {
       // log(`the doc ${data.getDocumentPath()} should not be referenced.`);
+      // log(`before removal docs: ${JSON.stringify(documentData.map((d) => d.getFileName()))}`);
       documentData.splice(documentData.indexOf(data), 1);
+      // log(`after removal docs: ${JSON.stringify(documentData.map((d) => d.getFileName()))}`);
     }
   });
 

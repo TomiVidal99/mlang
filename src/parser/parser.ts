@@ -616,7 +616,7 @@ export class Parser {
               Position.create(ref.lineNumber, 0),
               Position.create(ref.lineNumber, 0)
             ),
-            message: `reference not found: '${ref.name}' at line ${(
+            message: `reference '${ref.name}' not found. At line ${(
               ref.lineNumber + 1
             ).toString()}`,
             severity: DiagnosticSeverity.Error,
@@ -630,12 +630,13 @@ export class Parser {
             !functionsDefinitions.includes(ref.name)
         )
         .map((ref) => {
+          // log('functionsDefinitions: ' + JSON.stringify(functionsDefinitions));
           return {
             range: Range.create(
               Position.create(ref.start.line, 0),
               Position.create(ref.start.line, 0)
             ),
-            message: `reference not found: '${ref.name}' at line ${(
+            message: `reference '${ref.name}' not found. At line ${(
               ref.start.line + 1
             ).toString()}`,
             severity: DiagnosticSeverity.Error,
@@ -654,7 +655,7 @@ export class Parser {
     match: RegExpMatchArray;
     lineNumber: number;
   }): void {
-    log("visiting file reference: " + JSON.stringify(match));
+    // log("visiting reference: " + JSON.stringify(match));
     this.references.push({
       name: match.groups?.name,
       lineNumber,
@@ -724,7 +725,6 @@ export class Parser {
     this.functionsReferences.push(reference);
   }
 
-  // TODO: fix this, it can handle relative paths well, it's bugs out and shuts the server with call stack exceeded.
   private handleReferenceAddPath({
     match,
     lineNumber,
@@ -733,12 +733,12 @@ export class Parser {
     lineNumber: number;
   }): void {
     if (match.groups?.name === "addpath") {
-      log("FOUND PATH: " + match.groups.args);
+      // log("FOUND PATH: " + match.groups.args);
       const paths = parseMultipleMatchValues(match.groups?.args);
       paths.forEach((p) => {
         p.split(":").forEach((path) => {
           const pathExists = checkIfPathExists(path);
-          log(`does ${path} exits? ${JSON.stringify(pathExists)}`);
+          // log(`does ${path} exits? ${JSON.stringify(pathExists)}`);
           if (pathExists) {
             this.addedPaths.push(path);
           }
@@ -867,4 +867,12 @@ export class Parser {
   public getLines(): string[] {
     return this.lines;
   }
+
+  /**
+   * Returns variables and files referenced in the current file.
+   */
+  public getReferences(): IReference[] {
+    return this.references;
+  }
+
 }

@@ -2,7 +2,13 @@ import { TextDocument } from "vscode-languageserver-textdocument";
 import { IKeyword } from "./getFunctionDefinitions";
 import { getPathFromURI } from "./getPathFromURI";
 import { addDocumentsFromPath, documentData, log } from "../server";
-import { IFunctionDefinition, IFunctionReference, IVariableDefinition, Parser } from "../parser";
+import {
+  IFunctionDefinition,
+  IFunctionReference,
+  IReference,
+  IVariableDefinition,
+  Parser,
+} from "../parser";
 import { Diagnostic, PublishDiagnosticsParams } from "vscode-languageserver";
 import { parseToIKeyword } from "./parseToIKeyword";
 import * as path from "path";
@@ -11,11 +17,17 @@ export function addNewDocument(document: TextDocument): void {
   const data = new DocumentData(document);
   data.updateDocumentData();
   documentData.push(data);
-  log("adding: " + data.getDocumentPath());
+  // log("adding: " + data.getDocumentPath());
   data.postUpdateHooks();
 }
 
-export function updateDocumentData(document: TextDocument): void {
+/**
+ * Updates the text and all the data of a document.
+ */
+export function updateDocumentData(
+  document: TextDocument,
+  postUpdateCallback: (data: DocumentData) => void
+): void {
   let foundFlag = false;
   // const doc = TextDocument.create(document.uri, document.languageId, document.version, document.getText());
   documentData.forEach((data) => {
@@ -23,7 +35,7 @@ export function updateDocumentData(document: TextDocument): void {
       foundFlag = true;
       data.setDocument(document);
       data.updateDocumentData();
-      data.postUpdateHooks();
+      postUpdateCallback(data);
     }
   });
   if (!foundFlag) {
@@ -35,32 +47,27 @@ export function updateDocumentData(document: TextDocument): void {
  * Gets the variable definitions of all the documents registered.
  */
 export function getAllVariableDefinitions(): IVariableDefinition[] {
-  return documentData.flatMap((data) => data.getVariableDefinitions()
-    .filter((d) => d.depth <= 0)
-    .map(
-    (d) => {
-      return {
-        uri: data.getURI(),
-        ...d,
-      } as IVariableDefinition;
-    }
-  ));
+  return documentData.flatMap((data) =>
+    data
+      .getVariableDefinitions()
+      .filter((d) => d.depth <= 0)
+      .map((d) => {
+        return {
+          uri: data.getURI(),
+          ...d,
+        } as IVariableDefinition;
+      })
+  );
 }
 
-export function getAllFunctionDefinitions(
-  uri: string,
-): IFunctionDefinition[] {
+export function getAllFunctionDefinitions(uri: string): IFunctionDefinition[] {
   const d = documentData.flatMap((data) => {
-    return data
-      .getFunctionsDefinitions(
-        uri === data.getURI()
-      )
-      .map((def) => {
-        return {
-          ...def,
-          uri: data.getURI(),
-        };
-      });
+    return data.getFunctionsDefinitions(uri === data.getURI()).map((def) => {
+      return {
+        ...def,
+        uri: data.getURI(),
+      };
+    });
   });
   // log("d: " + JSON.stringify(d));
   return d;
@@ -162,7 +169,7 @@ export class DocumentData {
   public getDiagnostics({
     allFilesInProject,
     functionsDefinitions,
-    variablesDefinitions
+    variablesDefinitions,
   }: {
     allFilesInProject: string[];
     functionsDefinitions: string[];
@@ -197,34 +204,47 @@ export class DocumentData {
   }
 
   /**
-  * Returns the directory of the current document.
-  */
+   * Returns the directory of the current document.
+   */
   public getDocumentDirectory(): string {
     return path.dirname(this.getDocumentPath());
   }
 
   /**
-  * Returns weather the current document references a path or not
-  */
+   * Returns weather the current document references a path or not
+   */
   public referencesHasThisPath(path: string): boolean {
     return this.getLocallyReferencedPaths().includes(path);
   }
 
   public getExportedFunctions(): IFunctionDefinition[] {
     // log(`file ${this.getFileName()}: ${JSON.stringify(this.getFunctionsDefinitions().map((def) => def.name))}`);
-    return this.getFunctionsDefinitions().filter((def) => def.name === this.getFileName());
+    return this.getFunctionsDefinitions().filter(
+      (def) => def.name === this.getFileName()
+    );
   }
 
   /**
-  * Methods that must be ran after updating the document and pushing it to the array.
-  */
-  public postUpdateHooks(): void {
-    this.getLocallyReferencedPaths().forEach((p) => {
-    // this must be executed after pushing data to the documentData array
-    // TODO: consider when the path it's updated and the document it's not longer considered.
-    // what happens when multiple files references to the same files?
-    addDocumentsFromPath(p);
-  });
+   * Returns the references in the current file.
+   * This references are variables and files. NOT functions.
+   * @returns {IReference[]} - variables and files references.
+   */
+  public getReferences(): IReference[] {
+    return this.parser.getReferences();
   }
 
+  /**
+   * Methods that must be ran after updating the document and pushing it to the array.
+   */
+  public postUpdateHooks(): void {
+    this.getLocallyReferencedPaths()
+      .filter((p) => p !== this.getDocumentPath())
+      .forEach((p) => {
+        // log("p: " + p);
+        // this must be executed after pushing data to the documentData array
+        // TODO: consider when the path it's updated and the document it's not longer considered.
+        // what happens when multiple files references to the same files?
+        addDocumentsFromPath(p);
+      });
+  }
 }
