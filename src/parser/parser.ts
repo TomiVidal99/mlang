@@ -6,7 +6,7 @@ import {
 } from "vscode-languageserver";
 import { GRAMMAR, IToken } from "./grammar";
 import { checkIfPathExists, parseMultipleMatchValues } from "../utils";
-import { getAllFilepathsFromPath, log } from "../server";
+import { getAllFilepathsFromPath, log, logError } from "../server";
 import { TextDocument } from "vscode-languageserver-textdocument";
 
 const commentPattern = /^\s*(?!%(?:{|})|#(?:{|}))[#%%].*/;
@@ -873,6 +873,28 @@ export class Parser {
    */
   public getReferences(): IReference[] {
     return this.references;
+  }
+
+  public getCursorDepth(lineNumber: number): number {
+    if (this.functionsDefinitions.length === 0) {
+      // case for a definition at file level
+      return 0;
+    }
+    if (lineNumber > this.lines.length) {
+      logError("ERROR: the lineNumber of the depth does not match the amount of lines");
+    }
+
+    let depth = 0;
+    this.functionsDefinitions.forEach((def) => {
+      if (!def?.end || (
+        def.start.line < lineNumber &&
+        def.end.line > lineNumber
+      )) {
+        depth++;
+      }
+    });
+
+    return depth;
   }
 
 }

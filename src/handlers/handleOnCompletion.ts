@@ -60,10 +60,9 @@ function getCompletionFunctions({
   uri: string;
   position: Position;
 }): CompletionItem[] {
-  // TODO: have in count the current position to import in the right context
   // TODO: fix this to use map
   const completionFuncs: CompletionItem[] = [];
-  getAllFunctionDefinitions(uri).forEach((funcDef) => {
+  getAllFunctionDefinitions(uri, position.line).forEach((funcDef) => {
     const newCompletionItem: CompletionItem = {
       label: funcDef.name,
       kind: CompletionItemKind.Function,

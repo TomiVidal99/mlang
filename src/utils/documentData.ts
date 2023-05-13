@@ -60,14 +60,19 @@ export function getAllVariableDefinitions(): IVariableDefinition[] {
   );
 }
 
-export function getAllFunctionDefinitions(uri: string): IFunctionDefinition[] {
+export function getAllFunctionDefinitions(
+  uri: string,
+  lineNumber: number
+): IFunctionDefinition[] {
   const d = documentData.flatMap((data) => {
-    return data.getFunctionsDefinitions(uri === data.getURI()).map((def) => {
-      return {
-        ...def,
-        uri: data.getURI(),
-      };
-    });
+    return data
+      .getFunctionsDefinitions(lineNumber, uri === data.getURI())
+      .map((def) => {
+        return {
+          ...def,
+          uri: data.getURI(),
+        };
+      });
   });
   // log("d: " + JSON.stringify(d));
   return d;
@@ -152,11 +157,14 @@ export class DocumentData {
    * Returns the definitions based on weather the definitions are
    * local for the current file or the depth it's file level.
    */
-  public getFunctionsDefinitions(currentDoc?: boolean): IFunctionDefinition[] {
+  public getFunctionsDefinitions(
+    lineNumber?: number,
+    currentDoc?: boolean,
+  ): IFunctionDefinition[] {
     if (currentDoc) {
-      return this.functionsDefinitions;
+      return this.functionsDefinitions.filter((fn) => fn.depth <= this.parser.getCursorDepth(lineNumber));
     }
-    return this.functionsDefinitions.filter((fn) => fn.depth === 0);
+    return this.functionsDefinitions.filter((fn) => fn.depth <= 0);
   }
 
   /**

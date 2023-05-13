@@ -36,6 +36,13 @@ export const documentData: DocumentData[] = [];
 
 const documents = new TextDocuments<TextDocument>(TextDocument);
 
+export function logError(message: string): void {
+  connection.sendRequest("window/showMessage", {
+    type: MessageType.Info,
+    message,
+  });
+}
+
 export function log(message: string | object): void {
   // TODO: this is only for dev purposes
   // return;
@@ -99,6 +106,13 @@ documents.listen(connection);
 // Listen on the connection
 connection.listen();
 
+/**
+ * Returns the depth in blocks of the cursor.
+ */
+function getDepthOfCursor(): number {
+  return 0;
+}
+
 export function getAllFilepathsFromPath(p: string): string[] {
   let expandedFilepath = p;
   if (p.startsWith('~')) {
@@ -151,19 +165,36 @@ export function getAllFilesInProject(): string[] {
 }
 
 function getAllVariableDefinitions(currentDoc: DocumentData): string[] {
-  return documentData
+  return [...documentData
     .filter((d) =>
       currentDoc
-      .getVariableDefinitions()
-      .map((ref) => ref.name)
-      .includes(d.getFileName())
+        .getReferences()
+        .map((ref) => ref.name)
+        .includes(d.getFileName())
     )
     .flatMap((d) =>
       d
-      .getVariableDefinitions()
-      .filter((ref) => ref.depth === 0)
-      .map((ref) => ref.name)
-    );
+        .getVariableDefinitions()
+        .filter((ref) => ref.depth === 0)
+        .map((ref) => ref.name)
+    ),
+  ...documentData
+    .filter((d) =>
+      currentDoc
+        .getFunctionsReferences()
+        .map((ref) => ref.name)
+        .includes(d.getFileName())
+    )
+    .flatMap((d) =>
+      d
+        .getVariableDefinitions()
+        .filter((ref) => ref.depth === 0)
+        .map((ref) => ref.name)
+    ),
+  ...currentDoc.getVariableDefinitions()
+    .filter((def) => def.depth === 0)
+    .map((def) => def.name)
+  ];
 }
 
 /**
@@ -190,8 +221,7 @@ function updatePostParsingDiagnostics(): void {
 }
 
 function getValidFunctionsReferencesNames(currentDoc: DocumentData): string[] {
-  // const localDefinitions: string[] = [];
-  return [
+  const a = [
     ...documentData
       .filter((d) =>
         currentDoc
@@ -202,7 +232,7 @@ function getValidFunctionsReferencesNames(currentDoc: DocumentData): string[] {
       .flatMap((d) =>
         d
           .getFunctionsDefinitions()
-          .filter((ref) => ref.depth === 0)
+          // .filter((ref) => ref.depth === 0)
           .map((ref) => ref.name)
       ),
     ...documentData
@@ -215,7 +245,7 @@ function getValidFunctionsReferencesNames(currentDoc: DocumentData): string[] {
       .flatMap((d) =>
         d
           .getFunctionsDefinitions()
-          .filter((ref) => ref.depth === 0)
+          // .filter((ref) => ref.depth === 0)
           .map((ref) => ref.name)
       ),
     ...currentDoc.getFunctionsDefinitions().map((def) => def.name),
@@ -223,6 +253,8 @@ function getValidFunctionsReferencesNames(currentDoc: DocumentData): string[] {
       data.getExportedFunctions().map((ref) => ref.name)
     ),
   ];
+  // log("a: " + JSON.stringify(a));
+  return a;
 }
 
 /**
@@ -243,5 +275,5 @@ function cleanUnreferencedDocuments(currentDocumentURI: string): void {
     }
   });
 
-  log(JSON.stringify(documentData.map((d) => d.getFileName())));
+  // log(JSON.stringify(documentData.map((d) => d.getFileName())));
 }
