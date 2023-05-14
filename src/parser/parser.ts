@@ -164,7 +164,7 @@ export class Parser {
       if (f.name === name) {
         this.sendDiagnositcError(
           true,
-          `the name '${name}' it's already being used to define the function at (${(
+          `the name '${name}' it's already defined at (${(
             f.start.line + 1
           ).toString()}, ${f.start.character.toString()}). at line ${lineNumber.toString()}`,
           Range.create(

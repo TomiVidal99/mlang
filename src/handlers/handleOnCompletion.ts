@@ -31,7 +31,7 @@ export function handleOnCompletion({
   params: TextDocumentPositionParams;
 }): CompletionItem[] {
   return [
-    ...completionData,
+    ...completionData(params.position),
     ...getCompletionVariables(),
     ...getCompletionFunctions({
       uri: params.textDocument.uri,

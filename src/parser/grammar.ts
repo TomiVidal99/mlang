@@ -42,7 +42,7 @@ const COMMON_KEYWORDS = [
   "continue",
   "return",
   "exit",
-  ...completionData.map((data) => data.label)
+  ...completionData().map((data) => data.label)
 ];
 
 export interface IToken {

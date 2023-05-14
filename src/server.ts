@@ -46,7 +46,7 @@ export function logError(message: string): void {
 
 export function log(message: string | object): void {
   // TODO: this is only for dev purposes
-  // return;
+  return;
   connection.sendRequest("window/showMessage", {
     type: MessageType.Info,
     message: typeof message === "string" ? message : JSON.stringify(message),
@@ -211,7 +211,7 @@ function updatePostParsingDiagnostics(): void {
         allFilesInProject,
         functionsDefinitions: getValidFunctionsDefinitionsNames(data),
         references: [
-          ...completionData.map((data) => data.label),
+          ...completionData().map((data) => data.label),
           ...getDocumentsToBeExecutable({ currentDocument: data.getURI() }).map(
             (item) => item.label
           ),
