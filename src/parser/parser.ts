@@ -248,6 +248,17 @@ export class Parser {
     )
       return;
 
+    // check that it ends correctly
+    if (match.groups?.args && /,\s*$/.test(match.groups?.args)) {
+      this.diagnostics.push({
+        severity: DiagnosticSeverity.Error,
+        message: `Missing argument? ',' not valid in function '${match.groups?.name}'. At line ${lineNumber.toString()}`,
+        range: Range.create(Position.create(lineNumber, 0), Position.create(lineNumber, 0)),
+        source: "mlang",
+      });
+    }
+
+    const depth = this.helperGetFunctionDefinitionDepth();
     const functionDefinition: IFunctionDefinition = {
       start: Position.create(
         lineNumber,
@@ -265,11 +276,44 @@ export class Parser {
         : [],
       output: parseMultipleMatchValues(match.groups?.retval),
       name: match.groups?.name,
-      depth: this.helperGetFunctionDefinitionDepth(),
+      depth,
       description: this.helperGetFunctionDefinitionDescription({
         lineNumber: lineNumber,
       }),
     };
+
+    if (functionDefinition.arguments.length > 0) {
+      this.variablesDefinitions.push(
+        ...functionDefinition.arguments.map((arg) => {
+          const definition: IVariableDefinition = {
+            name: arg.name,
+            lineContent: arg.content,
+            content: [],
+            start: Position.create(lineNumber, match[0].indexOf(arg.content)),
+            end: Position.create(lineNumber, match[0].indexOf(arg.content) + arg.content.length),
+            depth: depth,
+          };
+          return definition;
+        })
+      );
+    }
+
+    if (functionDefinition.output.length > 0) {
+      this.variablesDefinitions.push(
+        ...functionDefinition.output.map((out) => {
+          const definition: IVariableDefinition = {
+            name: out,
+            lineContent: out,
+            content: [],
+            start: Position.create(lineNumber, match[0].indexOf(out)),
+            end: Position.create(lineNumber, match[0].indexOf(out) + out.length),
+            depth: depth,
+          };
+          return definition;
+        })
+      );
+    }
+
 
     this.functionsDefinitions.push(functionDefinition);
   }
@@ -347,6 +391,7 @@ export class Parser {
     lineNumber: number;
   }): void {
     this.diagnoseKeywordNaming({ line, match, lineNumber });
+    const depth = this.helperGetFunctionDefinitionDepth();
     const functionDefinition: IFunctionDefinition = {
       start: Position.create(lineNumber, 0),
       end: Position.create(lineNumber, 0),
@@ -361,11 +406,26 @@ export class Parser {
           lineNumber
         )
         : [],
-      depth: this.helperGetFunctionDefinitionDepth(),
+      depth,
       description: this.helperGetFunctionDefinitionDescription({
         lineNumber: lineNumber,
       }),
     };
+    if (functionDefinition.arguments.length > 0) {
+      this.variablesDefinitions.push(
+        ...functionDefinition.arguments.map((arg) => {
+          const definition: IVariableDefinition = {
+            name: arg.name,
+            lineContent: arg.content,
+            content: [],
+            start: Position.create(lineNumber, match[0].indexOf(arg.content)),
+            end: Position.create(lineNumber, match[0].indexOf(arg.content) + arg.content.length),
+            depth: depth,
+          };
+          return definition;
+        })
+      );
+    }
     // log("visitAnonymousFunctionDefinition: " + JSON.stringify(functionDefinition));
     this.functionsDefinitions.push(functionDefinition);
   }
