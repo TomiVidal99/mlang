@@ -4,8 +4,14 @@ import {
   Diagnostic,
   DiagnosticSeverity,
 } from "vscode-languageserver";
-import { GRAMMAR, IToken } from "./grammar";
-import { checkIfPathExists, parseMultipleMatchValues } from "../utils";
+import { BASIC_TYPES_REGEXS, BasicType, GRAMMAR, IToken } from "./grammar";
+import {
+  checkIfPathExists,
+  getAllFunctionDefinitions,
+  getNotFoundReferenceDiagnostic,
+  getWrongArgumentsDiagnostic,
+  parseMultipleMatchValues,
+} from "../utils";
 import { getAllFilepathsFromPath, log, logError } from "../server";
 import { TextDocument } from "vscode-languageserver-textdocument";
 
@@ -20,13 +26,23 @@ export interface IReference {
   name: string;
 }
 
+// make a IArgumentReference
+export interface IArgument {
+  type: BasicType;
+  start?: string;
+  step?: string;
+  end?: string;
+  math_expr?: string;
+  isOptional: boolean;
+}
+
 export interface IFunctionDefinition {
   uri?: string;
   start: Position;
   end?: Position;
   type: StatementType;
   name: string;
-  arguments?: string[];
+  arguments?: IArgument[];
   output?: string[];
   depth: number; // this indicates weather the function it's defined within another function
   description: string[];
@@ -36,7 +52,7 @@ export interface IFunctionReference {
   start: Position;
   end: Position;
   name: string;
-  arguments?: string[];
+  arguments?: IArgument[];
   output?: string[];
   depth: number;
 }
@@ -80,8 +96,10 @@ export class Parser {
   private commentBlocks: ICommentBlock[];
   private diagnostics: Diagnostic[];
   private lines: string[];
+  private uri: string;
 
   public constructor(document: TextDocument) {
+    this.uri = document.uri;
     this.text = document.getText();
     this.lines = this.text.split("\n");
     this.statements = [];
@@ -160,6 +178,58 @@ export class Parser {
     return false;
   }
 
+  /**
+   * Converts a string into an IArgument object.
+   * TODO: consider when it's a vector it should parse the data from it
+   * and start, end, step should be of the type VARIABLE, NUMBER, ETC
+   */
+  private getArgumentFromString(arg: string): IArgument | null {
+    let argument: IArgument;
+    let argStr = arg;
+    let isOptionalArgument = false;
+
+    log("------------------------------");
+    log("arg: " + arg);
+
+    // check if the argument it's an optional argument
+    const optionalArgumentMatch = /^\w+\s*=\s*(?<value>.+)$/.exec(arg);
+    if (optionalArgumentMatch) {
+      argStr = optionalArgumentMatch.groups.value;
+      isOptionalArgument = true;
+    }
+
+    for (let i = 0; i < BASIC_TYPES_REGEXS.length; i++) {
+      const regex = BASIC_TYPES_REGEXS[i];
+      const match = regex.pattern.exec(argStr);
+      if (match) {
+        // log("regex: " + JSON.stringify(regex.name));
+        // log("line: " + match[0]);
+        argument = {
+          type: regex.name,
+          isOptional: isOptionalArgument,
+        };
+        if (regex.name === "VECTOR") {
+          argument = {
+            ...argument,
+            start: match.groups.start,
+            end: match.groups.end,
+          };
+          if (match.groups?.step) {
+            argument.step = match.groups?.step;
+          }
+          if (match.groups?.math_expr) {
+            argument.math_expr = match.groups?.math_expr;
+          }
+        }
+
+        // log("argument: " + JSON.stringify(argument));
+        return argument;
+      }
+    }
+
+    return null;
+  }
+
   private visitFunctionDefinition({
     match,
     lineNumber,
@@ -181,7 +251,9 @@ export class Parser {
         match.index + match[0].indexOf(match.groups?.name)
       ),
       type: "FUNCTION",
-      arguments: parseMultipleMatchValues(match.groups?.args),
+      arguments: parseMultipleMatchValues(match.groups?.args).map((arg) =>
+        this.getArgumentFromString(arg)
+      ),
       output: parseMultipleMatchValues(match.groups?.retval),
       name: match.groups?.name,
       depth: this.helperGetFunctionDefinitionDepth(),
@@ -274,7 +346,7 @@ export class Parser {
       type: "IF",
       arguments: this.checkValidFunctionArguments(
         parseMultipleMatchValues(match.groups?.retval)
-      ),
+      ).map((arg) => this.getArgumentFromString(arg)),
       depth: this.helperGetFunctionDefinitionDepth(),
       description: this.helperGetFunctionDefinitionDescription({
         lineNumber: lineNumber,
@@ -593,12 +665,13 @@ export class Parser {
     uris,
     functionsDefinitions,
     variablesDefinitions,
-  }:
-    {
-      uris: string[];
-      functionsDefinitions: string[];
-      variablesDefinitions: string[];
-    }): Diagnostic[] {
+    references,
+  }: {
+    uris: string[];
+    functionsDefinitions: IFunctionDefinition[];
+    variablesDefinitions: string[];
+    references: string[];
+  }): Diagnostic[] {
     // TODO: maybe add indication of possible references that matches the wrongly typed text
     // TODO: optimize this.
     const localDiagnostics: Diagnostic[] = [];
@@ -607,42 +680,53 @@ export class Parser {
       ...this.references
         .filter(
           (ref) =>
-            !uris.includes(ref.name) &&
-            !variablesDefinitions.includes(ref.name)
+            !uris.includes(ref.name) && !variablesDefinitions.includes(ref.name)
         )
-        .map((ref) => {
-          return {
-            range: Range.create(
-              Position.create(ref.lineNumber, 0),
-              Position.create(ref.lineNumber, 0)
-            ),
-            message: `reference '${ref.name}' not found. At line ${(
-              ref.lineNumber + 1
-            ).toString()}`,
-            severity: DiagnosticSeverity.Error,
-            source: "mlang",
-          } as Diagnostic;
-        }),
+        .map((ref) => getNotFoundReferenceDiagnostic(ref.name, ref.lineNumber)),
       ...this.functionsReferences
-        .filter(
-          (ref) =>
-            functionsDefinitions.length === 0 ||
-            !functionsDefinitions.includes(ref.name)
-        )
-        .map((ref) => {
-          // log('functionsDefinitions: ' + JSON.stringify(functionsDefinitions));
-          return {
-            range: Range.create(
-              Position.create(ref.start.line, 0),
-              Position.create(ref.start.line, 0)
-            ),
-            message: `reference '${ref.name}' not found. At line ${(
-              ref.start.line + 1
-            ).toString()}`,
-            severity: DiagnosticSeverity.Error,
-            source: "mlang",
-          } as Diagnostic;
+        .filter((ref) => {
+          let foundInReferencesFlag = false;
+          if (references.length > 0 && references.includes(ref.name))
+            foundInReferencesFlag = true;
+          if (functionsDefinitions.length === 0) return !foundInReferencesFlag;
+          for (let i = 0; i < functionsDefinitions.length; i++) {
+            const def = functionsDefinitions[i];
+            if (def.name === ref.name) {
+              const defRequiredArgs = def?.arguments
+                ? def.arguments.filter((arg) => !arg.isOptional).length
+                : 0;
+              const defOptArgs = def?.arguments
+                ? def.arguments.filter((arg) => arg.isOptional).length
+                : 0;
+              const refArgs = ref?.arguments
+                ? ref.arguments.length
+                : 0;
+              if (
+                def?.arguments &&
+                (defRequiredArgs > refArgs ||
+                  defRequiredArgs + defOptArgs < refArgs)
+              ) {
+                localDiagnostics.push(
+                  getWrongArgumentsDiagnostic({
+                    defArgumentsLength: defRequiredArgs,
+                    defOptionalArgsLength: defOptArgs,
+                    refLineNumber: ref.start.line,
+                    refArgumentsLength: refArgs,
+                    name: ref.name,
+                  })
+                );
+                log("def args: " + JSON.stringify(def.arguments));
+                log("required: " + defRequiredArgs.toString() + ", opts: " + defOptArgs.toString());
+              }
+              return false;
+            }
+          }
+          return !foundInReferencesFlag;
         })
+        .map((ref) =>
+          // log('functionsDefinitions: ' + JSON.stringify(functionsDefinitions));
+          getNotFoundReferenceDiagnostic(ref.name, ref.start.line)
+        )
     );
 
     return localDiagnostics;
@@ -703,8 +787,12 @@ export class Parser {
     if (!this.diagnoseKeywordNaming({ line, match, lineNumber })) return;
     this.handleReferenceAddPath({ match, lineNumber });
 
-    const args = parseMultipleMatchValues(match.groups?.retval);
+    // log("visiting function reference: " + match[0]);
+
+    const args = parseMultipleMatchValues(match.groups?.args);
     const outputs = parseMultipleMatchValues(match.groups?.retval);
+
+    // log("args: " + JSON.stringify(args));
 
     const reference: IFunctionReference = {
       name: match.groups?.name,
@@ -716,7 +804,7 @@ export class Parser {
       depth: this.helperGetFunctionReferenceDepth({ lineNumber }),
     };
     if (args.length > 0) {
-      reference.arguments = args;
+      reference.arguments = args.map((arg) => this.getArgumentFromString(arg));
     }
     if (outputs.length > 0) {
       reference.output = outputs;
@@ -881,20 +969,21 @@ export class Parser {
       return 0;
     }
     if (lineNumber > this.lines.length) {
-      logError("ERROR: the lineNumber of the depth does not match the amount of lines");
+      logError(
+        "ERROR: the lineNumber of the depth does not match the amount of lines"
+      );
     }
 
     let depth = 0;
     this.functionsDefinitions.forEach((def) => {
-      if (!def?.end || (
-        def.start.line < lineNumber &&
-        def.end.line > lineNumber
-      )) {
+      if (
+        !def?.end ||
+        (def.start.line < lineNumber && def.end.line > lineNumber)
+      ) {
         depth++;
       }
     });
 
     return depth;
   }
-
 }

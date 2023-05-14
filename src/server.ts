@@ -26,6 +26,7 @@ import {
   updateDocumentData,
 } from "./utils";
 import { getAllMFiles } from "./managers";
+import { IFunctionDefinition } from "./parser";
 
 const CHANGE_CONTENT_DELAY_MS = 150;
 let onChangeContentDelay: NodeJS.Timer | undefined;
@@ -208,19 +209,19 @@ function updatePostParsingDiagnostics(): void {
       data.getDiagnostics({
         variablesDefinitions: getAllVariableDefinitions(data),
         allFilesInProject,
-        functionsDefinitions: [
-          ...getValidFunctionsReferencesNames(data),
+        functionsDefinitions: getValidFunctionsDefinitionsNames(data),
+        references: [
           ...completionData.map((data) => data.label),
           ...getDocumentsToBeExecutable({ currentDocument: data.getURI() }).map(
             (item) => item.label
           ),
-        ],
+        ]
       })
     );
   });
 }
 
-function getValidFunctionsReferencesNames(currentDoc: DocumentData): string[] {
+function getValidFunctionsDefinitionsNames(currentDoc: DocumentData): IFunctionDefinition[] {
   const a = [
     ...documentData
       .filter((d) =>
@@ -232,8 +233,6 @@ function getValidFunctionsReferencesNames(currentDoc: DocumentData): string[] {
       .flatMap((d) =>
         d
           .getFunctionsDefinitions()
-          // .filter((ref) => ref.depth === 0)
-          .map((ref) => ref.name)
       ),
     ...documentData
       .filter((d) =>
@@ -245,12 +244,10 @@ function getValidFunctionsReferencesNames(currentDoc: DocumentData): string[] {
       .flatMap((d) =>
         d
           .getFunctionsDefinitions()
-          // .filter((ref) => ref.depth === 0)
-          .map((ref) => ref.name)
       ),
-    ...currentDoc.getFunctionsDefinitions().map((def) => def.name),
+    ...currentDoc.getFunctionsDefinitions(),
     ...documentData.flatMap((data) =>
-      data.getExportedFunctions().map((ref) => ref.name)
+      data.getExportedFunctions()
     ),
   ];
   // log("a: " + JSON.stringify(a));

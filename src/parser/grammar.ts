@@ -6,28 +6,33 @@ import { completionData } from "../data";
 // TODO: arguments need to change to consider default values
 // TODO: add end keyword for other methods, else it messes up the other definitions
 
-export type BasicTypes =
+export type BasicType =
   "VARIABLE" |
   "NUMBER" |
   "STRING" |
   "VECTOR";
 
-export interface IBasicTypes {
-  name: BasicTypes;
+export interface IBasicType {
+  name: BasicType;
   pattern: RegExp;
 }
-export const BASIC_TYPES: IBasicTypes[] = [
+
+export const BASIC_TYPES_REGEXS: IBasicType[] = [
   {
     name: "VECTOR",
     pattern: /^\[(?<start>[\w.]+|[+-]?\d+(?:\.\d+)?(?:e[+-]?\d+)?)\s*:\s*(?<step>[\w.]+|[+-]?\d+(?:\.\d+)?(?:e[+-]?\d+)?)?\s*:\s*(?<end>[\w.]+|[+-]?\d+(?:\.\d+)?(?:e[+-]?\d+)?)](?<math_expr>(?:(?:[\\+\-\\*\\/]\s*)?(?:[\w.]+|[+-]?\d+(?:\.\d+)?(?:e[+-]?\d+)?))*)$/,
   },
   {
     name: "STRING",
-    pattern: /^".*"$/,
+    pattern: /^(["'])(.*?)\1$/,
   },
   {
     name: "NUMBER",
-    pattern: /^".*"$/,
+    pattern: /^\s*(?:-?\d+(?:\.\d+)?|\d+(?:\.\d+)?e[-+]?\d+)\s*$/,
+  },
+  {
+    name: "VARIABLE",
+    pattern: /^\s*.*?\s*$/,
   },
 ];
 

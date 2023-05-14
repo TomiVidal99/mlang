@@ -10,3 +10,5 @@ export * from "./getPathType";
 export * from "./parseToIKeyword";
 export * from "./getFunctionReferenceMessage";
 export * from "./checkIfPathExists";
+export * from "./getNotFoundReferenceDiagnostic";
+export * from "./getWrongArgumentsDiagnostic";

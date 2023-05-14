@@ -178,10 +178,12 @@ export class DocumentData {
     allFilesInProject,
     functionsDefinitions,
     variablesDefinitions,
+    references,
   }: {
     allFilesInProject: string[];
-    functionsDefinitions: string[];
+    functionsDefinitions: IFunctionDefinition[];
     variablesDefinitions: string[];
+    references: string[];
   }): PublishDiagnosticsParams {
     return {
       uri: this.getURI(),
@@ -191,6 +193,7 @@ export class DocumentData {
           uris: allFilesInProject,
           functionsDefinitions,
           variablesDefinitions,
+          references
         }),
       ],
     };
@@ -242,6 +245,14 @@ export class DocumentData {
   }
 
   /**
+   * Sends diagnostics when a referenced argument it's not valid.
+   * TODO: make this
+   */
+  private checkCorrectArguments(): void {
+    return;
+  }
+
+  /**
    * Methods that must be ran after updating the document and pushing it to the array.
    */
   public postUpdateHooks(): void {
@@ -254,5 +265,8 @@ export class DocumentData {
         // what happens when multiple files references to the same files?
         addDocumentsFromPath(p);
       });
+
+    this.checkCorrectArguments();
   }
+
 }

@@ -1,9 +1,10 @@
-import { Location, Position, Range, TextDocument, TextDocuments } from "vscode-languageserver";
+import { CompletionParams, Location, Position, Range, TextDocuments } from "vscode-languageserver";
 import { getAllFunctionDefinitions, getAllVariableDefinitions, getPathFromURI, getWordRangeAtPosition } from "../utils";
 import * as path from "path";
+import { TextDocument } from "vscode-languageserver-textdocument";
 
 interface IProps {
-  params: any;
+  params: CompletionParams;
   documents: TextDocuments<TextDocument>;
 }
 
@@ -25,7 +26,7 @@ export async function handleOnDefinition({ params, documents }: IProps ): Promis
   const locations: Location[] = [];
 
   // handle functions definitions
-  const allFunctionsDefinitions = getAllFunctionDefinitions(document.uri);
+  const allFunctionsDefinitions = getAllFunctionDefinitions(document.uri, position.line);
   // log(JSON.stringify(allFunctionsDefinitions));
   allFunctionsDefinitions.forEach((func) => {
     if (func.name === word) {
