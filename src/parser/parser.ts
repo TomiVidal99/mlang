@@ -337,33 +337,29 @@ export class Parser {
     match: RegExpMatchArray;
     lineNumber: number;
   }): void {
-    // log("visitAnonymousFunctionDefinition: " + JSON.stringify(match));
     this.diagnoseKeywordNaming({ line, match, lineNumber });
     const functionDefinition: IFunctionDefinition = {
       start: Position.create(lineNumber, 0),
       end: Position.create(lineNumber, 0),
       name: match[1],
-      type: "IF",
-      arguments: this.checkValidFunctionArguments(
-        parseMultipleMatchValues(match.groups?.retval)
-      ).map((arg) => this.getArgumentFromString(arg)),
+      type: "FUNCTION",
+      arguments: parseMultipleMatchValues(match.groups?.args).map((arg) => this.getArgumentFromString(arg)),
       depth: this.helperGetFunctionDefinitionDepth(),
       description: this.helperGetFunctionDefinitionDescription({
         lineNumber: lineNumber,
       }),
     };
+    this.checkArgsOfFuncDef(functionDefinition);
+    // log("visitAnonymousFunctionDefinition: " + JSON.stringify(functionDefinition));
     this.functionsDefinitions.push(functionDefinition);
   }
 
   /**
-   * Sends a diagnostic if the provided arguments are not valid
-   * TODO
+   * TODO: check syntax
+   * TODO: check that the optional values are always defined after the required ones.
    */
-  private checkValidFunctionArguments(args: string[]): string[] {
-    return args;
-    // args.map((arg) => {
-    //   if (arg)
-    // });
+  private checkArgsOfFuncDef(def: IFunctionDefinition): void {
+    return;
   }
 
   /**
@@ -891,14 +887,6 @@ export class Parser {
       range: range,
       message: "will output to console",
       source: "mlang",
-      // relatedInformation: [
-      // {
-      //   location: {
-      //     uri: formatURI(this.uri),
-      //     range: range,
-      //   },
-      //   message: 'Spelling matters'
-      // }]
     };
 
     this.diagnostics.push(diagnostic);
