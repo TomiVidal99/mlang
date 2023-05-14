@@ -49,6 +49,7 @@ end
 
 ## TODO
 
+- [ ] depth it's not enough to get right context of references (improve this).
 - [ ] functions references not necessarily have to have '()'.
 - [ ] consider variables inside for, if, etcs.
 - [ ] consider function composition.
