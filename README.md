@@ -49,10 +49,10 @@ end
 
 ## TODO
 
+- [ ] consider function composition.
 - [ ] implement global settings and add custom user settings.
 - [ ] consider comment blocks.
 - [ ] add loading progress display.
-- [ ] fix: that file references not need _()_ to be called.
 - [ ] consider packages (check if they're installed and offer references).
 - [ ] add auto imports (add the _addpath_ command at the beggining of the file when importing some function, think this better).
 - [ ] add diagnostics checking for arguments and return values (function references).
@@ -61,7 +61,6 @@ end
 - [ ] add more and better description to completion items.
 - [ ] add hover capability.
 - [ ] optimize esbuild bundle config.
-- [ ] check when repeated function definitions.
 - [ ] make tests.
 - [ ] add husky (for linting before commit).
 - [ ] formatting.
