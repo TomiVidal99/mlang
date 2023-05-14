@@ -233,6 +233,17 @@ export class Parser {
     return null;
   }
 
+  private checkCorrectArguments(match: RegExpMatchArray, lineNumber: number): void {
+    if (match.groups?.args && /,\s*$/.test(match.groups?.args)) {
+      this.diagnostics.push({
+        severity: DiagnosticSeverity.Error,
+        message: `Missing argument? ',' not valid in function '${match.groups?.name}'. At line ${lineNumber.toString()}`,
+        range: Range.create(Position.create(lineNumber, 0), Position.create(lineNumber, 0)),
+        source: "mlang",
+      });
+    }
+  }
+
   private visitFunctionDefinition({
     match,
     lineNumber,
@@ -249,14 +260,7 @@ export class Parser {
       return;
 
     // check that it ends correctly
-    if (match.groups?.args && /,\s*$/.test(match.groups?.args)) {
-      this.diagnostics.push({
-        severity: DiagnosticSeverity.Error,
-        message: `Missing argument? ',' not valid in function '${match.groups?.name}'. At line ${lineNumber.toString()}`,
-        range: Range.create(Position.create(lineNumber, 0), Position.create(lineNumber, 0)),
-        source: "mlang",
-      });
-    }
+    this.checkCorrectArguments(match, lineNumber);
 
     const depth = this.helperGetFunctionDefinitionDepth();
     const functionDefinition: IFunctionDefinition = {
@@ -391,6 +395,10 @@ export class Parser {
     lineNumber: number;
   }): void {
     this.diagnoseKeywordNaming({ line, match, lineNumber });
+
+    // check that it ends correctly
+    this.checkCorrectArguments(match, lineNumber);
+
     const depth = this.helperGetFunctionDefinitionDepth();
     const functionDefinition: IFunctionDefinition = {
       start: Position.create(lineNumber, 0),
@@ -898,6 +906,9 @@ export class Parser {
     if (!this.diagnoseKeywordNaming({ line, match, lineNumber })) return;
     this.handleReferenceAddPath({ match, lineNumber });
 
+    // check that it ends correctly
+    this.checkCorrectArguments(match, lineNumber);
+
     // log("visiting function reference: " + match[0]);
 
     const args = parseMultipleMatchValues(match.groups?.args);
@@ -905,6 +916,7 @@ export class Parser {
 
     // log("args: " + JSON.stringify(args));
 
+    const depth =  this.helperGetFunctionReferenceDepth({ lineNumber });
     const reference: IFunctionReference = {
       name: match.groups?.name,
       start: Position.create(lineNumber, match.index),
@@ -912,13 +924,31 @@ export class Parser {
         lineNumber,
         match.index + match[0].indexOf(match.groups?.name)
       ),
-      depth: this.helperGetFunctionReferenceDepth({ lineNumber }),
+      depth,
     };
     if (args.length > 0) {
       reference.arguments = args.map((arg) => this.getArgumentFromString(arg));
+      reference.arguments.forEach((arg) => {
+        if (arg.type === "VARIABLE") {
+          this.references.push({
+            name: arg.name,
+            lineNumber
+          });
+        }
+      });
     }
     if (outputs.length > 0) {
       reference.output = outputs;
+      reference.output.forEach((o) => {
+        this.variablesDefinitions.push({
+          name: o,
+          lineContent: match[0],
+          depth,
+          content: [match[0]],
+          start: Position.create(lineNumber, 0),
+          end: Position.create(lineNumber, 0),
+        });
+      });
     }
 
     this.functionsReferences.push(reference);
