@@ -7,7 +7,6 @@ import {
 import { BASIC_TYPES_REGEXS, BasicType, GRAMMAR, IToken } from "./grammar";
 import {
   checkIfPathExists,
-  getAllFunctionDefinitions,
   getNotFoundReferenceDiagnostic,
   getWrongArgumentsDiagnostic,
   parseMultipleMatchValues,
@@ -28,6 +27,8 @@ export interface IReference {
 
 // make a IArgumentReference
 export interface IArgument {
+  name: string;
+  content: string;
   type: BasicType;
   start?: string;
   step?: string;
@@ -96,10 +97,8 @@ export class Parser {
   private commentBlocks: ICommentBlock[];
   private diagnostics: Diagnostic[];
   private lines: string[];
-  private uri: string;
 
   public constructor(document: TextDocument) {
-    this.uri = document.uri;
     this.text = document.getText();
     this.lines = this.text.split("\n");
     this.statements = [];
@@ -187,14 +186,16 @@ export class Parser {
     let argument: IArgument;
     let argStr = arg;
     let isOptionalArgument = false;
+    let name: string | undefined = undefined;
 
     log("------------------------------");
     log("arg: " + arg);
 
     // check if the argument it's an optional argument
-    const optionalArgumentMatch = /^\w+\s*=\s*(?<value>.+)$/.exec(arg);
+    const optionalArgumentMatch = /^(?<name>\w+)\s*=\s*(?<value>.+)$/.exec(arg);
     if (optionalArgumentMatch) {
       argStr = optionalArgumentMatch.groups.value;
+      name = optionalArgumentMatch.groups?.name;
       isOptionalArgument = true;
     }
 
@@ -205,6 +206,8 @@ export class Parser {
         // log("regex: " + JSON.stringify(regex.name));
         // log("line: " + match[0]);
         argument = {
+          name: name ? name : arg.trim(),
+          content: match[0],
           type: regex.name,
           isOptional: isOptionalArgument,
         };
@@ -251,9 +254,9 @@ export class Parser {
         match.index + match[0].indexOf(match.groups?.name)
       ),
       type: "FUNCTION",
-      arguments: parseMultipleMatchValues(match.groups?.args).map((arg) =>
+      arguments: this.checkArgsFuncDef(parseMultipleMatchValues(match.groups?.args).map((arg) =>
         this.getArgumentFromString(arg)
-      ),
+      ), match.groups?.name, lineNumber),
       output: parseMultipleMatchValues(match.groups?.retval),
       name: match.groups?.name,
       depth: this.helperGetFunctionDefinitionDepth(),
@@ -343,13 +346,12 @@ export class Parser {
       end: Position.create(lineNumber, 0),
       name: match[1],
       type: "FUNCTION",
-      arguments: parseMultipleMatchValues(match.groups?.args).map((arg) => this.getArgumentFromString(arg)),
+      arguments: this.checkArgsFuncDef(parseMultipleMatchValues(match.groups?.args).map((arg) => this.getArgumentFromString(arg)), match.groups?.name, lineNumber),
       depth: this.helperGetFunctionDefinitionDepth(),
       description: this.helperGetFunctionDefinitionDescription({
         lineNumber: lineNumber,
       }),
     };
-    this.checkArgsOfFuncDef(functionDefinition);
     // log("visitAnonymousFunctionDefinition: " + JSON.stringify(functionDefinition));
     this.functionsDefinitions.push(functionDefinition);
   }
@@ -358,8 +360,27 @@ export class Parser {
    * TODO: check syntax
    * TODO: check that the optional values are always defined after the required ones.
    */
-  private checkArgsOfFuncDef(def: IFunctionDefinition): void {
-    return;
+  private checkArgsFuncDef(args: IArgument[], functionName: string, lineNumber: number): IArgument[] {
+    args.forEach((arg, index, arr) => {
+      if (index === arr.length - 1) return;
+      if (args.filter((a) => a !== arg).map((a) => a.name).includes(arg.name)) {
+        this.diagnostics.push({
+          range: Range.create(Position.create(lineNumber, 0), Position.create(lineNumber, 0)),
+          message: `Bad arguments, arguments can't have the same name, '${arg.name}' in function '${functionName}'. At line ${lineNumber.toString()}`,
+          severity: DiagnosticSeverity.Error,
+          source: "mlang",
+        });
+      }
+      if (arg.isOptional && !arr[index + 1].isOptional) {
+        this.diagnostics.push({
+          range: Range.create(Position.create(lineNumber, 0), Position.create(lineNumber, 0)),
+          message: `Bad arguments, a default value can't be before a required one, '${arg.content}' in function '${functionName}'. At line ${lineNumber.toString()}`,
+          severity: DiagnosticSeverity.Error,
+          source: "mlang",
+        });
+      }
+    });
+    return args;
   }
 
   /**
