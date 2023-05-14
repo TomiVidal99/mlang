@@ -49,6 +49,7 @@ end
 
 ## TODO
 
+- [ ] functions references not necessarily have to have '()'.
 - [ ] consider variables inside for, if, etcs.
 - [ ] consider function composition.
 - [ ] implement global settings and add custom user settings.
