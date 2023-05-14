@@ -76,16 +76,16 @@ export const GRAMMAR: IToken[] = [
   {
     name: "FUNCTION_DEFINITION_WITH_MULTIPLE_OUTPUT",
     pattern:
-      /function\s+(?:\[\s*(?<retval>[\w\s,]*)\s*\])\s*=\s*(?<name>\w+)\s*\((?<args>.*?)\)/,
+      /function\s+(?:\[\s*(?<retval>[\w\s,]*)\s*\])\s*=\s*(?<name>\w+)\s*(?:\((?<args>.*?)\))?/,
   },
   {
     name: "FUNCTION_DEFINITION_WITH_SINGLE_OUTPUT",
     pattern:
-      /function\s+(?<retval>\w+)\s*=\s*(?<name>\w+)\s*\((?<args>.*?)\)/,
+      /function\s+(?<retval>\w+)\s*=\s*(?<name>\w+)\s*(?:\((?<args>.*?)\))?/,
   },
   {
     name: "FUNCTION_DEFINITION_WITHOUT_OUTPUT",
-    pattern: /^\s*function\s+(?<name>\w+)\s*\((?<args>.*?)\)/,
+    pattern: /^\s*function\s+(?<name>\w+)\s*(?:\((?<args>.*?)\))?/,
   },
   {
     name: "FUNCTION_REFERENCE_WITHOUT_OUTPUT",

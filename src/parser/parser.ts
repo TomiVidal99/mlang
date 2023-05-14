@@ -254,9 +254,15 @@ export class Parser {
         match.index + match[0].indexOf(match.groups?.name)
       ),
       type: "FUNCTION",
-      arguments: this.checkArgsFuncDef(parseMultipleMatchValues(match.groups?.args).map((arg) =>
-        this.getArgumentFromString(arg)
-      ), match.groups?.name, lineNumber),
+      arguments: match.groups?.args
+        ? this.checkArgsFuncDef(
+          parseMultipleMatchValues(match.groups?.args).map((arg) =>
+            this.getArgumentFromString(arg)
+          ),
+          match.groups?.name,
+          lineNumber
+        )
+        : [],
       output: parseMultipleMatchValues(match.groups?.retval),
       name: match.groups?.name,
       depth: this.helperGetFunctionDefinitionDepth(),
@@ -346,7 +352,15 @@ export class Parser {
       end: Position.create(lineNumber, 0),
       name: match[1],
       type: "FUNCTION",
-      arguments: this.checkArgsFuncDef(parseMultipleMatchValues(match.groups?.args).map((arg) => this.getArgumentFromString(arg)), match.groups?.name, lineNumber),
+      arguments: match.groups?.args
+        ? this.checkArgsFuncDef(
+          parseMultipleMatchValues(match.groups?.args).map((arg) =>
+            this.getArgumentFromString(arg)
+          ),
+          match.groups?.name,
+          lineNumber
+        )
+        : [],
       depth: this.helperGetFunctionDefinitionDepth(),
       description: this.helperGetFunctionDefinitionDescription({
         lineNumber: lineNumber,
@@ -360,21 +374,38 @@ export class Parser {
    * TODO: check syntax
    * TODO: check that the optional values are always defined after the required ones.
    */
-  private checkArgsFuncDef(args: IArgument[], functionName: string, lineNumber: number): IArgument[] {
+  private checkArgsFuncDef(
+    args: IArgument[],
+    functionName: string,
+    lineNumber: number
+  ): IArgument[] {
     args.forEach((arg, index, arr) => {
       if (index === arr.length - 1) return;
-      if (args.filter((a) => a !== arg).map((a) => a.name).includes(arg.name)) {
+      if (
+        args
+          .filter((a) => a !== arg)
+          .map((a) => a.name)
+          .includes(arg.name)
+      ) {
         this.diagnostics.push({
-          range: Range.create(Position.create(lineNumber, 0), Position.create(lineNumber, 0)),
-          message: `Bad arguments, arguments can't have the same name, '${arg.name}' in function '${functionName}'. At line ${lineNumber.toString()}`,
+          range: Range.create(
+            Position.create(lineNumber, 0),
+            Position.create(lineNumber, 0)
+          ),
+          message: `Bad arguments, arguments can't have the same name, '${arg.name
+            }' in function '${functionName}'. At line ${lineNumber.toString()}`,
           severity: DiagnosticSeverity.Error,
           source: "mlang",
         });
       }
       if (arg.isOptional && !arr[index + 1].isOptional) {
         this.diagnostics.push({
-          range: Range.create(Position.create(lineNumber, 0), Position.create(lineNumber, 0)),
-          message: `Bad arguments, a default value can't be before a required one, '${arg.content}' in function '${functionName}'. At line ${lineNumber.toString()}`,
+          range: Range.create(
+            Position.create(lineNumber, 0),
+            Position.create(lineNumber, 0)
+          ),
+          message: `Bad arguments, a default value can't be before a required one, '${arg.content
+            }' in function '${functionName}'. At line ${lineNumber.toString()}`,
           severity: DiagnosticSeverity.Error,
           source: "mlang",
         });
@@ -715,9 +746,7 @@ export class Parser {
               const defOptArgs = def?.arguments
                 ? def.arguments.filter((arg) => arg.isOptional).length
                 : 0;
-              const refArgs = ref?.arguments
-                ? ref.arguments.length
-                : 0;
+              const refArgs = ref?.arguments ? ref.arguments.length : 0;
               if (
                 def?.arguments &&
                 (defRequiredArgs > refArgs ||
@@ -733,7 +762,12 @@ export class Parser {
                   })
                 );
                 log("def args: " + JSON.stringify(def.arguments));
-                log("required: " + defRequiredArgs.toString() + ", opts: " + defOptArgs.toString());
+                log(
+                  "required: " +
+                  defRequiredArgs.toString() +
+                  ", opts: " +
+                  defOptArgs.toString()
+                );
               }
               return false;
             }
