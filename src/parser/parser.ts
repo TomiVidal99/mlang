@@ -11,18 +11,18 @@ import {
   getWrongArgumentsDiagnostic,
   parseMultipleMatchValues,
 } from "../utils";
-import { getAllFilepathsFromPath, log, logError } from "../server";
+import { getAllFilepathsFromPath, log } from "../server";
 import { TextDocument } from "vscode-languageserver-textdocument";
+import { randomUUID } from "crypto";
 
 const commentPattern = /^\s*(?!%(?:{|})|#(?:{|}))[#%%].*/;
-
-// TODO: think better how should the end keyword and such close the opened definitions/statements
 
 export type StatementType = "IF" | "WHILE" | "FOR" | "DO" | "FUNCTION";
 
 export interface IReference {
   lineNumber: number;
   name: string;
+  depth: string[]; // it's the ordered list of context from the file context to the reference context
 }
 
 // make a IArgumentReference
@@ -45,8 +45,9 @@ export interface IFunctionDefinition {
   name: string;
   arguments?: IArgument[];
   output?: string[];
-  depth: number; // this indicates weather the function it's defined within another function
+  depth: string; // this indicates weather the function it's defined within another function
   description: string[];
+  context: string; // it's the unique identifier of the context that it creates, meaning the depth
 }
 
 export interface IFunctionReference {
@@ -55,11 +56,11 @@ export interface IFunctionReference {
   name: string;
   arguments?: IArgument[];
   output?: string[];
-  depth: number;
+  depth: string[];
 }
 
 export interface IVariableDefinition {
-  depth: number;
+  depth: string;
   uri?: string;
   start: Position;
   end?: Position;
@@ -79,10 +80,20 @@ export interface IErrorLines {
 }
 
 export interface IStatements {
-  depth: number;
+  depth: string;
   type: StatementType;
   start: Position;
   end?: Position;
+  context: string;
+}
+
+export interface IDepth {
+  context: string;
+  depth: number;
+}
+
+export interface IDepthLog extends IDepth {
+  lineNumber: number;
 }
 
 export class Parser {
@@ -97,6 +108,8 @@ export class Parser {
   private commentBlocks: ICommentBlock[];
   private diagnostics: Diagnostic[];
   private lines: string[];
+  private currentContext: IDepth[];
+  private contextLog: IDepthLog[];
 
   public constructor(document: TextDocument) {
     this.text = document.getText();
@@ -110,6 +123,16 @@ export class Parser {
     this.addedPaths = [];
     this.variablesDefinitions = [];
     this.diagnostics = [];
+
+    this.contextLog = [{
+      lineNumber: -1,
+      depth: 0,
+      context: "",
+    }];
+    this.currentContext = [{
+      depth: 0,
+      context: "",
+    }];
 
     this.tokenizeText();
   }
@@ -188,8 +211,8 @@ export class Parser {
     let isOptionalArgument = false;
     let name: string | undefined = undefined;
 
-    log("------------------------------");
-    log("arg: " + arg);
+    // log("------------------------------");
+    // log("arg: " + arg);
 
     // check if the argument it's an optional argument
     const optionalArgumentMatch = /^(?<name>\w+)\s*=\s*(?<value>.+)$/.exec(arg);
@@ -262,7 +285,7 @@ export class Parser {
     // check that it ends correctly
     this.checkCorrectArguments(match, lineNumber);
 
-    const depth = this.helperGetFunctionDefinitionDepth();
+    const [depth, context] = this.helperGetFunctionDefinitionDepth(lineNumber);
     const functionDefinition: IFunctionDefinition = {
       start: Position.create(
         lineNumber,
@@ -284,6 +307,7 @@ export class Parser {
       description: this.helperGetFunctionDefinitionDescription({
         lineNumber: lineNumber,
       }),
+      context,
     };
 
     if (functionDefinition.arguments.length > 0) {
@@ -295,7 +319,7 @@ export class Parser {
             content: [],
             start: Position.create(lineNumber, match[0].indexOf(arg.content)),
             end: Position.create(lineNumber, match[0].indexOf(arg.content) + arg.content.length),
-            depth: depth,
+            depth: context,
           };
           return definition;
         })
@@ -311,13 +335,12 @@ export class Parser {
             content: [],
             start: Position.create(lineNumber, match[0].indexOf(out)),
             end: Position.create(lineNumber, match[0].indexOf(out) + out.length),
-            depth: depth,
+            depth: context,
           };
           return definition;
         })
       );
     }
-
 
     this.functionsDefinitions.push(functionDefinition);
   }
@@ -372,6 +395,7 @@ export class Parser {
           (currentDef.type === "WHILE" && match[0].includes("endwhile")))
       ) {
         currentDef.end = Position.create(lineNumber, 0);
+        this.popCurrentContext(lineNumber);
         return;
       }
     }
@@ -398,8 +422,7 @@ export class Parser {
 
     // check that it ends correctly
     this.checkCorrectArguments(match, lineNumber);
-
-    const depth = this.helperGetFunctionDefinitionDepth();
+    const [depth, context] = this.helperGetFunctionDefinitionDepth(lineNumber);
     const functionDefinition: IFunctionDefinition = {
       start: Position.create(lineNumber, 0),
       end: Position.create(lineNumber, 0),
@@ -418,6 +441,7 @@ export class Parser {
       description: this.helperGetFunctionDefinitionDescription({
         lineNumber: lineNumber,
       }),
+      context,
     };
     if (functionDefinition.arguments.length > 0) {
       this.variablesDefinitions.push(
@@ -428,7 +452,7 @@ export class Parser {
             content: [],
             start: Position.create(lineNumber, match[0].indexOf(arg.content)),
             end: Position.create(lineNumber, match[0].indexOf(arg.content) + arg.content.length),
-            depth: depth,
+            depth: context,
           };
           return definition;
         })
@@ -436,6 +460,32 @@ export class Parser {
     }
     // log("visitAnonymousFunctionDefinition: " + JSON.stringify(functionDefinition));
     this.functionsDefinitions.push(functionDefinition);
+  }
+
+  /**
+   * Adds a depth to the current context
+   */
+  private pushNewContext(lineNumber: number): void {
+    const context: IDepth = {
+      context: randomUUID(),
+      depth: this.currentContext[this.currentContext.length - 1].depth + 1,
+    };
+    this.currentContext.push(context);
+    this.contextLog.push({
+      ...context,
+      lineNumber,
+    });
+  }
+
+  /**
+   * Returns from a context
+   */
+  private popCurrentContext(lineNumber: number): void {
+    this.currentContext.pop();
+    this.contextLog.push({
+      ...this.currentContext[this.currentContext.length - 1],
+      lineNumber,
+    });
   }
 
   /**
@@ -483,46 +533,18 @@ export class Parser {
   }
 
   /**
-   * Returns the depth in a function definition of the current function definition.
-   * If it's 0 then it means that the function it's defined at file level.
+   * Returns the current depth and a new created context and pushes it to the array.
    */
-  private helperGetFunctionDefinitionDepth(): number {
-    if (this.functionsDefinitions.length === 0) {
-      // case for a definition at file level
-      return 0;
-    }
-    return this.functionsDefinitions.filter((d) => !d.end).length;
+  private helperGetFunctionDefinitionDepth(lineNumber: number): [string, string] {
+    this.pushNewContext(lineNumber);
+    return [
+      this.currentContext[this.currentContext.length - 2].context,
+      this.currentContext[this.currentContext.length - 1].context
+    ];
   }
 
-  /**
-   * Returns the depth in scope of a function reference
-   * If it's 0 then it means that the function it's defined at file level.
-   */
-  private helperGetFunctionReferenceDepth({
-    lineNumber,
-  }: {
-    lineNumber: number;
-  }): number {
-    if (this.functionsDefinitions.length === 0) {
-      // case for a definition at file level
-      return 0;
-    }
-    let foundDepthFlag = false;
-    for (let i = this.functionsDefinitions.length; i > 0; i--) {
-      const func = this.functionsDefinitions[i - 1];
-      if (
-        func.start.line < lineNumber &&
-        func.end &&
-        func.end.line > lineNumber
-      ) {
-        foundDepthFlag = true;
-        return func.depth;
-      }
-    }
-    if (!foundDepthFlag) {
-      // this cases occurs when there are one or more definitions not closed with the 'end' keyword
-      return -1;
-    }
+  private helperGetVariableDefinitionDepth(): string {
+    return this.currentContext[this.currentContext.length - 1].context;
   }
 
   /**
@@ -710,6 +732,9 @@ export class Parser {
     this.checkClosingBlocks();
     this.cleanUpPotentialErrorLines();
     // log(JSON.stringify(this.commentBlocks));
+
+    // log(JSON.stringify(this.contextLog));
+
   }
 
   /**
@@ -724,7 +749,7 @@ export class Parser {
   }) {
     if (this.checkRepetedDefinition(match.groups?.name, lineNumber)) return;
     const def: IVariableDefinition = {
-      depth: this.helperGetFunctionDefinitionDepth(),
+      depth: this.helperGetVariableDefinitionDepth(),
       start: Position.create(lineNumber, 0),
       name: match.groups?.name,
       content: match.groups?.content.split(","),
@@ -749,10 +774,12 @@ export class Parser {
     match: RegExpMatchArray;
     lineNumber: number;
   }): void {
+    const [depth, context] = this.helperGetStatementDepth();
     const statement: IStatements = {
-      depth: this.helperGetStatementDepth(),
+      depth,
       type,
       start: Position.create(lineNumber, 0),
+      context,
     };
     this.statements.push(statement);
   }
@@ -760,18 +787,11 @@ export class Parser {
   /**
    * Returns the depth of the current statement
    */
-  private helperGetStatementDepth(): number {
-    const allScopes = [...this.functionsDefinitions, ...this.statements].sort(
-      (a, b) => a.start.line - b.start.line
-    );
-
-    let currentDef = 0;
-    allScopes.forEach((def) => {
-      if (def?.end) return;
-      currentDef++;
-    });
-
-    return currentDef;
+  private helperGetStatementDepth(): [string, string] {
+    return [
+      this.currentContext[this.currentContext.length - 2].context,
+      this.currentContext[this.currentContext.length - 1].context
+    ];
   }
 
   /**
@@ -796,14 +816,27 @@ export class Parser {
       ...this.references
         .filter(
           (ref) =>
-            !uris.includes(ref.name) && !variablesDefinitions.includes(ref.name)
+            !uris.includes(ref.name) &&
+            !variablesDefinitions.includes(ref.name) &&
+            !this.variablesDefinitions
+              .filter((def) => ref.depth.includes(def.depth))
+              .map((def) => def.name)
+              .includes(ref.name)
         )
         .map((ref) => getNotFoundReferenceDiagnostic(ref.name, ref.lineNumber)),
       ...this.functionsReferences
         .filter((ref) => {
           let foundInReferencesFlag = false;
+
+          // found in the imported references list
           if (references.length > 0 && references.includes(ref.name))
             foundInReferencesFlag = true;
+
+          // found in the local references based on the right context
+          if (this.functionsDefinitions.length > 0 && this.functionsDefinitions.filter((def) => ref.depth.includes(def.depth)).length > 0)
+            foundInReferencesFlag = true;
+
+          // check the imported definitions
           if (functionsDefinitions.length === 0) return !foundInReferencesFlag;
           for (let i = 0; i < functionsDefinitions.length; i++) {
             const def = functionsDefinitions[i];
@@ -828,13 +861,6 @@ export class Parser {
                     refArgumentsLength: refArgs,
                     name: ref.name,
                   })
-                );
-                log("def args: " + JSON.stringify(def.arguments));
-                log(
-                  "required: " +
-                  defRequiredArgs.toString() +
-                  ", opts: " +
-                  defOptArgs.toString()
                 );
               }
               return false;
@@ -862,6 +888,7 @@ export class Parser {
     this.references.push({
       name: match.groups?.name,
       lineNumber,
+      depth: this.helperGetReferenceDepth(),
     });
   }
 
@@ -916,7 +943,7 @@ export class Parser {
 
     // log("args: " + JSON.stringify(args));
 
-    const depth =  this.helperGetFunctionReferenceDepth({ lineNumber });
+    const depth = this.helperGetReferenceDepth();
     const reference: IFunctionReference = {
       name: match.groups?.name,
       start: Position.create(lineNumber, match.index),
@@ -932,7 +959,8 @@ export class Parser {
         if (arg.type === "VARIABLE") {
           this.references.push({
             name: arg.name,
-            lineNumber
+            lineNumber,
+            depth: this.helperGetReferenceDepth(),
           });
         }
       });
@@ -943,7 +971,7 @@ export class Parser {
         this.variablesDefinitions.push({
           name: o,
           lineContent: match[0],
-          depth,
+          depth: depth[depth.length - 1],
           content: [match[0]],
           start: Position.create(lineNumber, 0),
           end: Position.create(lineNumber, 0),
@@ -952,6 +980,14 @@ export class Parser {
     }
 
     this.functionsReferences.push(reference);
+  }
+
+
+  /**
+   * Returns the ordered list of context from the file context to the current one.
+   */
+  private helperGetReferenceDepth(): string[] {
+    return this.currentContext.map((context) => context.context);
   }
 
   private handleReferenceAddPath({
@@ -1096,27 +1132,21 @@ export class Parser {
     return this.references;
   }
 
-  public getCursorDepth(lineNumber: number): number {
-    if (this.functionsDefinitions.length === 0) {
-      // case for a definition at file level
-      return 0;
-    }
-    if (lineNumber > this.lines.length) {
-      logError(
-        "ERROR: the lineNumber of the depth does not match the amount of lines"
-      );
-    }
-
-    let depth = 0;
-    this.functionsDefinitions.forEach((def) => {
-      if (
-        !def?.end ||
-        (def.start.line < lineNumber && def.end.line > lineNumber)
-      ) {
-        depth++;
+  /**
+   * Returns the list of context from the file context to the current line
+   * given a line number.
+   * @params {lineNumber: number} - current line number.
+   * @returns string[] - current context.
+   */
+  public getCursorDepth(lineNumber: number): string[] {
+    for (let i = 0; i < this.contextLog.length; i++) {
+      if (this.contextLog[i].lineNumber === lineNumber) {
+        return this.contextLog.slice(0, i+1).map((c) => c.context);
+      } else if (this.contextLog[i].lineNumber > lineNumber) {
+        return this.contextLog.slice(0, i).map((c) => c.context);
       }
-    });
-
-    return depth;
+    }
+    return [""];
   }
+
 }

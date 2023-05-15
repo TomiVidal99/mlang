@@ -46,7 +46,7 @@ export function logError(message: string): void {
 
 export function log(message: string | object): void {
   // TODO: this is only for dev purposes
-  return;
+  // return;
   connection.sendRequest("window/showMessage", {
     type: MessageType.Info,
     message: typeof message === "string" ? message : JSON.stringify(message),
@@ -106,13 +106,6 @@ documents.listen(connection);
 
 // Listen on the connection
 connection.listen();
-
-/**
- * Returns the depth in blocks of the cursor.
- */
-function getDepthOfCursor(): number {
-  return 0;
-}
 
 export function getAllFilepathsFromPath(p: string): string[] {
   let expandedFilepath = p;
@@ -176,7 +169,6 @@ function getAllVariableDefinitions(currentDoc: DocumentData): string[] {
     .flatMap((d) =>
       d
         .getVariableDefinitions()
-        .filter((ref) => ref.depth === 0)
         .map((ref) => ref.name)
     ),
   ...documentData
@@ -189,11 +181,10 @@ function getAllVariableDefinitions(currentDoc: DocumentData): string[] {
     .flatMap((d) =>
       d
         .getVariableDefinitions()
-        .filter((ref) => ref.depth === 0)
+        .filter((ref) => ref.depth === "")
         .map((ref) => ref.name)
     ),
-  ...currentDoc.getVariableDefinitions()
-    .filter((def) => def.depth === 0)
+    ...currentDoc.getVariableDefinitions(0, true)
     .map((def) => def.name)
   ];
 }

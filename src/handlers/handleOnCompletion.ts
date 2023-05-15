@@ -11,19 +11,8 @@ import {
   getPathFromURI,
 } from "../utils";
 import { documentData } from "../server";
-import { Position, TextDocument } from "vscode-languageserver-textdocument";
+import { Position } from "vscode-languageserver-textdocument";
 import { completionData, defaultSettings } from "../data";
-
-const PREVIEW_LINES = 7;
-
-interface IUpdateCompletionListProps {
-  document: TextDocument;
-}
-export function updateCompletionList({ document }: IUpdateCompletionListProps) {
-  // const text = document.getText();
-  // const definedFunctions = grabFunctionsFromDocument({text});
-  // updateFunctionList({documents: [document]});
-}
 
 export function handleOnCompletion({
   params,
@@ -32,7 +21,7 @@ export function handleOnCompletion({
 }): CompletionItem[] {
   return [
     ...completionData(params.position),
-    ...getCompletionVariables(),
+    ...getCompletionVariables(params.position, params.textDocument.uri),
     ...getCompletionFunctions({
       uri: params.textDocument.uri,
       position: params.position,
@@ -43,8 +32,8 @@ export function handleOnCompletion({
   ];
 }
 
-function getCompletionVariables(): CompletionItem[] {
-  return getAllVariableDefinitions().map((v) => {
+function getCompletionVariables(position: Position, currentDocURI: string): CompletionItem[] {
+  return getAllVariableDefinitions(position.line, currentDocURI).map((v) => {
     return {
       label: v.name,
       documentation: `${v.lineContent}\n\nfrom: ${getPathFromURI(v.uri)}`,
@@ -92,14 +81,8 @@ export function getDocumentsToBeExecutable({
       label: data.getFileName(),
       kind: CompletionItemKind.File,
       insertText: `${data.getFileName()};`
-      // TODO: this throws an error
-      // documentation: {
-      //   kind: MarkupKind.Markdown,
-      //   value: `file: "${getPathFromURI(data.getDocumentPath())}"\n\n${data.getLines().splice(0, PREVIEW_LINES)}`,
-      // },
     };
     documentsReferences.push(newCompletionItem);
   });
-  // log("documentsReferences: " + JSON.stringify(documentsReferences));
   return documentsReferences;
 }

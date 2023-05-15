@@ -46,11 +46,10 @@ export function updateDocumentData(
 /**
  * Gets the variable definitions of all the documents registered.
  */
-export function getAllVariableDefinitions(): IVariableDefinition[] {
+export function getAllVariableDefinitions(lineNumber: number, currentDocURI: string): IVariableDefinition[] {
   return documentData.flatMap((data) =>
     data
-      .getVariableDefinitions()
-      .filter((d) => d.depth <= 0)
+      .getVariableDefinitions(lineNumber, data.getURI() === currentDocURI)
       .map((d) => {
         return {
           uri: data.getURI(),
@@ -120,8 +119,14 @@ export class DocumentData {
   /**
    * Returns the variable definitions of the document.
    */
-  public getVariableDefinitions(): IVariableDefinition[] {
-    return this.parser.getVariableDefinitions();
+  public getVariableDefinitions(lineNumber?: number, currentDoc?: boolean): IVariableDefinition[] {
+    if (currentDoc) {
+      const dep = this.parser.getCursorDepth(lineNumber);
+      log("--------------------" + JSON.stringify(lineNumber));
+      log("dep current: " + JSON.stringify(dep));
+      return this.parser.getVariableDefinitions().filter((v) => dep.includes(v.depth));
+    }
+    return this.parser.getVariableDefinitions().filter((v) => v.depth === "");
   }
 
   /**
@@ -149,7 +154,7 @@ export class DocumentData {
       );
     }
     return this.functionsReferences
-      .filter((fn) => fn.depth <= 0)
+      .filter((fn) => fn.depth.at(-1) === "")
       .map((fn) => parseToIKeyword(fn, this.getURI()));
   }
 
@@ -162,9 +167,11 @@ export class DocumentData {
     currentDoc?: boolean,
   ): IFunctionDefinition[] {
     if (currentDoc) {
-      return this.functionsDefinitions.filter((fn) => fn.depth <= this.parser.getCursorDepth(lineNumber));
+      const dep = this.parser.getCursorDepth(lineNumber);
+      // log("current context: " + JSON.stringify(dep));
+      return this.functionsDefinitions.filter((fn) => dep.includes(fn.depth));
     }
-    return this.functionsDefinitions.filter((fn) => fn.depth <= 0);
+    return this.functionsDefinitions.filter((fn) => fn.depth === "");
   }
 
   /**
