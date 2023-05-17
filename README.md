@@ -49,6 +49,7 @@ end
 
 ## TODO
 
+- [ ] fix: info when ending ; should not consider after white spaces.
 - [ ] fix: not redefine variables when reasigning values.
 - [ ] Check correct types when defining variables.
 - [ ] Improve description of variables.
