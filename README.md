@@ -49,6 +49,7 @@ end
 
 ## TODO
 
+- [ ] fix: not redefine variables when reasigning values.
 - [ ] Check correct types when defining variables.
 - [ ] Improve description of variables.
 - [ ] depth it's not enough to get right context of references (improve this).
