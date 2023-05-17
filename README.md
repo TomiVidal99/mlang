@@ -49,6 +49,7 @@ end
 
 ## TODO
 
+- [ ] consider primitives STRING, NUMBER, VECTOR.
 - [ ] Redthink all the context system, maybe just considering the definition line it's just enough.
 - [ ] fix: info when ending ; should not consider after white spaces.
 - [ ] fix: not redefine variables when reasigning values.
