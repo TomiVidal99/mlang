@@ -33,7 +33,7 @@ export function handleOnCompletion({
 }
 
 function getCompletionVariables(position: Position, currentDocURI: string): CompletionItem[] {
-  return getAllVariableDefinitions(position.line, currentDocURI).map((v) => {
+  return getAllVariableDefinitions(currentDocURI, position.line).map((v) => {
     return {
       label: v.name,
       documentation: `${v.lineContent}\n\nfrom: ${getPathFromURI(v.uri)}`,

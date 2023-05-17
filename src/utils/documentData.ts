@@ -9,9 +9,10 @@ import {
   IVariableDefinition,
   Parser,
 } from "../parser";
-import { Diagnostic, PublishDiagnosticsParams } from "vscode-languageserver";
+import { Diagnostic, Position, Range, PublishDiagnosticsParams } from "vscode-languageserver";
 import { parseToIKeyword } from "./parseToIKeyword";
 import * as path from "path";
+import { randomUUID } from "crypto";
 
 export function addNewDocument(document: TextDocument): void {
   const data = new DocumentData(document);
@@ -46,8 +47,8 @@ export function updateDocumentData(
 /**
  * Gets the variable definitions of all the documents registered.
  */
-export function getAllVariableDefinitions(lineNumber: number, currentDocURI: string): IVariableDefinition[] {
-  return documentData.flatMap((data) =>
+export function getAllVariableDefinitions(currentDocURI: string, lineNumber: number): IVariableDefinition[] {
+  const a = documentData.flatMap((data) =>
     data
       .getVariableDefinitions(lineNumber, data.getURI() === currentDocURI)
       .map((d) => {
@@ -57,6 +58,8 @@ export function getAllVariableDefinitions(lineNumber: number, currentDocURI: str
         } as IVariableDefinition;
       })
   );
+
+  return a;
 }
 
 export function getAllFunctionDefinitions(
@@ -87,6 +90,18 @@ export function getAllFunctionReferences(uri: string): IKeyword[] {
   );
 }
 
+/**
+ * Returns all variable references
+ * if given a uri, only returns the valid references for that uri.
+ */
+export function getAllVariableReferences(uri?: string): IKeyword[] {
+  return documentData.flatMap((data) =>
+    data.getVariableReferences(uri && uri === data.getURI())
+  );
+}
+
+// TODO: optimize the mem usage by using the references of the parser
+// instead of making it's own references.
 export class DocumentData {
   private functionsDefinitions: IFunctionDefinition[];
   private functionsReferences: IFunctionReference[];
@@ -117,14 +132,26 @@ export class DocumentData {
   }
 
   /**
+   * Get all the variable references of the current document.
+   */
+  public getVariableReferences(currentDoc?: boolean): IKeyword[] {
+    if (currentDoc) {
+      return this.parser.getVariableReferences().map((v) => 
+        parseToIKeyword(v, this.getURI())
+      );
+    }
+    return this.parser.getVariableReferences()
+      .filter((v) => v.depth === "")
+      .map((v) => parseToIKeyword(v, this.getURI()));
+  }
+
+  /**
    * Returns the variable definitions of the document.
    */
   public getVariableDefinitions(lineNumber?: number, currentDoc?: boolean): IVariableDefinition[] {
     if (currentDoc) {
-      const dep = this.parser.getCursorDepth(lineNumber);
-      log("--------------------" + JSON.stringify(lineNumber));
-      log("dep current: " + JSON.stringify(dep));
-      return this.parser.getVariableDefinitions().filter((v) => dep.includes(v.depth));
+      // return this.parser.getVariableDefinitions().filter((v) => this.parser.getCursorDepth(lineNumber+1).includes(v.depth));
+      return this.parser.getVariableDefinitions().filter((v) => v.start.line < lineNumber);
     }
     return this.parser.getVariableDefinitions().filter((v) => v.depth === "");
   }

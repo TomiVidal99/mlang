@@ -184,7 +184,7 @@ function getAllVariableDefinitions(currentDoc: DocumentData): string[] {
         .filter((ref) => ref.depth === "")
         .map((ref) => ref.name)
     ),
-    ...currentDoc.getVariableDefinitions(0, true)
+    ...currentDoc.getVariableDefinitions(-1, true)
     .map((def) => def.name)
   ];
 }

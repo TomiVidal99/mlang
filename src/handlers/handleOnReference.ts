@@ -1,5 +1,5 @@
 import { HandlerResult, Location, ReferenceParams, TextDocuments } from "vscode-languageserver";
-import {getAllFunctionReferences, getWordRangeAtPosition} from "../utils";
+import {getAllFunctionReferences, getAllVariableReferences, getWordRangeAtPosition} from "../utils";
 import { TextDocument } from "vscode-languageserver-textdocument";
 
 export function handleOnReference({ params, documents }: { params: ReferenceParams, documents: TextDocuments<TextDocument> }): HandlerResult<Location[], void> {
@@ -28,6 +28,18 @@ export function handleOnReference({ params, documents }: { params: ReferencePara
         const loc: Location = {
           range: func.range,
           uri: func.uri,
+        };
+        locations.push(loc);
+      }
+    });
+
+    const allVariableReferences = getAllVariableReferences(document.uri);
+    allVariableReferences.forEach((v) => {
+      // log(`func name: ${func.name}, word: ${word}`);
+      if (v.name === word) {
+        const loc: Location = {
+          range: v.range,
+          uri: v.uri,
         };
         locations.push(loc);
       }

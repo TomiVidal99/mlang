@@ -1,8 +1,8 @@
 import { randomUUID } from "crypto";
 import { IKeyword } from ".";
-import { IFunctionDefinition, IFunctionReference } from "../parser";
+import { IFunctionDefinition, IFunctionReference, IVariableReference } from "../parser";
 
-export function parseToIKeyword(data: IFunctionDefinition | IFunctionReference, uri: string): IKeyword {
+export function parseToIKeyword(data: IFunctionDefinition | IFunctionReference | IVariableReference, uri: string): IKeyword {
   const keyword: IKeyword = {
     uri,
     range: {

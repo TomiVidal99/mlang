@@ -11,7 +11,7 @@ import {
   getWrongArgumentsDiagnostic,
   parseMultipleMatchValues,
 } from "../utils";
-import { getAllFilepathsFromPath, log } from "../server";
+import { getAllFilepathsFromPath } from "../server";
 import { TextDocument } from "vscode-languageserver-textdocument";
 import { randomUUID } from "crypto";
 
@@ -96,6 +96,13 @@ export interface IDepthLog extends IDepth {
   lineNumber: number;
 }
 
+export interface IVariableReference {
+  name: string;
+  start: Position;
+  end: Position;
+  depth: string;
+}
+
 export class Parser {
   private text: string;
   private functionsDefinitions: IFunctionDefinition[];
@@ -104,6 +111,7 @@ export class Parser {
   private statements: IStatements[];
   private references: IReference[];
   private variablesDefinitions: IVariableDefinition[];
+  private variablesReferences: IVariableReference[];
   private addedPaths: string[];
   private commentBlocks: ICommentBlock[];
   private diagnostics: Diagnostic[];
@@ -122,6 +130,7 @@ export class Parser {
     this.references = [];
     this.addedPaths = [];
     this.variablesDefinitions = [];
+    this.variablesReferences = [];
     this.diagnostics = [];
 
     this.contextLog = [{
@@ -135,6 +144,10 @@ export class Parser {
     }];
 
     this.tokenizeText();
+
+    // this.contextLog.forEach((cl) => {
+    //   log(`context (${cl.lineNumber.toString()}): ${cl.context}, [${cl.depth.toString()}]`);
+    // });
   }
 
   private visitCommentBlock({
@@ -180,7 +193,7 @@ export class Parser {
   /**
    * If finds a repeated name function or variable it sends a diagnostic.
    */
-  private checkRepetedDefinition(name: string, lineNumber: number): boolean {
+  private checkRepetedFunctionDefinition(name: string, lineNumber: number): boolean {
     for (let i = 0; i < this.functionsDefinitions.length; i++) {
       const f = this.functionsDefinitions[i];
       if (f.name === name) {
@@ -278,7 +291,7 @@ export class Parser {
   }) {
     if (
       !this.diagnoseKeywordNaming({ line, match, lineNumber }) ||
-      this.checkRepetedDefinition(match.groups?.name, lineNumber)
+      this.checkRepetedFunctionDefinition(match.groups?.name, lineNumber)
     )
       return;
 
@@ -747,7 +760,17 @@ export class Parser {
     match: RegExpMatchArray;
     lineNumber: number;
   }) {
-    if (this.checkRepetedDefinition(match.groups?.name, lineNumber)) return;
+    if (this.variablesDefinitions.map((d) => d.name).includes(match.groups?.name)) {
+      // it's a reference not a definition
+      this.variablesReferences.push({
+        name: match.groups?.name,
+        start: Position.create(lineNumber, 0),
+        end: Position.create(lineNumber, 0),
+        depth: this.currentContext.at(-1).context,
+      });
+      return;
+    }
+    if (this.checkRepetedFunctionDefinition(match.groups?.name, lineNumber)) return;
     const def: IVariableDefinition = {
       depth: this.helperGetVariableDefinitionDepth(),
       start: Position.create(lineNumber, 0),
@@ -1036,6 +1059,13 @@ export class Parser {
   }
 
   /**
+   * Returns all the variable references of the document.
+   */
+  public getVariableReferences(): IVariableReference[] {
+    return this.variablesReferences;
+  }
+
+  /**
    * TODO: this should send the diagnostics to an array to be handled later
    * Sets a diagnostic for when the line does not
    * have a ';' no output to console character
@@ -1141,9 +1171,9 @@ export class Parser {
   public getCursorDepth(lineNumber: number): string[] {
     for (let i = 0; i < this.contextLog.length; i++) {
       if (this.contextLog[i].lineNumber === lineNumber) {
-        return this.contextLog.slice(0, i+1).map((c) => c.context);
+        return this.contextLog.slice(0, i + 1).map((c) => c.context);
       } else if (this.contextLog[i].lineNumber > lineNumber) {
-        return this.contextLog.slice(0, i).map((c) => c.context);
+        return this.contextLog.slice(0, i + 1).map((c) => c.context);
       }
     }
     return [""];

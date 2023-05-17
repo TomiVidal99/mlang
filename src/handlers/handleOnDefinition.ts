@@ -43,7 +43,7 @@ export async function handleOnDefinition({ params, documents }: IProps ): Promis
   });
 
   // handle variable definitions
-  const allVariablesDefinitions = getAllVariableDefinitions();
+  const allVariablesDefinitions = getAllVariableDefinitions(document.uri, position.line);
   // log(JSON.stringify(allVariablesDefinitions));
   allVariablesDefinitions.forEach((variable) => {
     if (variable.name === word) {
