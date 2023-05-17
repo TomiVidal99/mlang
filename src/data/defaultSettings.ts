@@ -30,10 +30,11 @@ function getDefaultInitFile(): string {
 // Please note that this is not the case when using this server with the client provided in this example
 // but could happen with other clients.
 export const defaultSettings: ISettings = {
-  maxNumberOfProblems: 1000,
+  // TODO: implement these settings
+  maxNumberOfProblems: 200,
   maxFilesSearchDepth: 3,
   defaultInitFile: getDefaultInitFile(),
-  enableInitFile: true,
+  enableInitFile: false,
 };
 
 export let globalSettings: ISettings = defaultSettings;

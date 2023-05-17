@@ -3,28 +3,16 @@ import {
   CompletionItemKind,
   MarkupKind,
   TextDocumentPositionParams,
-  TextDocuments,
 } from "vscode-languageserver";
-import * as path from "path";
 import {
   getAllFunctionDefinitions,
+  getAllVariableDefinitions,
   getFunctionReferenceMessage,
   getPathFromURI,
 } from "../utils";
-import { documentData, log } from "../server";
-import { Position, TextDocument } from "vscode-languageserver-textdocument";
+import { documentData } from "../server";
+import { Position } from "vscode-languageserver-textdocument";
 import { completionData, defaultSettings } from "../data";
-
-const PREVIEW_LINES = 7;
-
-interface IUpdateCompletionListProps {
-  document: TextDocument;
-}
-export function updateCompletionList({ document }: IUpdateCompletionListProps) {
-  // const text = document.getText();
-  // const definedFunctions = grabFunctionsFromDocument({text});
-  // updateFunctionList({documents: [document]});
-}
 
 export function handleOnCompletion({
   params,
@@ -32,7 +20,8 @@ export function handleOnCompletion({
   params: TextDocumentPositionParams;
 }): CompletionItem[] {
   return [
-    ...completionData,
+    ...completionData(params.position),
+    ...getCompletionVariables(params.position, params.textDocument.uri),
     ...getCompletionFunctions({
       uri: params.textDocument.uri,
       position: params.position,
@@ -43,6 +32,16 @@ export function handleOnCompletion({
   ];
 }
 
+function getCompletionVariables(position: Position, currentDocURI: string): CompletionItem[] {
+  return getAllVariableDefinitions(currentDocURI, position.line).map((v) => {
+    return {
+      label: v.name,
+      documentation: `${v.lineContent}\n\nfrom: ${getPathFromURI(v.uri)}`,
+      kind: CompletionItemKind.Variable,
+    } as CompletionItem;
+  });
+}
+
 function getCompletionFunctions({
   uri,
   position,
@@ -50,13 +49,13 @@ function getCompletionFunctions({
   uri: string;
   position: Position;
 }): CompletionItem[] {
-  // TODO: have in count the current position to import in the right context
   // TODO: fix this to use map
   const completionFuncs: CompletionItem[] = [];
-  getAllFunctionDefinitions(uri).forEach((funcDef) => {
+  getAllFunctionDefinitions(uri, position.line).forEach((funcDef) => {
     const newCompletionItem: CompletionItem = {
       label: funcDef.name,
       kind: CompletionItemKind.Function,
+      insertText: `${funcDef.name}()`, // TODO: make this completion complaint with the arguments
       documentation: {
         kind: MarkupKind.Markdown,
         // value: 'from "' + val.uri + '"',
@@ -79,15 +78,11 @@ export function getDocumentsToBeExecutable({
     // log("currentDocument: " + currentDocument + ", doc.uri: " + data.getURI());
     if (currentDocument === data.getURI() || data.getDocumentPath() === defaultSettings.defaultInitFile) return;
     const newCompletionItem: CompletionItem = {
-      label: path.basename(data.getDocumentPath(), ".m"),
+      label: data.getFileName(),
       kind: CompletionItemKind.File,
-      // documentation: {
-      //   kind: MarkupKind.Markdown,
-      //   value: `file: "${getPathFromURI(data.getDocumentPath())}"\n\n${data.getLines().splice(0, PREVIEW_LINES)}`,
-      // },
+      insertText: `${data.getFileName()};`
     };
     documentsReferences.push(newCompletionItem);
   });
-  // log("documentsReferences: " + JSON.stringify(documentsReferences));
   return documentsReferences;
 }

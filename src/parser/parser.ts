@@ -4,52 +4,69 @@ import {
   Diagnostic,
   DiagnosticSeverity,
 } from "vscode-languageserver";
-import { GRAMMAR, IToken, TokenNameType } from "./grammar";
-import { checkIfPathExists, parseMultipleMatchValues } from "../utils";
+import { BASIC_TYPES_REGEXS, BasicType, GRAMMAR, IToken } from "./grammar";
+import {
+  checkIfPathExists,
+  getNotFoundReferenceDiagnostic,
+  getWrongArgumentsDiagnostic,
+  parseMultipleMatchValues,
+} from "../utils";
 import { getAllFilepathsFromPath } from "../server";
 import { TextDocument } from "vscode-languageserver-textdocument";
+import { randomUUID } from "crypto";
 
 const commentPattern = /^\s*(?!%(?:{|})|#(?:{|}))[#%%].*/;
 
-// TODO: think better how should the end keyword and such close the opened definitions/statements
+export type StatementType = "IF" | "WHILE" | "FOR" | "DO" | "FUNCTION";
 
-export interface IFileReference {
+export interface IReference {
   lineNumber: number;
   name: string;
+  depth: string[]; // it's the ordered list of context from the file context to the reference context
+}
+
+// make a IArgumentReference
+export interface IArgument {
+  name: string;
+  content: string;
+  type: BasicType;
+  start?: string;
+  step?: string;
+  end?: string;
+  math_expr?: string;
+  isOptional: boolean;
 }
 
 export interface IFunctionDefinition {
   uri?: string;
   start: Position;
   end?: Position;
-  type: TokenNameType;
+  type: StatementType;
   name: string;
-  arguments?: string[];
+  arguments?: IArgument[];
   output?: string[];
-  depth: number; // this indicates weather the function it's defined within another function
+  depth: string; // this indicates weather the function it's defined within another function
   description: string[];
+  context: string; // it's the unique identifier of the context that it creates, meaning the depth
 }
 
 export interface IFunctionReference {
   start: Position;
   end: Position;
   name: string;
-  arguments?: string[];
+  arguments?: IArgument[];
   output?: string[];
-  depth: number;
+  depth: string[];
 }
 
 export interface IVariableDefinition {
+  depth: string;
+  uri?: string;
   start: Position;
   end?: Position;
-  type: TokenNameType;
   name: string;
-}
-
-export interface IVariableReference {
-  start: Position;
-  end: Position;
-  name: string;
+  content: string[];
+  lineContent: string;
 }
 
 export interface ICommentBlock {
@@ -62,37 +79,78 @@ export interface IErrorLines {
   lineNumber: number;
 }
 
+export interface IStatements {
+  depth: string;
+  type: StatementType;
+  start: Position;
+  end?: Position;
+  context: string;
+}
+
+export interface IDepth {
+  context: string;
+  depth: number;
+}
+
+export interface IDepthLog extends IDepth {
+  lineNumber: number;
+}
+
+export interface IVariableReference {
+  name: string;
+  start: Position;
+  end: Position;
+  depth: string;
+}
+
 export class Parser {
   private text: string;
   private functionsDefinitions: IFunctionDefinition[];
   private functionsReferences: IFunctionReference[];
   private potentialErrorLines: IErrorLines[];
-  private fileReferences: IFileReference[];
-  // private variablesDefinitions: IVariableDefinition[];
-  // private variablesReferences: IVariableReference[];
+  private statements: IStatements[];
+  private references: IReference[];
+  private variablesDefinitions: IVariableDefinition[];
+  private variablesReferences: IVariableReference[];
   private addedPaths: string[];
   private commentBlocks: ICommentBlock[];
   private diagnostics: Diagnostic[];
   private lines: string[];
+  private currentContext: IDepth[];
+  private contextLog: IDepthLog[];
 
   public constructor(document: TextDocument) {
     this.text = document.getText();
     this.lines = this.text.split("\n");
+    this.statements = [];
     this.functionsDefinitions = [];
     this.functionsReferences = [];
     this.commentBlocks = [];
     this.potentialErrorLines = [];
-    this.fileReferences = [];
+    this.references = [];
     this.addedPaths = [];
-    // this.variablesDefinitions = [];
-    // this.variablesReferences = [];
+    this.variablesDefinitions = [];
+    this.variablesReferences = [];
     this.diagnostics = [];
 
+    this.contextLog = [{
+      lineNumber: -1,
+      depth: 0,
+      context: "",
+    }];
+    this.currentContext = [{
+      depth: 0,
+      context: "",
+    }];
+
     this.tokenizeText();
+
+    // this.contextLog.forEach((cl) => {
+    //   log(`context (${cl.lineNumber.toString()}): ${cl.context}, [${cl.depth.toString()}]`);
+    // });
   }
 
   private visitCommentBlock({
-    match,
     lineNumber,
     start,
   }: {
@@ -132,43 +190,170 @@ export class Parser {
     });
   }
 
+  /**
+   * If finds a repeated name function or variable it sends a diagnostic.
+   */
+  private checkRepetedFunctionDefinition(name: string, lineNumber: number): boolean {
+    for (let i = 0; i < this.functionsDefinitions.length; i++) {
+      const f = this.functionsDefinitions[i];
+      if (f.name === name) {
+        this.sendDiagnositcError(
+          true,
+          `the name '${name}' it's already defined at (${(
+            f.start.line + 1
+          ).toString()}, ${f.start.character.toString()}). at line ${lineNumber.toString()}`,
+          Range.create(
+            Position.create(lineNumber, 0),
+            Position.create(lineNumber, 0)
+          )
+        );
+        return true;
+      }
+    }
+    return false;
+  }
+
+  /**
+   * Converts a string into an IArgument object.
+   * TODO: consider when it's a vector it should parse the data from it
+   * and start, end, step should be of the type VARIABLE, NUMBER, ETC
+   */
+  private getArgumentFromString(arg: string): IArgument | null {
+    let argument: IArgument;
+    let argStr = arg;
+    let isOptionalArgument = false;
+    let name: string | undefined = undefined;
+
+    // log("------------------------------");
+    // log("arg: " + arg);
+
+    // check if the argument it's an optional argument
+    const optionalArgumentMatch = /^(?<name>\w+)\s*=\s*(?<value>.+)$/.exec(arg);
+    if (optionalArgumentMatch) {
+      argStr = optionalArgumentMatch.groups.value;
+      name = optionalArgumentMatch.groups?.name;
+      isOptionalArgument = true;
+    }
+
+    for (let i = 0; i < BASIC_TYPES_REGEXS.length; i++) {
+      const regex = BASIC_TYPES_REGEXS[i];
+      const match = regex.pattern.exec(argStr);
+      if (match) {
+        // log("regex: " + JSON.stringify(regex.name));
+        // log("line: " + match[0]);
+        argument = {
+          name: name ? name : arg.trim(),
+          content: match[0],
+          type: regex.name,
+          isOptional: isOptionalArgument,
+        };
+        if (regex.name === "VECTOR") {
+          argument = {
+            ...argument,
+            start: match.groups.start,
+            end: match.groups.end,
+          };
+          if (match.groups?.step) {
+            argument.step = match.groups?.step;
+          }
+          if (match.groups?.math_expr) {
+            argument.math_expr = match.groups?.math_expr;
+          }
+        }
+
+        // log("argument: " + JSON.stringify(argument));
+        return argument;
+      }
+    }
+
+    return null;
+  }
+
+  private checkCorrectArguments(match: RegExpMatchArray, lineNumber: number): void {
+    if (match.groups?.args && /,\s*$/.test(match.groups?.args)) {
+      this.diagnostics.push({
+        severity: DiagnosticSeverity.Error,
+        message: `Missing argument? ',' not valid in function '${match.groups?.name}'. At line ${lineNumber.toString()}`,
+        range: Range.create(Position.create(lineNumber, 0), Position.create(lineNumber, 0)),
+        source: "mlang",
+      });
+    }
+  }
+
   private visitFunctionDefinition({
     match,
     lineNumber,
-    token,
     line,
   }: {
     line: string;
     match: RegExpMatchArray;
-    token: IToken;
     lineNumber: number;
   }) {
-    if (!this.diagnoseKeywordNaming({ line, match, lineNumber })) return;
+    if (
+      !this.diagnoseKeywordNaming({ line, match, lineNumber }) ||
+      this.checkRepetedFunctionDefinition(match.groups?.name, lineNumber)
+    )
+      return;
 
-    // check if the function has already been defined
-    this.sendDiagnositcError(
-      this.functionsDefinitions
-        .map((def) => def.name)
-        .includes(match.groups?.name),
-      `the function '${match.groups.name
-      }' has already been defined. line ${lineNumber.toString()}`,
-      Range.create(Position.create(lineNumber,0), Position.create(lineNumber, 0))
-    );
+    // check that it ends correctly
+    this.checkCorrectArguments(match, lineNumber);
 
+    const [depth, context] = this.helperGetFunctionDefinitionDepth(lineNumber);
     const functionDefinition: IFunctionDefinition = {
       start: Position.create(
         lineNumber,
         match.index + match[0].indexOf(match.groups?.name)
       ),
-      type: token.name,
-      arguments: parseMultipleMatchValues(match.groups?.args),
+      type: "FUNCTION",
+      arguments: match.groups?.args
+        ? this.checkArgsFuncDef(
+          parseMultipleMatchValues(match.groups?.args).map((arg) =>
+            this.getArgumentFromString(arg)
+          ),
+          match.groups?.name,
+          lineNumber
+        )
+        : [],
       output: parseMultipleMatchValues(match.groups?.retval),
       name: match.groups?.name,
-      depth: this.helperGetFunctionDefinitionDepth({ lineNumber }),
+      depth,
       description: this.helperGetFunctionDefinitionDescription({
         lineNumber: lineNumber,
       }),
+      context,
     };
+
+    if (functionDefinition.arguments.length > 0) {
+      this.variablesDefinitions.push(
+        ...functionDefinition.arguments.map((arg) => {
+          const definition: IVariableDefinition = {
+            name: arg.name,
+            lineContent: arg.content,
+            content: [],
+            start: Position.create(lineNumber, match[0].indexOf(arg.content)),
+            end: Position.create(lineNumber, match[0].indexOf(arg.content) + arg.content.length),
+            depth: context,
+          };
+          return definition;
+        })
+      );
+    }
+
+    if (functionDefinition.output.length > 0) {
+      this.variablesDefinitions.push(
+        ...functionDefinition.output.map((out) => {
+          const definition: IVariableDefinition = {
+            name: out,
+            lineContent: out,
+            content: [],
+            start: Position.create(lineNumber, match[0].indexOf(out)),
+            end: Position.create(lineNumber, match[0].indexOf(out) + out.length),
+            depth: context,
+          };
+          return definition;
+        })
+      );
+    }
 
     this.functionsDefinitions.push(functionDefinition);
   }
@@ -193,11 +378,37 @@ export class Parser {
     return lines;
   }
 
-  private closeFunctionDefintion({ lineNumber }: { lineNumber: number }): void {
-    for (let i = this.functionsDefinitions.length - 1; i >= 0; i--) {
-      const currentFunctionDef = this.functionsDefinitions[i];
-      if (!currentFunctionDef.end) {
-        currentFunctionDef.end = Position.create(lineNumber, 0);
+  /**
+   * Handles the closing of the functions and statements defintions.
+   * TODO: maybe optimize for the cases of endfunction, endfor, etc?
+   * TODO: maybe when parsing the document just have one array with all the defintions
+   * so i dont have to perform this ordering?
+   */
+  private closeDefinitions({
+    lineNumber,
+    match,
+  }: {
+    lineNumber: number;
+    match: RegExpMatchArray;
+  }): void {
+    const orderedDefinitions = [
+      ...this.functionsDefinitions,
+      ...this.statements,
+    ].sort((a, b) => a.start.line - b.start.line);
+    for (let i = orderedDefinitions.length - 1; i >= 0; i--) {
+      const currentDef = orderedDefinitions[i];
+      if (
+        !currentDef.end &&
+        (/^\s*end\s*$/.test(match[0]) ||
+          (currentDef.type === "FUNCTION" &&
+            match[0].includes("endfunction")) ||
+          (currentDef.type === "IF" && match[0].includes("endif")) ||
+          (currentDef.type === "DO" && match[0].includes("until")) ||
+          (currentDef.type === "FOR" && match[0].includes("endfor")) ||
+          (currentDef.type === "WHILE" && match[0].includes("endwhile")))
+      ) {
+        currentDef.end = Position.create(lineNumber, 0);
+        this.popCurrentContext(lineNumber);
         return;
       }
     }
@@ -213,86 +424,140 @@ export class Parser {
 
   private visitAnonymousFunctionDefinition({
     match,
-    token,
     lineNumber,
     line,
   }: {
     line: string;
     match: RegExpMatchArray;
-    token: IToken;
     lineNumber: number;
   }): void {
-    // log("visitAnonymousFunctionDefinition: " + JSON.stringify(match));
     this.diagnoseKeywordNaming({ line, match, lineNumber });
+
+    // check that it ends correctly
+    this.checkCorrectArguments(match, lineNumber);
+    const [depth, context] = this.helperGetFunctionDefinitionDepth(lineNumber);
     const functionDefinition: IFunctionDefinition = {
       start: Position.create(lineNumber, 0),
       end: Position.create(lineNumber, 0),
       name: match[1],
-      type: token.name,
-      arguments: parseMultipleMatchValues(match.groups?.retval),
-      depth: this.helperGetFunctionDefinitionDepth({ lineNumber }),
+      type: "FUNCTION",
+      arguments: match.groups?.args
+        ? this.checkArgsFuncDef(
+          parseMultipleMatchValues(match.groups?.args).map((arg) =>
+            this.getArgumentFromString(arg)
+          ),
+          match.groups?.name,
+          lineNumber
+        )
+        : [],
+      depth,
       description: this.helperGetFunctionDefinitionDescription({
         lineNumber: lineNumber,
       }),
+      context,
     };
+    if (functionDefinition.arguments.length > 0) {
+      this.variablesDefinitions.push(
+        ...functionDefinition.arguments.map((arg) => {
+          const definition: IVariableDefinition = {
+            name: arg.name,
+            lineContent: arg.content,
+            content: [],
+            start: Position.create(lineNumber, match[0].indexOf(arg.content)),
+            end: Position.create(lineNumber, match[0].indexOf(arg.content) + arg.content.length),
+            depth: context,
+          };
+          return definition;
+        })
+      );
+    }
+    // log("visitAnonymousFunctionDefinition: " + JSON.stringify(functionDefinition));
     this.functionsDefinitions.push(functionDefinition);
   }
 
   /**
-   * Returns the depth in a function definition of the current function definition.
-   * If it's 0 then it means that the function it's defined at file level.
+   * Adds a depth to the current context
    */
-  private helperGetFunctionDefinitionDepth({
-    lineNumber,
-  }: {
-    lineNumber: number;
-  }): number {
-    if (this.functionsDefinitions.length === 0) {
-      // case for a definition at file level
-      return 0;
-    }
-    let foundDepthFlag = false;
-    this.functionsDefinitions.forEach((func) => {
-      if (!func.end || func.end.line > lineNumber) {
-        foundDepthFlag = true;
-        return func.depth + 1;
-      }
+  private pushNewContext(lineNumber: number): void {
+    const context: IDepth = {
+      context: randomUUID(),
+      depth: this.currentContext[this.currentContext.length - 1].depth + 1,
+    };
+    this.currentContext.push(context);
+    this.contextLog.push({
+      ...context,
+      lineNumber,
     });
-    if (!foundDepthFlag) {
-      // this cases occurs when there are multiple definitions not closed with the 'end' keyword
-      return 0;
-    }
   }
 
   /**
-   * Returns the depth in scope of a function reference
-   * If it's 0 then it means that the function it's defined at file level.
+   * Returns from a context
    */
-  private helperGetFunctionReferenceDepth({
-    lineNumber,
-  }: {
-    lineNumber: number;
-  }): number {
-    if (this.functionsDefinitions.length === 0) {
-      // case for a definition at file level
-      return 0;
-    }
-    let foundDepthFlag = false;
-    for (let i = this.functionsDefinitions.length; i > 0; i--) {
-      const func = this.functionsDefinitions[i - 1];
+  private popCurrentContext(lineNumber: number): void {
+    this.currentContext.pop();
+    this.contextLog.push({
+      ...this.currentContext[this.currentContext.length - 1],
+      lineNumber,
+    });
+  }
+
+  /**
+   * TODO: check syntax
+   * TODO: check that the optional values are always defined after the required ones.
+   */
+  private checkArgsFuncDef(
+    args: IArgument[],
+    functionName: string,
+    lineNumber: number
+  ): IArgument[] {
+    args.forEach((arg, index, arr) => {
+      if (index === arr.length - 1) return;
       if (
-        func.start.line < lineNumber &&
-        func.end &&
-        func.end.line > lineNumber
+        args
+          .filter((a) => a !== arg)
+          .map((a) => a.name)
+          .includes(arg.name)
       ) {
-        foundDepthFlag = true;
-        return func.depth;
+        this.diagnostics.push({
+          range: Range.create(
+            Position.create(lineNumber, 0),
+            Position.create(lineNumber, 0)
+          ),
+          message: `Bad arguments, arguments can't have the same name, '${arg.name
+            }' in function '${functionName}'. At line ${lineNumber.toString()}`,
+          severity: DiagnosticSeverity.Error,
+          source: "mlang",
+        });
       }
-    }
-    if (!foundDepthFlag) {
-      // this cases occurs when there are one or more definitions not closed with the 'end' keyword
-      return -1;
-    }
+      if (arg.isOptional && !arr[index + 1].isOptional) {
+        this.diagnostics.push({
+          range: Range.create(
+            Position.create(lineNumber, 0),
+            Position.create(lineNumber, 0)
+          ),
+          message: `Bad arguments, a default value can't be before a required one, '${arg.content
+            }' in function '${functionName}'. At line ${lineNumber.toString()}`,
+          severity: DiagnosticSeverity.Error,
+          source: "mlang",
+        });
+      }
+    });
+    return args;
+  }
+
+  /**
+   * Returns the current depth and a new created context and pushes it to the array.
+   */
+  private helperGetFunctionDefinitionDepth(lineNumber: number): [string, string] {
+    this.pushNewContext(lineNumber);
+    return [
+      this.currentContext[this.currentContext.length - 2].context,
+      this.currentContext[this.currentContext.length - 1].context
+    ];
+  }
+
+  private helperGetVariableDefinitionDepth(): string {
+    return this.currentContext[this.currentContext.length - 1].context;
   }
 
   /**
@@ -300,6 +565,10 @@ export class Parser {
    * that does not have it's corresponding closing keyword
    */
   checkClosingBlocks(): void {
+    this.sendDiagnositcError(
+      this.statements.some((def) => !def.end),
+      "missing closing keyword"
+    );
     this.sendDiagnositcError(
       this.functionsDefinitions.some((def) => !def.end),
       "missing closing keyword"
@@ -361,7 +630,6 @@ export class Parser {
           case "FUNCTION_DEFINITION_WITHOUT_OUTPUT":
             this.visitFunctionDefinition({
               match,
-              token,
               lineNumber: lineNumber - 1,
               line,
             });
@@ -370,7 +638,6 @@ export class Parser {
             this.visitAnonymousFunctionDefinition({
               match,
               lineNumber: lineNumber - 1,
-              token,
               line,
             });
             break;
@@ -384,20 +651,63 @@ export class Parser {
             });
             break;
 
-          case "COMMON_KEYWORDS":
-          case "DO_STATEMENT":
-          case "UNTIL_STATEMENT":
           case "IF_STATEMENT_START":
+            this.visitStatementStart({
+              type: "IF",
+              match,
+              lineNumber: lineNumber - 1,
+            });
+            break;
+          case "WHILE_STATEMENT_START":
+            this.visitStatementStart({
+              type: "WHILE",
+              match,
+              lineNumber: lineNumber - 1,
+            });
+            break;
+          case "FOR_STATEMENT_START":
+            this.visitStatementStart({
+              type: "FOR",
+              match,
+              lineNumber: lineNumber - 1,
+            });
+            break;
+          case "DO_STATEMENT":
+            this.visitStatementStart({
+              type: "DO",
+              match,
+              lineNumber: lineNumber - 1,
+            });
+            break;
+
           case "ELSE_STATEMENT":
           case "ELSE_IF_STATEMENT":
-          case "WHILE_STATEMENT_START":
-          case "FOR_STATEMENT_START":
-          case "VARIABLE_REFERENCE":
+            // TODO: should check that elseif its after else
+            this.sendDiagnositcError(
+              this.statements.filter(
+                (s) => !s.end && s.start.line < lineNumber - 1
+              ).length === 0,
+              `missing if before calling '${match[0]}' at line ${(
+                lineNumber - 1
+              ).toString()}`,
+              Range.create(
+                Position.create(lineNumber - 1, 0),
+                Position.create(lineNumber - 1, 0)
+              )
+            );
+            break;
           case "VARIABLE_DECLARATION":
+            this.visitVariableDefinition({
+              match,
+              lineNumber: lineNumber - 1,
+            });
+            break;
+
+          case "COMMON_KEYWORDS":
             break;
 
           case "END":
-            this.closeFunctionDefintion({ lineNumber });
+            this.closeDefinitions({ lineNumber: lineNumber - 1, match });
             break;
 
           case "COMMENT_BLOCK_START":
@@ -415,8 +725,8 @@ export class Parser {
             });
             break;
 
-          case "FILE_REFERENCE":
-            this.visitFileReference({ match, lineNumber: lineNumber - 1 });
+          case "REFERENCE":
+            this.visitReference({ match, lineNumber: lineNumber - 1 });
             break;
 
           case "ANY":
@@ -435,6 +745,76 @@ export class Parser {
     this.checkClosingBlocks();
     this.cleanUpPotentialErrorLines();
     // log(JSON.stringify(this.commentBlocks));
+
+    // log(JSON.stringify(this.contextLog));
+
+  }
+
+  /**
+   * Creates the variables definitions
+   */
+  private visitVariableDefinition({
+    match,
+    lineNumber,
+  }: {
+    match: RegExpMatchArray;
+    lineNumber: number;
+  }) {
+    if (this.variablesDefinitions.map((d) => d.name).includes(match.groups?.name)) {
+      // it's a reference not a definition
+      this.variablesReferences.push({
+        name: match.groups?.name,
+        start: Position.create(lineNumber, 0),
+        end: Position.create(lineNumber, 0),
+        depth: this.currentContext.at(-1).context,
+      });
+      return;
+    }
+    if (this.checkRepetedFunctionDefinition(match.groups?.name, lineNumber)) return;
+    const def: IVariableDefinition = {
+      depth: this.helperGetVariableDefinitionDepth(),
+      start: Position.create(lineNumber, 0),
+      name: match.groups?.name,
+      content: match.groups?.content.split(","),
+      lineContent: match[0],
+    };
+    this.variablesDefinitions.push(def);
+  }
+
+  public getVariableDefinitions(): IVariableDefinition[] {
+    return this.variablesDefinitions;
+  }
+
+  /**
+   * Creates the references when an statement it's made, mainly to check if
+   * the grammar it's correct.
+   */
+  visitStatementStart({
+    type,
+    lineNumber,
+  }: {
+    type: StatementType;
+    match: RegExpMatchArray;
+    lineNumber: number;
+  }): void {
+    const [depth, context] = this.helperGetStatementDepth();
+    const statement: IStatements = {
+      depth,
+      type,
+      start: Position.create(lineNumber, 0),
+      context,
+    };
+    this.statements.push(statement);
+  }
+
+  /**
+   * Returns the depth of the current statement
+   */
+  private helperGetStatementDepth(): [string, string] {
+    return [
+      this.currentContext[this.currentContext.length - 2].context,
+      this.currentContext[this.currentContext.length - 1].context
+    ];
   }
 
   /**
@@ -444,79 +824,109 @@ export class Parser {
     uris,
     functionsDefinitions,
     variablesDefinitions,
+    references,
   }: {
     uris: string[];
-    functionsDefinitions: string[];
+    functionsDefinitions: IFunctionDefinition[];
     variablesDefinitions: string[];
+    references: string[];
   }): Diagnostic[] {
     // TODO: maybe add indication of possible references that matches the wrongly typed text
+    // TODO: optimize this.
     const localDiagnostics: Diagnostic[] = [];
     // validate file references
     localDiagnostics.push(
-      ...this.fileReferences
-        .filter((ref) => !uris.includes(ref.name))
-        .map((ref) => {
-          return {
-            range: Range.create(
-              Position.create(ref.lineNumber, 0),
-              Position.create(ref.lineNumber, 0)
-            ),
-            message: `reference not found: '${ref.name}' at line ${(
-              ref.lineNumber + 1
-            ).toString()}`,
-            severity: DiagnosticSeverity.Error,
-            source: "mlang",
-          } as Diagnostic;
-        }),
-      ...this.functionsReferences
+      ...this.references
         .filter(
           (ref) =>
-            functionsDefinitions.length === 0 ||
-            !functionsDefinitions.includes(ref.name)
+            !uris.includes(ref.name) &&
+            !variablesDefinitions.includes(ref.name) &&
+            !this.variablesDefinitions
+              .filter((def) => ref.depth.includes(def.depth))
+              .map((def) => def.name)
+              .includes(ref.name)
         )
-        .map((ref) => {
-          return {
-            range: Range.create(
-              Position.create(ref.start.line, 0),
-              Position.create(ref.start.line, 0)
-            ),
-            message: `reference not found: '${ref.name}' at line ${(
-              ref.start.line + 1
-            ).toString()}`,
-            severity: DiagnosticSeverity.Error,
-            source: "mlang",
-          } as Diagnostic;
+        .map((ref) => getNotFoundReferenceDiagnostic(ref.name, ref.lineNumber)),
+      ...this.functionsReferences
+        .filter((ref) => {
+          let foundInReferencesFlag = false;
+
+          // found in the imported references list
+          if (references.length > 0 && references.includes(ref.name))
+            foundInReferencesFlag = true;
+
+          // found in the local references based on the right context
+          if (this.functionsDefinitions.length > 0 && this.functionsDefinitions.filter((def) => ref.depth.includes(def.depth)).length > 0)
+            foundInReferencesFlag = true;
+
+          // check the imported definitions
+          if (functionsDefinitions.length === 0) return !foundInReferencesFlag;
+          for (let i = 0; i < functionsDefinitions.length; i++) {
+            const def = functionsDefinitions[i];
+            if (def.name === ref.name) {
+              const defRequiredArgs = def?.arguments
+                ? def.arguments.filter((arg) => !arg.isOptional).length
+                : 0;
+              const defOptArgs = def?.arguments
+                ? def.arguments.filter((arg) => arg.isOptional).length
+                : 0;
+              const refArgs = ref?.arguments ? ref.arguments.length : 0;
+              if (
+                def?.arguments &&
+                (defRequiredArgs > refArgs ||
+                  defRequiredArgs + defOptArgs < refArgs)
+              ) {
+                localDiagnostics.push(
+                  getWrongArgumentsDiagnostic({
+                    defArgumentsLength: defRequiredArgs,
+                    defOptionalArgsLength: defOptArgs,
+                    refLineNumber: ref.start.line,
+                    refArgumentsLength: refArgs,
+                    name: ref.name,
+                  })
+                );
+              }
+              return false;
+            }
+          }
+          return !foundInReferencesFlag;
         })
+        .map((ref) =>
+          // log('functionsDefinitions: ' + JSON.stringify(functionsDefinitions));
+          getNotFoundReferenceDiagnostic(ref.name, ref.start.line)
+        )
     );
 
     return localDiagnostics;
   }
 
-  private visitFileReference({
+  private visitReference({
     match,
     lineNumber,
   }: {
     match: RegExpMatchArray;
     lineNumber: number;
   }): void {
-    this.fileReferences.push({
+    // log("visiting reference: " + JSON.stringify(match));
+    this.references.push({
       name: match.groups?.name,
       lineNumber,
+      depth: this.helperGetReferenceDepth(),
     });
   }
 
   // Removes the lines that are commented
+  // TODO: consider comment blocks
   private cleanUpPotentialErrorLines(): void {
     this.potentialErrorLines.forEach((line) => {
-      this.commentBlocks.forEach((block) => {
-        if (
-          block.end &&
-          block.start.line < line.lineNumber &&
-          block.end.line > line.lineNumber
-        ) {
-          return;
-        }
-      });
+      // this.commentBlocks.forEach((block) => {
+      // if (
+      //   block.end &&
+      //   block.start.line < line.lineNumber &&
+      //   block.end.line > line.lineNumber
+      // ) {
+      //   return;
+      // }
       const diagnostic: Diagnostic = {
         severity: DiagnosticSeverity.Error,
         range: {
@@ -527,6 +937,7 @@ export class Parser {
         source: "mlang",
       };
       this.diagnostics.push(diagnostic);
+      // });
     });
   }
 
@@ -545,9 +956,17 @@ export class Parser {
     if (!this.diagnoseKeywordNaming({ line, match, lineNumber })) return;
     this.handleReferenceAddPath({ match, lineNumber });
 
-    const args = parseMultipleMatchValues(match.groups?.retval);
+    // check that it ends correctly
+    this.checkCorrectArguments(match, lineNumber);
+
+    // log("visiting function reference: " + match[0]);
+
+    const args = parseMultipleMatchValues(match.groups?.args);
     const outputs = parseMultipleMatchValues(match.groups?.retval);
 
+    // log("args: " + JSON.stringify(args));
+
+    const depth = this.helperGetReferenceDepth();
     const reference: IFunctionReference = {
       name: match.groups?.name,
       start: Position.create(lineNumber, match.index),
@@ -555,19 +974,45 @@ export class Parser {
         lineNumber,
         match.index + match[0].indexOf(match.groups?.name)
       ),
-      depth: this.helperGetFunctionReferenceDepth({ lineNumber }),
+      depth,
     };
     if (args.length > 0) {
-      reference.arguments = args;
+      reference.arguments = args.map((arg) => this.getArgumentFromString(arg));
+      reference.arguments.forEach((arg) => {
+        if (arg.type === "VARIABLE") {
+          this.references.push({
+            name: arg.name,
+            lineNumber,
+            depth: this.helperGetReferenceDepth(),
+          });
+        }
+      });
     }
     if (outputs.length > 0) {
       reference.output = outputs;
+      reference.output.forEach((o) => {
+        this.variablesDefinitions.push({
+          name: o,
+          lineContent: match[0],
+          depth: depth[depth.length - 1],
+          content: [match[0]],
+          start: Position.create(lineNumber, 0),
+          end: Position.create(lineNumber, 0),
+        });
+      });
     }
 
     this.functionsReferences.push(reference);
   }
 
-  // TODO: fix this, it can handle relative paths well, it's bugs out and shuts the server with call stack exceeded.
+
+  /**
+   * Returns the ordered list of context from the file context to the current one.
+   */
+  private helperGetReferenceDepth(): string[] {
+    return this.currentContext.map((context) => context.context);
+  }
+
   private handleReferenceAddPath({
     match,
     lineNumber,
@@ -576,10 +1021,12 @@ export class Parser {
     lineNumber: number;
   }): void {
     if (match.groups?.name === "addpath") {
+      // log("FOUND PATH: " + match.groups.args);
       const paths = parseMultipleMatchValues(match.groups?.args);
       paths.forEach((p) => {
         p.split(":").forEach((path) => {
           const pathExists = checkIfPathExists(path);
+          // log(`does ${path} exits? ${JSON.stringify(pathExists)}`);
           if (pathExists) {
             this.addedPaths.push(path);
           }
@@ -612,6 +1059,13 @@ export class Parser {
   }
 
   /**
+   * Returns all the variable references of the document.
+   */
+  public getVariableReferences(): IVariableReference[] {
+    return this.variablesReferences;
+  }
+
+  /**
    * TODO: this should send the diagnostics to an array to be handled later
    * Sets a diagnostic for when the line does not
    * have a ';' no output to console character
@@ -620,7 +1074,6 @@ export class Parser {
     line,
     lineNumber,
     token,
-    match,
   }: {
     line: string;
     lineNumber: number;
@@ -628,10 +1081,10 @@ export class Parser {
     token: IToken;
   }): void {
     const validTokens =
+      token.name === "REFERENCE" ||
       token.name === "FUNCTION_REFERENCE_WITH_SINGLE_OUTPUT" ||
       token.name === "FUNCTION_REFERENCE_WITH_MULTIPLE_OUTPUTS" ||
       token.name === "FUNCTION_REFERENCE_WITHOUT_OUTPUT" ||
-      token.name === "VARIABLE_REFERENCE" ||
       token.name === "VARIABLE_DECLARATION" ||
       token.name === "ANONYMOUS_FUNCTION";
     if (!validTokens || line.trim() === "" || line.endsWith(";")) return;
@@ -645,14 +1098,6 @@ export class Parser {
       range: range,
       message: "will output to console",
       source: "mlang",
-      // relatedInformation: [
-      // {
-      //   location: {
-      //     uri: formatURI(this.uri),
-      //     range: range,
-      //   },
-      //   message: 'Spelling matters'
-      // }]
     };
 
     this.diagnostics.push(diagnostic);
@@ -709,4 +1154,29 @@ export class Parser {
   public getLines(): string[] {
     return this.lines;
   }
+
+  /**
+   * Returns variables and files referenced in the current file.
+   */
+  public getReferences(): IReference[] {
+    return this.references;
+  }
+
+  /**
+   * Returns the list of context from the file context to the current line
+   * given a line number.
+   * @params {lineNumber: number} - current line number.
+   * @returns string[] - current context.
+   */
+  public getCursorDepth(lineNumber: number): string[] {
+    for (let i = 0; i < this.contextLog.length; i++) {
+      if (this.contextLog[i].lineNumber === lineNumber) {
+        return this.contextLog.slice(0, i + 1).map((c) => c.context);
+      } else if (this.contextLog[i].lineNumber > lineNumber) {
+        return this.contextLog.slice(0, i + 1).map((c) => c.context);
+      }
+    }
+    return [""];
+  }
+
 }

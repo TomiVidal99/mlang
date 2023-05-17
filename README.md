@@ -49,7 +49,18 @@ end
 
 ## TODO
 
-- [ ] fix: that file references not need _()_ to be called.
+- [ ] Redthink all the context system, maybe just considering the definition line it's just enough.
+- [ ] fix: info when ending ; should not consider after white spaces.
+- [ ] fix: not redefine variables when reasigning values.
+- [ ] Check correct types when defining variables.
+- [ ] Improve description of variables.
+- [ ] depth it's not enough to get right context of references (improve this).
+- [ ] functions references not necessarily have to have '()'.
+- [ ] consider variables inside for, if, etcs.
+- [ ] consider function composition.
+- [ ] implement global settings and add custom user settings.
+- [ ] consider comment blocks.
+- [ ] add loading progress display.
 - [ ] consider packages (check if they're installed and offer references).
 - [ ] add auto imports (add the _addpath_ command at the beggining of the file when importing some function, think this better).
 - [ ] add diagnostics checking for arguments and return values (function references).
@@ -58,7 +69,6 @@ end
 - [ ] add more and better description to completion items.
 - [ ] add hover capability.
 - [ ] optimize esbuild bundle config.
-- [ ] check when repeated function definitions.
 - [ ] make tests.
 - [ ] add husky (for linting before commit).
 - [ ] formatting.

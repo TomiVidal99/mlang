@@ -8,7 +8,7 @@ import * as fs from "fs";
 import * as path from "path";
 
 import { TextDocument } from "vscode-languageserver-textdocument";
-import { ISettings, completionData } from "./data";
+import { ISettings, completionData, globalSettings } from "./data";
 import {
   getDocumentsToBeExecutable,
   handleOnCompletion,
@@ -26,6 +26,7 @@ import {
   updateDocumentData,
 } from "./utils";
 import { getAllMFiles } from "./managers";
+import { IFunctionDefinition } from "./parser";
 
 const CHANGE_CONTENT_DELAY_MS = 150;
 let onChangeContentDelay: NodeJS.Timer | undefined;
@@ -36,9 +37,16 @@ export const documentData: DocumentData[] = [];
 
 const documents = new TextDocuments<TextDocument>(TextDocument);
 
+export function logError(message: string): void {
+  connection.sendRequest("window/showMessage", {
+    type: MessageType.Info,
+    message,
+  });
+}
+
 export function log(message: string | object): void {
   // TODO: this is only for dev purposes
-  return;
+  // return;
   connection.sendRequest("window/showMessage", {
     type: MessageType.Info,
     message: typeof message === "string" ? message : JSON.stringify(message),
@@ -80,7 +88,13 @@ documents.onDidChangeContent((change) => {
   // log(JSON.stringify(documentData.map((d) => d.getDocumentPath())));
 
   onChangeContentDelay = setTimeout(async () => {
-    updateDocumentData(change.document);
+    updateDocumentData(change.document, (data) => {
+      // TODO: maybe think of a better way to handle this case
+      // this is because the update of the diagnostics for references and such
+      // must be ran after the document has read all the other files
+      cleanUnreferencedDocuments(change.document.uri);
+      data.postUpdateHooks();
+    });
     updatePostParsingDiagnostics();
   }, CHANGE_CONTENT_DELAY_MS);
 });
@@ -144,6 +158,37 @@ export function getAllFilesInProject(): string[] {
   return files;
 }
 
+function getAllVariableDefinitions(currentDoc: DocumentData): string[] {
+  return [...documentData
+    .filter((d) =>
+      currentDoc
+        .getReferences()
+        .map((ref) => ref.name)
+        .includes(d.getFileName())
+    )
+    .flatMap((d) =>
+      d
+        .getVariableDefinitions()
+        .map((ref) => ref.name)
+    ),
+  ...documentData
+    .filter((d) =>
+      currentDoc
+        .getFunctionsReferences()
+        .map((ref) => ref.name)
+        .includes(d.getFileName())
+    )
+    .flatMap((d) =>
+      d
+        .getVariableDefinitions()
+        .filter((ref) => ref.depth === "")
+        .map((ref) => ref.name)
+    ),
+    ...currentDoc.getVariableDefinitions(-1, true)
+    .map((def) => def.name)
+  ];
+}
+
 /**
  * Checks that references are ok, else send diagnostics.
  * TODO: distinguish between reference does not exist and should import the reference
@@ -153,23 +198,33 @@ function updatePostParsingDiagnostics(): void {
   documentData.forEach((data) => {
     connection.sendDiagnostics(
       data.getDiagnostics({
+        variablesDefinitions: getAllVariableDefinitions(data),
         allFilesInProject,
-        functionsDefinitions: [
-          ...getValidFunctionsReferencesNames(data),
-          ...completionData.map((data) => data.label),
+        functionsDefinitions: getValidFunctionsDefinitionsNames(data),
+        references: [
+          ...completionData().map((data) => data.label),
           ...getDocumentsToBeExecutable({ currentDocument: data.getURI() }).map(
             (item) => item.label
           ),
-        ],
+        ]
       })
     );
   });
 }
 
-// TODO: make this
-function getValidFunctionsReferencesNames(currentDoc: DocumentData): string[] {
-  // const localDefinitions: string[] = [];
-  const defs = [
+function getValidFunctionsDefinitionsNames(currentDoc: DocumentData): IFunctionDefinition[] {
+  const a = [
+    ...documentData
+      .filter((d) =>
+        currentDoc
+          .getReferences()
+          .map((ref) => ref.name)
+          .includes(d.getFileName())
+      )
+      .flatMap((d) =>
+        d
+          .getFunctionsDefinitions()
+      ),
     ...documentData
       .filter((d) =>
         currentDoc
@@ -180,13 +235,33 @@ function getValidFunctionsReferencesNames(currentDoc: DocumentData): string[] {
       .flatMap((d) =>
         d
           .getFunctionsDefinitions()
-          .filter((ref) => ref.depth === 0)
-          .map((ref) => ref.name)
       ),
-    ...currentDoc.getFunctionsDefinitions().map((def) => def.name),
+    ...currentDoc.getFunctionsDefinitions(),
     ...documentData.flatMap((data) =>
-      data.getExportedFunctions().map((ref) => ref.name)
+      data.getExportedFunctions()
     ),
   ];
-  return [...defs];
+  // log("a: " + JSON.stringify(a));
+  return a;
+}
+
+/**
+  * Checks that all documents are referencing to the listed documents.
+  * if any document in the list it's not referenced will be removed.
+  */
+function cleanUnreferencedDocuments(currentDocumentURI: string): void {
+  const referencedPaths = documentData.flatMap((data) => data.getLocallyReferencedPaths());
+  if (globalSettings.enableInitFile && globalSettings.defaultInitFile) {
+    referencedPaths.push(...getAllFilepathsFromPath(globalSettings.defaultInitFile));
+  }
+  documentData.forEach((data) => {
+    if (data.getURI() !== currentDocumentURI && !referencedPaths.includes(data.getDocumentPath())) {
+      // log(`the doc ${data.getDocumentPath()} should not be referenced.`);
+      // log(`before removal docs: ${JSON.stringify(documentData.map((d) => d.getFileName()))}`);
+      documentData.splice(documentData.indexOf(data), 1);
+      // log(`after removal docs: ${JSON.stringify(documentData.map((d) => d.getFileName()))}`);
+    }
+  });
+
+  // log(JSON.stringify(documentData.map((d) => d.getFileName())));
 }
