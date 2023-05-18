@@ -1114,7 +1114,7 @@ export class Parser {
       token.name === "FUNCTION_REFERENCE_WITHOUT_OUTPUT" ||
       token.name === "VARIABLE_DECLARATION" ||
       token.name === "ANONYMOUS_FUNCTION";
-    if (!validTokens || line.trim() === "" || line.endsWith(";")) return;
+    if (!validTokens || line.trim() === "" || /(<?>.*)?\s*?;\s*?$/.test(line)) return;
     const range = Range.create(
       Position.create(lineNumber, line.length - 1),
       Position.create(lineNumber, line.length)
