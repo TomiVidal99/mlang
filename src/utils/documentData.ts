@@ -1,7 +1,7 @@
 import { TextDocument } from "vscode-languageserver-textdocument";
 import { IKeyword } from "./getFunctionDefinitions";
 import { getPathFromURI } from "./getPathFromURI";
-import { addDocumentsFromPath, documentData, log } from "../server";
+import { addDocumentsFromPath, documentData } from "../server";
 import {
   IFunctionDefinition,
   IFunctionReference,
@@ -9,10 +9,9 @@ import {
   IVariableDefinition,
   Parser,
 } from "../parser";
-import { Diagnostic, Position, Range, PublishDiagnosticsParams } from "vscode-languageserver";
+import { Diagnostic, PublishDiagnosticsParams } from "vscode-languageserver";
 import { parseToIKeyword } from "./parseToIKeyword";
 import * as path from "path";
-import { randomUUID } from "crypto";
 
 export function addNewDocument(document: TextDocument): void {
   const data = new DocumentData(document);
@@ -47,10 +46,13 @@ export function updateDocumentData(
 /**
  * Gets the variable definitions of all the documents registered.
  */
-export function getAllVariableDefinitions(currentDocURI: string, lineNumber: number): IVariableDefinition[] {
+export function getAllVariableDefinitions(
+  currentDocURI: string,
+  lineNumber: number
+): IVariableDefinition[] {
   const a = documentData.flatMap((data) =>
     data
-      .getVariableDefinitions(lineNumber, data.getURI() === currentDocURI)
+      .getVariableDefinitions(lineNumber + 1, data.getURI() === currentDocURI)
       .map((d) => {
         return {
           uri: data.getURI(),
@@ -136,11 +138,12 @@ export class DocumentData {
    */
   public getVariableReferences(currentDoc?: boolean): IKeyword[] {
     if (currentDoc) {
-      return this.parser.getVariableReferences().map((v) => 
-        parseToIKeyword(v, this.getURI())
-      );
+      return this.parser
+        .getVariableReferences()
+        .map((v) => parseToIKeyword(v, this.getURI()));
     }
-    return this.parser.getVariableReferences()
+    return this.parser
+      .getVariableReferences()
       .filter((v) => v.depth === "")
       .map((v) => parseToIKeyword(v, this.getURI()));
   }
@@ -148,10 +151,18 @@ export class DocumentData {
   /**
    * Returns the variable definitions of the document.
    */
-  public getVariableDefinitions(lineNumber?: number, currentDoc?: boolean): IVariableDefinition[] {
+  public getVariableDefinitions(
+    lineNumber?: number,
+    currentDoc?: boolean
+  ): IVariableDefinition[] {
     if (currentDoc) {
-      // return this.parser.getVariableDefinitions().filter((v) => this.parser.getCursorDepth(lineNumber+1).includes(v.depth));
-      return this.parser.getVariableDefinitions().filter((v) => v.start.line < lineNumber);
+      return this.parser
+        .getVariableDefinitions()
+        .filter(
+          (v) =>
+            this.parser.getCursorDepth(lineNumber).includes(v.depth) &&
+            v.start.line < lineNumber
+        );
     }
     return this.parser.getVariableDefinitions().filter((v) => v.depth === "");
   }
@@ -191,7 +202,7 @@ export class DocumentData {
    */
   public getFunctionsDefinitions(
     lineNumber?: number,
-    currentDoc?: boolean,
+    currentDoc?: boolean
   ): IFunctionDefinition[] {
     if (currentDoc) {
       const dep = this.parser.getCursorDepth(lineNumber);
@@ -227,7 +238,7 @@ export class DocumentData {
           uris: allFilesInProject,
           functionsDefinitions,
           variablesDefinitions,
-          references
+          references,
         }),
       ],
     };
@@ -302,5 +313,4 @@ export class DocumentData {
 
     this.checkCorrectArguments();
   }
-
 }

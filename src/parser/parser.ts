@@ -133,21 +133,21 @@ export class Parser {
     this.variablesReferences = [];
     this.diagnostics = [];
 
-    this.contextLog = [{
-      lineNumber: -1,
-      depth: 0,
-      context: "",
-    }];
-    this.currentContext = [{
-      depth: 0,
-      context: "",
-    }];
+    this.contextLog = [
+      {
+        lineNumber: -1,
+        depth: 0,
+        context: "",
+      },
+    ];
+    this.currentContext = [
+      {
+        depth: 0,
+        context: "",
+      },
+    ];
 
     this.tokenizeText();
-
-    // this.contextLog.forEach((cl) => {
-    //   log(`context (${cl.lineNumber.toString()}): ${cl.context}, [${cl.depth.toString()}]`);
-    // });
   }
 
   private visitCommentBlock({
@@ -193,7 +193,10 @@ export class Parser {
   /**
    * If finds a repeated name function or variable it sends a diagnostic.
    */
-  private checkRepetedFunctionDefinition(name: string, lineNumber: number): boolean {
+  private checkRepetedFunctionDefinition(
+    name: string,
+    lineNumber: number
+  ): boolean {
     for (let i = 0; i < this.functionsDefinitions.length; i++) {
       const f = this.functionsDefinitions[i];
       if (f.name === name) {
@@ -269,12 +272,19 @@ export class Parser {
     return null;
   }
 
-  private checkCorrectArguments(match: RegExpMatchArray, lineNumber: number): void {
+  private checkCorrectArguments(
+    match: RegExpMatchArray,
+    lineNumber: number
+  ): void {
     if (match.groups?.args && /,\s*$/.test(match.groups?.args)) {
       this.diagnostics.push({
         severity: DiagnosticSeverity.Error,
-        message: `Missing argument? ',' not valid in function '${match.groups?.name}'. At line ${lineNumber.toString()}`,
-        range: Range.create(Position.create(lineNumber, 0), Position.create(lineNumber, 0)),
+        message: `Missing argument? ',' not valid in function '${match.groups?.name
+          }'. At line ${lineNumber.toString()}`,
+        range: Range.create(
+          Position.create(lineNumber, 0),
+          Position.create(lineNumber, 0)
+        ),
         source: "mlang",
       });
     }
@@ -331,7 +341,10 @@ export class Parser {
             lineContent: arg.content,
             content: [],
             start: Position.create(lineNumber, match[0].indexOf(arg.content)),
-            end: Position.create(lineNumber, match[0].indexOf(arg.content) + arg.content.length),
+            end: Position.create(
+              lineNumber,
+              match[0].indexOf(arg.content) + arg.content.length
+            ),
             depth: context,
           };
           return definition;
@@ -347,7 +360,10 @@ export class Parser {
             lineContent: out,
             content: [],
             start: Position.create(lineNumber, match[0].indexOf(out)),
-            end: Position.create(lineNumber, match[0].indexOf(out) + out.length),
+            end: Position.create(
+              lineNumber,
+              match[0].indexOf(out) + out.length
+            ),
             depth: context,
           };
           return definition;
@@ -464,7 +480,10 @@ export class Parser {
             lineContent: arg.content,
             content: [],
             start: Position.create(lineNumber, match[0].indexOf(arg.content)),
-            end: Position.create(lineNumber, match[0].indexOf(arg.content) + arg.content.length),
+            end: Position.create(
+              lineNumber,
+              match[0].indexOf(arg.content) + arg.content.length
+            ),
             depth: context,
           };
           return definition;
@@ -548,11 +567,13 @@ export class Parser {
   /**
    * Returns the current depth and a new created context and pushes it to the array.
    */
-  private helperGetFunctionDefinitionDepth(lineNumber: number): [string, string] {
+  private helperGetFunctionDefinitionDepth(
+    lineNumber: number
+  ): [string, string] {
     this.pushNewContext(lineNumber);
     return [
       this.currentContext[this.currentContext.length - 2].context,
-      this.currentContext[this.currentContext.length - 1].context
+      this.currentContext[this.currentContext.length - 1].context,
     ];
   }
 
@@ -747,7 +768,6 @@ export class Parser {
     // log(JSON.stringify(this.commentBlocks));
 
     // log(JSON.stringify(this.contextLog));
-
   }
 
   /**
@@ -760,7 +780,9 @@ export class Parser {
     match: RegExpMatchArray;
     lineNumber: number;
   }) {
-    if (this.variablesDefinitions.map((d) => d.name).includes(match.groups?.name)) {
+    if (
+      this.variablesDefinitions.map((d) => d.name).includes(match.groups?.name)
+    ) {
       // it's a reference not a definition
       this.variablesReferences.push({
         name: match.groups?.name,
@@ -770,7 +792,8 @@ export class Parser {
       });
       return;
     }
-    if (this.checkRepetedFunctionDefinition(match.groups?.name, lineNumber)) return;
+    if (this.checkRepetedFunctionDefinition(match.groups?.name, lineNumber))
+      return;
     const def: IVariableDefinition = {
       depth: this.helperGetVariableDefinitionDepth(),
       start: Position.create(lineNumber, 0),
@@ -813,7 +836,7 @@ export class Parser {
   private helperGetStatementDepth(): [string, string] {
     return [
       this.currentContext[this.currentContext.length - 2].context,
-      this.currentContext[this.currentContext.length - 1].context
+      this.currentContext[this.currentContext.length - 1].context,
     ];
   }
 
@@ -856,7 +879,12 @@ export class Parser {
             foundInReferencesFlag = true;
 
           // found in the local references based on the right context
-          if (this.functionsDefinitions.length > 0 && this.functionsDefinitions.filter((def) => ref.depth.includes(def.depth)).length > 0)
+          if (
+            this.functionsDefinitions.length > 0 &&
+            this.functionsDefinitions.filter((def) =>
+              ref.depth.includes(def.depth)
+            ).length > 0
+          )
             foundInReferencesFlag = true;
 
           // check the imported definitions
@@ -1004,7 +1032,6 @@ export class Parser {
 
     this.functionsReferences.push(reference);
   }
-
 
   /**
    * Returns the ordered list of context from the file context to the current one.
@@ -1163,6 +1190,27 @@ export class Parser {
   }
 
   /**
+   * Returns the list of context without internal contexts.
+   * for example if a function it's defined within a function but it's ended before the reference
+   * the context of the inner function should not appear.
+   */
+  private helperTransformToRightContext(currContext: string[]): string[] {
+    const transformedContext = currContext;
+    let removed: string[] = ["a"];
+    while (removed.length > 0) {
+      removed = [];
+      for (let i = 0; i < transformedContext.length; i++) {
+        for (let j = i+1; j < transformedContext.length; j++) {
+          if (transformedContext[i] === transformedContext[j]) {
+            removed = transformedContext.splice(i, j-i);
+          }
+        }
+      }
+    }
+    return transformedContext;
+  }
+
+  /**
    * Returns the list of context from the file context to the current line
    * given a line number.
    * @params {lineNumber: number} - current line number.
@@ -1173,10 +1221,9 @@ export class Parser {
       if (this.contextLog[i].lineNumber === lineNumber) {
         return this.contextLog.slice(0, i + 1).map((c) => c.context);
       } else if (this.contextLog[i].lineNumber > lineNumber) {
-        return this.contextLog.slice(0, i + 1).map((c) => c.context);
+        return this.helperTransformToRightContext(this.contextLog.slice(0, i).map((c) => c.context));
       }
     }
     return [""];
   }
-
 }
