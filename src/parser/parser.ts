@@ -11,7 +11,7 @@ import {
   getWrongArgumentsDiagnostic,
   parseMultipleMatchValues,
 } from "../utils";
-import { getAllFilepathsFromPath } from "../server";
+import { getAllFilepathsFromPath, log } from "../server";
 import { TextDocument } from "vscode-languageserver-textdocument";
 import { randomUUID } from "crypto";
 
@@ -238,36 +238,63 @@ export class Parser {
       isOptionalArgument = true;
     }
 
-    for (let i = 0; i < BASIC_TYPES_REGEXS.length; i++) {
-      const regex = BASIC_TYPES_REGEXS[i];
-      const match = regex.pattern.exec(argStr);
-      if (match) {
-        // log("regex: " + JSON.stringify(regex.name));
-        // log("line: " + match[0]);
+    // NUMBER
+    if (BASIC_TYPES_REGEXS.NUMBER.test(argStr)) {
+      const regex = BASIC_TYPES_REGEXS.NUMBER;
+      const match = regex.exec(argStr);
         argument = {
           name: name ? name : arg.trim(),
           content: match[0],
-          type: regex.name,
+          type: "NUMBER",
           isOptional: isOptionalArgument,
         };
-        if (regex.name === "VECTOR") {
-          argument = {
-            ...argument,
-            start: match.groups.start,
-            end: match.groups.end,
-          };
-          if (match.groups?.step) {
-            argument.step = match.groups?.step;
-          }
-          if (match.groups?.math_expr) {
-            argument.math_expr = match.groups?.math_expr;
-          }
-        }
-
-        // log("argument: " + JSON.stringify(argument));
-        return argument;
-      }
+      return argument;
     }
+
+    // STRING
+    if (BASIC_TYPES_REGEXS.STRING.test(argStr)) {
+      const match = BASIC_TYPES_REGEXS.STRING.exec(argStr);
+        argument = {
+          name: name ? name : arg.trim(),
+          content: match[0],
+          type: "STRING",
+          isOptional: isOptionalArgument,
+        };
+      return argument;
+    }
+
+    // VECTOR
+    if (BASIC_TYPES_REGEXS.VECTOR.test(argStr)) {
+      const match = BASIC_TYPES_REGEXS.VECTOR.exec(argStr);
+        argument = {
+          name: name ? name : arg.trim(),
+          content: match[0],
+          type: "VECTOR",
+          isOptional: isOptionalArgument,
+        start: match.groups.start,
+        end: match.groups.end,
+        };
+      if (match.groups?.step) {
+        argument.step = match.groups?.step;
+      }
+      if (match.groups?.math_expr) {
+        argument.math_expr = match.groups?.math_expr;
+      }
+      return argument;
+    }
+
+    // VARIABLE
+    if (BASIC_TYPES_REGEXS.VARIABLE.test(argStr)) {
+      const match = BASIC_TYPES_REGEXS.VARIABLE.exec(argStr);
+        argument = {
+          name: name ? name : arg.trim(),
+          content: match[0],
+          type: "VARIABLE",
+          isOptional: isOptionalArgument,
+        };
+      return argument;
+    }
+
 
     return null;
   }
@@ -1008,6 +1035,7 @@ export class Parser {
       reference.arguments = args.map((arg) => this.getArgumentFromString(arg));
       reference.arguments.forEach((arg) => {
         if (arg.type === "VARIABLE") {
+          log("REF: " + match.groups?.name + ", " + JSON.stringify(arg));
           this.references.push({
             name: arg.name,
             lineNumber,

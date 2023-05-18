@@ -13,28 +13,15 @@ export type BasicType =
   "VECTOR";
 
 export interface IBasicType {
-  name: BasicType;
-  pattern: RegExp;
+  BasicType: RegExp;
 }
 
-export const BASIC_TYPES_REGEXS: IBasicType[] = [
-  {
-    name: "VECTOR",
-    pattern: /^\[(?<start>[\w.]+|[+-]?\d+(?:\.\d+)?(?:e[+-]?\d+)?)\s*:\s*(?<step>[\w.]+|[+-]?\d+(?:\.\d+)?(?:e[+-]?\d+)?)?\s*:\s*(?<end>[\w.]+|[+-]?\d+(?:\.\d+)?(?:e[+-]?\d+)?)](?<math_expr>(?:(?:[\\+\-\\*\\/]\s*)?(?:[\w.]+|[+-]?\d+(?:\.\d+)?(?:e[+-]?\d+)?))*)$/,
-  },
-  {
-    name: "STRING",
-    pattern: /^(["'])(.*?)\1$/,
-  },
-  {
-    name: "NUMBER",
-    pattern: /^\s*(?:-?\d+(?:\.\d+)?|\d+(?:\.\d+)?e[-+]?\d+)\s*$/,
-  },
-  {
-    name: "VARIABLE",
-    pattern: /^\s*.*?\s*$/,
-  },
-];
+export const BASIC_TYPES_REGEXS = {
+  VECTOR: /^\[(?<start>[\w.]+|[+-]?\d+(?:\.\d+)?(?:e[+-]?\d+)?)\s*:\s*(?<step>[\w.]+|[+-]?\d+(?:\.\d+)?(?:e[+-]?\d+)?)?\s*:\s*(?<end>[\w.]+|[+-]?\d+(?:\.\d+)?(?:e[+-]?\d+)?)](?<math_expr>(?:(?:[\\+\-\\*\\/]\s*)?(?:[\w.]+|[+-]?\d+(?:\.\d+)?(?:e[+-]?\d+)?))*)$/,
+  STRING: /^(["'])(.*?)\1$/,
+  NUMBER: /^\s*(?:-?\d+(?:\.\d+)?|\d+(?:\.\d+)?e[-+]?\d+)\s*$/,
+  VARIABLE: /^\s*.*?\s*$/,
+};
 
 const COMMON_KEYWORDS = [
   "do",
