@@ -49,15 +49,9 @@ end
 
 ## TODO
 
-- [ ] consider primitives STRING, NUMBER, VECTOR.
-- [ ] Redthink all the context system, maybe just considering the definition line it's just enough.
-- [ ] fix: info when ending ; should not consider after white spaces.
-- [ ] fix: not redefine variables when reasigning values.
-- [ ] Check correct types when defining variables.
+- [ ] fix: % comments after ; should not display output warning message.
 - [ ] Improve description of variables.
-- [ ] depth it's not enough to get right context of references (improve this).
 - [ ] functions references not necessarily have to have '()'.
-- [ ] consider variables inside for, if, etcs.
 - [ ] consider function composition.
 - [ ] implement global settings and add custom user settings.
 - [ ] consider comment blocks.
