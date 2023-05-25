@@ -1,8 +1,9 @@
 import { DidChangeConfigurationNotification, InitializeParams, InitializeResult, InitializedParams, TextDocumentSyncKind, _Connection } from "vscode-languageserver";
 import { getFilesInWorkspace} from "../managers";
 import { URI } from "vscode-uri";
-import { addDocumentsFromPath, log } from "../server";
+import { addDocumentFromPath, createDocumentFromFilepath, documentData, log} from "../server";
 import { globalSettings } from "../data";
+import { addNewDocument } from "../utils";
 
 export let hasConfigurationCapability = false;
 export let hasWorkspaceFolderCapability = false;
@@ -14,9 +15,9 @@ interface IOnInitializeProps {
 }
 export function handleOnInitialize({params, connection }: IOnInitializeProps) {
   const capabilities = params.capabilities;
-  const rootUri = params.rootUri;
-  const workspace = URI.parse(rootUri).fsPath;
-  const documentsInWorkspace = getFilesInWorkspace({workspace});
+  // const rootUri = params.rootUri;
+  // const workspace = URI.parse(rootUri).fsPath;
+  // const documentsInWorkspace = getFilesInWorkspace({workspace});
 
   // fills the list of function references, to goToReference and goToDefinition
   // updateFunctionList({documents: documentsInWorkspace});
@@ -92,15 +93,8 @@ export function handleOnInitialized({ params, connection }: IOnInitializedProps)
 
   // has in count the default init file if the configuration enables it
   if (globalSettings.enableInitFile) {
-    // const debounced = debounce(function() {
-    addDocumentsFromPath(globalSettings.defaultInitFile);
-      // log("InitFileEnabled: " + JSON.stringify(globalSettings.defaultInitFile) + "\n\nFILE:" + JSON.stringify(initFile));
-      // if (initFile) {
-      //   addNewDocument(initFile);
-      // }
-    // }, 400);
-    //
-    // debounced();
+    addDocumentFromPath(globalSettings.defaultInitFile);
   }
 
+  log("documentData: \n" + JSON.stringify(documentData));
 }

@@ -1,7 +1,6 @@
 import { TextDocument } from "vscode-languageserver-textdocument";
-import { IKeyword } from "./getFunctionDefinitions";
 import { getPathFromURI } from "./getPathFromURI";
-import { addDocumentsFromPath, documentData } from "../server";
+import { addDocumentFromPath, documentData, log } from "../server";
 import {
   IFunctionDefinition,
   IFunctionReference,
@@ -12,6 +11,13 @@ import {
 import { Diagnostic, PublishDiagnosticsParams } from "vscode-languageserver";
 import { parseToIKeyword } from "./parseToIKeyword";
 import * as path from "path";
+
+export interface IKeyword {
+  uri: string;
+  range: Range;
+  id: string;
+  name: string;
+}
 
 export function addNewDocument(document: TextDocument): void {
   const data = new DocumentData(document);
@@ -304,11 +310,11 @@ export class DocumentData {
     this.getLocallyReferencedPaths()
       .filter((p) => p !== this.getDocumentPath())
       .forEach((p) => {
-        // log("p: " + p);
         // this must be executed after pushing data to the documentData array
         // TODO: consider when the path it's updated and the document it's not longer considered.
         // what happens when multiple files references to the same files?
-        addDocumentsFromPath(p);
+        addDocumentFromPath(p);
+        log("p: " + p);
       });
 
     this.checkCorrectArguments();

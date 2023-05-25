@@ -108,6 +108,7 @@ documents.listen(connection);
 connection.listen();
 
 export function getAllFilepathsFromPath(p: string): string[] {
+  log("checking : " + p);
   let expandedFilepath = p;
   if (p.startsWith('~')) {
     expandedFilepath = expandedFilepath.replace('~', process.env.HOME || '');
@@ -125,30 +126,37 @@ export function getAllFilepathsFromPath(p: string): string[] {
         return [];
       }
     case "dir":
+      log("found dir: " + expandedFilepath);
       return getAllMFiles(expandedFilepath);
     case "none":
-      log("ERROR: NONE");
+      log(`ERROR: NONE (${expandedFilepath})`);
       return [];
   }
 }
 
-export function addDocumentsFromPath(filepath: string | null): void {
-  getAllFilepathsFromPath(filepath)
-    .filter(
-      (filepath) =>
-        !documentData.map((data) => data.getDocumentPath()).includes(filepath)
-    )
-    .forEach((filepath) => {
-      // log(filepath);
-      const content = fs.readFileSync(filepath, "utf8");
-      const doc = TextDocument.create(
-        formatURI(filepath),
-        "octave",
-        1,
-        content
-      );
-      addNewDocument(doc);
-    });
+export function addDocumentFromPath(filepath: string): void {
+  // check if the document it's not already added in the documentData list
+  const alreadyInDocumentData = documentData.map((data) => data.getDocumentPath()).includes(filepath);
+
+  // TODO: add a diagnostic for this case
+  if (alreadyInDocumentData) {
+    log(`The filepath '${filepath} it has already been added.`);
+    return;
+  }
+
+  const doc = createDocumentFromFilepath(filepath);
+  addNewDocument(doc);
+}
+
+export function createDocumentFromFilepath(filepath: string): TextDocument {
+  const content = fs.readFileSync(filepath, "utf8");
+  const doc = TextDocument.create(
+    formatURI(filepath),
+    "octave",
+    1,
+    content
+  );
+  return doc;
 }
 
 export function getAllFilesInProject(): string[] {

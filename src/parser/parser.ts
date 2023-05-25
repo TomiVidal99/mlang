@@ -1035,7 +1035,6 @@ export class Parser {
       reference.arguments = args.map((arg) => this.getArgumentFromString(arg));
       reference.arguments.forEach((arg) => {
         if (arg.type === "VARIABLE") {
-          log("REF: " + match.groups?.name + ", " + JSON.stringify(arg));
           this.references.push({
             name: arg.name,
             lineNumber,
@@ -1077,7 +1076,7 @@ export class Parser {
   }): void {
     if (match.groups?.name === "addpath") {
       // log("FOUND PATH: " + match.groups.args);
-      const paths = parseMultipleMatchValues(match.groups?.args);
+      const paths = parseMultipleMatchValues(match.groups?.args, true);
       paths.forEach((p) => {
         p.split(":").forEach((path) => {
           const pathExists = checkIfPathExists(path);
