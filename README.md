@@ -49,6 +49,7 @@ end
 
 ## TODO
 
+- [ ] add: check duplicated name of file in the same project.
 - [ ] fix: arguments detection should consider string with commas inside of them.
 - [ ] fix: % comments after ; should not display output warning message.
 - [ ] Improve description of variables.
