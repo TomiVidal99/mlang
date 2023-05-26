@@ -119,10 +119,8 @@ export class Parser {
   private lines: string[];
   private currentContext: IDepth[];
   private contextLog: IDepthLog[];
-  private uri: string;
 
   public constructor(document: TextDocument) {
-    this.uri = document.uri;
     this.text = document.getText();
     this.lines = this.text.split("\n");
     this.statements = [];
@@ -670,148 +668,152 @@ export class Parser {
     const lines = this.text.split("\n");
     for (let lineNumber = 1; lineNumber < lines.length + 1; lineNumber++) {
       const line = lines[lineNumber - 1];
-      // ignore comments # or %
-      if (commentPattern.test(line)) continue;
-      for (
+      // TODO: consider multiple commands per line separated by ;
+      // const commands = /[^;]+(?=;|\b)/.exec(line);
+      // for (let commandCount = 0; commandCount < commands; commandCount++) {
+        // ignore comments # or %
+        if (commentPattern.test(line)) continue;
+        for (
         let grammarIndex = 0;
         grammarIndex < GRAMMAR.length;
         grammarIndex++
       ) {
-        const token = GRAMMAR[grammarIndex];
-        const match = line.match(token.pattern);
-        if (!match) {
-          // this.potentialErrorLines.push({lineNumber: lineNumber-1});
-          continue;
+          const token = GRAMMAR[grammarIndex];
+          const match = line.match(token.pattern);
+          if (!match) {
+            // this.potentialErrorLines.push({lineNumber: lineNumber-1});
+            continue;
+          }
+          this.consoleOutputWarning({
+            line,
+            match,
+            lineNumber: lineNumber - 1,
+            token,
+          });
+          switch (token.name) {
+            case "FUNCTION_DEFINITION_WITH_SINGLE_OUTPUT":
+            case "FUNCTION_DEFINITION_WITH_MULTIPLE_OUTPUT":
+            case "FUNCTION_DEFINITION_WITHOUT_OUTPUT":
+              this.visitFunctionDefinition({
+                match,
+                lineNumber: lineNumber - 1,
+                line,
+              });
+              break;
+            case "ANONYMOUS_FUNCTION":
+              this.visitAnonymousFunctionDefinition({
+                match,
+                lineNumber: lineNumber - 1,
+                line,
+              });
+              break;
+            case "FUNCTION_REFERENCE_WITHOUT_OUTPUT":
+            case "FUNCTION_REFERENCE_WITH_MULTIPLE_OUTPUTS":
+            case "FUNCTION_REFERENCE_WITH_SINGLE_OUTPUT":
+              this.visitFunctionReference({
+                match,
+                lineNumber: lineNumber - 1,
+                line,
+              });
+              break;
+
+            case "IF_STATEMENT_START":
+              this.visitStatementStart({
+                type: "IF",
+                match,
+                lineNumber: lineNumber - 1,
+              });
+              break;
+            case "WHILE_STATEMENT_START":
+              this.visitStatementStart({
+                type: "WHILE",
+                match,
+                lineNumber: lineNumber - 1,
+              });
+              break;
+            case "FOR_STATEMENT_START":
+              this.visitStatementStart({
+                type: "FOR",
+                match,
+                lineNumber: lineNumber - 1,
+              });
+              break;
+            case "DO_STATEMENT":
+              this.visitStatementStart({
+                type: "DO",
+                match,
+                lineNumber: lineNumber - 1,
+              });
+              break;
+
+            case "ELSE_STATEMENT":
+            case "ELSE_IF_STATEMENT":
+              // TODO: should check that elseif its after else
+              this.sendDiagnositcError(
+                this.statements.filter(
+                  (s) => !s.end && s.start.line < lineNumber - 1
+                ).length === 0,
+                `missing if before calling '${match[0]}' at line ${(
+lineNumber - 1
+).toString()}`,
+                Range.create(
+                  Position.create(lineNumber - 1, 0),
+                  Position.create(lineNumber - 1, 0)
+                )
+              );
+              break;
+            case "VARIABLE_DECLARATION":
+              this.visitVariableDefinition({
+                match,
+                lineNumber: lineNumber - 1,
+              });
+              break;
+
+            case "COMMON_KEYWORDS":
+              break;
+
+            case "END":
+              this.closeDefinitions({ lineNumber: lineNumber - 1, match });
+              break;
+
+            case "COMMENT_BLOCK_START":
+              this.visitCommentBlock({
+                match,
+                lineNumber: lineNumber - 1,
+                start: true,
+              });
+              break;
+            case "COMMENT_BLOCK_END":
+              this.visitCommentBlock({
+                match,
+                lineNumber: lineNumber - 1,
+                start: false,
+              });
+              break;
+
+            case "REFERENCE":
+              this.visitReference({ match, lineNumber: lineNumber - 1 });
+              break;
+
+            case "ANY":
+              // this should be the last item in the list
+              // if execute it should warn that the current line did not match any token
+              // thus conclude that the line has an error
+              // TODO: maybe i dont need this?
+              this.potentialErrorLines.push({ lineNumber: lineNumber - 1 });
+              break;
+          }
+          // log("matched: " + JSON.stringify(token.name));
+          break;
         }
-        this.consoleOutputWarning({
-          line,
-          match,
-          lineNumber: lineNumber - 1,
-          token,
-        });
-        switch (token.name) {
-          case "FUNCTION_DEFINITION_WITH_SINGLE_OUTPUT":
-          case "FUNCTION_DEFINITION_WITH_MULTIPLE_OUTPUT":
-          case "FUNCTION_DEFINITION_WITHOUT_OUTPUT":
-            this.visitFunctionDefinition({
-              match,
-              lineNumber: lineNumber - 1,
-              line,
-            });
-            break;
-          case "ANONYMOUS_FUNCTION":
-            this.visitAnonymousFunctionDefinition({
-              match,
-              lineNumber: lineNumber - 1,
-              line,
-            });
-            break;
-          case "FUNCTION_REFERENCE_WITHOUT_OUTPUT":
-          case "FUNCTION_REFERENCE_WITH_MULTIPLE_OUTPUTS":
-          case "FUNCTION_REFERENCE_WITH_SINGLE_OUTPUT":
-            this.visitFunctionReference({
-              match,
-              lineNumber: lineNumber - 1,
-              line,
-            });
-            break;
-
-          case "IF_STATEMENT_START":
-            this.visitStatementStart({
-              type: "IF",
-              match,
-              lineNumber: lineNumber - 1,
-            });
-            break;
-          case "WHILE_STATEMENT_START":
-            this.visitStatementStart({
-              type: "WHILE",
-              match,
-              lineNumber: lineNumber - 1,
-            });
-            break;
-          case "FOR_STATEMENT_START":
-            this.visitStatementStart({
-              type: "FOR",
-              match,
-              lineNumber: lineNumber - 1,
-            });
-            break;
-          case "DO_STATEMENT":
-            this.visitStatementStart({
-              type: "DO",
-              match,
-              lineNumber: lineNumber - 1,
-            });
-            break;
-
-          case "ELSE_STATEMENT":
-          case "ELSE_IF_STATEMENT":
-            // TODO: should check that elseif its after else
-            this.sendDiagnositcError(
-              this.statements.filter(
-                (s) => !s.end && s.start.line < lineNumber - 1
-              ).length === 0,
-              `missing if before calling '${match[0]}' at line ${(
-                lineNumber - 1
-              ).toString()}`,
-              Range.create(
-                Position.create(lineNumber - 1, 0),
-                Position.create(lineNumber - 1, 0)
-              )
-            );
-            break;
-          case "VARIABLE_DECLARATION":
-            this.visitVariableDefinition({
-              match,
-              lineNumber: lineNumber - 1,
-            });
-            break;
-
-          case "COMMON_KEYWORDS":
-            break;
-
-          case "END":
-            this.closeDefinitions({ lineNumber: lineNumber - 1, match });
-            break;
-
-          case "COMMENT_BLOCK_START":
-            this.visitCommentBlock({
-              match,
-              lineNumber: lineNumber - 1,
-              start: true,
-            });
-            break;
-          case "COMMENT_BLOCK_END":
-            this.visitCommentBlock({
-              match,
-              lineNumber: lineNumber - 1,
-              start: false,
-            });
-            break;
-
-          case "REFERENCE":
-            this.visitReference({ match, lineNumber: lineNumber - 1 });
-            break;
-
-          case "ANY":
-            // this should be the last item in the list
-            // if execute it should warn that the current line did not match any token
-            // thus conclude that the line has an error
-            // TODO: maybe i dont need this?
-            this.potentialErrorLines.push({ lineNumber: lineNumber - 1 });
-            break;
-        }
-        // log("matched: " + JSON.stringify(token.name));
-        break;
-      }
-    }
+      // }
 
     this.checkClosingBlocks();
     this.cleanUpPotentialErrorLines();
     // log(JSON.stringify(this.commentBlocks));
 
     // log(JSON.stringify(this.contextLog));
+  }
   }
 
   /**
@@ -944,6 +946,8 @@ export class Parser {
                 : 0;
               const refArgs = ref?.arguments ? ref.arguments.length : 0;
               if (
+                // special case for varargin can take N arguments
+                !def.arguments.some((a) => a.name === "varargin") &&
                 def?.arguments &&
                 (defRequiredArgs > refArgs ||
                   defRequiredArgs + defOptArgs < refArgs)
