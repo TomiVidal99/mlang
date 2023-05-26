@@ -49,12 +49,11 @@ end
 
 ## TODO
 
-- [ ] consider multiple commands per line (separaed by ;).
+- [ ] consider multiple commands per line (separaed by ;) and multi lines arguments.
 - [ ] exclude the documents added by the defaultInitPath.
 - [ ] add: exclusive cases of references like (close all) which have spaces in between.
 - [ ] add: check duplicated name of file in the same project.
 - [ ] fix: arguments detection should consider string with commas inside of them.
-- [ ] fix: % comments after ; should not display output warning message.
 - [ ] Improve description of variables.
 - [ ] functions references not necessarily have to have '()'.
 - [ ] consider function composition.
