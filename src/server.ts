@@ -3,9 +3,11 @@ import {
   TextDocuments,
   ProposedFeatures,
   MessageType,
+  Position,
 } from "vscode-languageserver/node";
 import * as fs from "fs";
 import * as path from "path";
+import * as os from "os";
 
 import { TextDocument } from "vscode-languageserver-textdocument";
 import { ISettings, completionData, globalSettings } from "./data";
@@ -26,7 +28,7 @@ import {
   updateDocumentData,
 } from "./utils";
 import { getAllMFiles } from "./managers";
-import { IFunctionDefinition } from "./parser";
+import { IFunctionDefinition, IReference, IVariableDefinition } from "./parser";
 
 const CHANGE_CONTENT_DELAY_MS = 150;
 let onChangeContentDelay: NodeJS.Timer | undefined;
@@ -57,8 +59,8 @@ export function log(message: string | object): void {
 // documents.onDidOpen((change) => handleDidOpenFile({change}));
 // documents.onDidSave((change) => handleOnDidSave({change}));
 connection.onInitialize((params) => handleOnInitialize({ params, connection }));
-connection.onInitialized((params) =>
-  handleOnInitialized({ params, connection })
+connection.onInitialized(() =>
+  handleOnInitialized({ connection })
 );
 // connection.onDidOpenTextDocument((params) => handleDidOpenTextDocument({params}));
 connection.onDefinition((params) => handleOnDefinition({ params, documents }));
@@ -78,16 +80,16 @@ documents.onDidClose((e) => {
   documentSettings.delete(e.document.uri);
 });
 documents.onDidChangeContent((change) => {
-  if (onChangeContentDelay) {
-    clearTimeout(onChangeContentDelay);
-  }
+  // if (onChangeContentDelay) {
+  //   clearTimeout(onChangeContentDelay);
+  // }
 
   // validateTextDocument(change.document, hasConfigurationCapability, connection); // detects al CAPS
   // updateCompletionList({document: change.document});
 
   // log(JSON.stringify(documentData.map((d) => d.getDocumentPath())));
 
-  onChangeContentDelay = setTimeout(async () => {
+  // onChangeContentDelay = setTimeout(async () => {
     updateDocumentData(change.document, (data) => {
       // TODO: maybe think of a better way to handle this case
       // this is because the update of the diagnostics for references and such
@@ -96,7 +98,8 @@ documents.onDidChangeContent((change) => {
       data.postUpdateHooks();
     });
     updatePostParsingDiagnostics();
-  }, CHANGE_CONTENT_DELAY_MS);
+  // }, CHANGE_CONTENT_DELAY_MS);
+
 });
 connection.onCompletion((params) => handleOnCompletion({ params: params }));
 
@@ -107,45 +110,48 @@ documents.listen(connection);
 // Listen on the connection
 connection.listen();
 
-export function getAllFilepathsFromPath(p: string): string[] {
-  log("checking : " + p);
-  let expandedFilepath = p;
-  if (p.startsWith('~')) {
-    expandedFilepath = expandedFilepath.replace('~', process.env.HOME || '');
-  }
-  expandedFilepath = path.resolve(expandedFilepath);
-  const checkedPath = getPathType(expandedFilepath);
+function getFilesInPaths(filepath: string): string[] {
+  const checkedPath = getPathType(filepath);
   switch (checkedPath) {
     case "file":
       try {
-        return [expandedFilepath];
+        return [filepath];
       } catch (e) {
         log(
-          `ERROR: Failed to create document from path ${expandedFilepath}: ${e}`
+          `ERROR: Failed to create document from path ${filepath}: ${e}`
         );
         return [];
       }
     case "dir":
-      log("found dir: " + expandedFilepath);
-      return getAllMFiles(expandedFilepath);
+    {
+        // log("found dir: " + filepath);
+        // const f = getAllMFiles(filepath);
+        // const myFils = getAllMFiles(filepath);
+        const myFiles = getAllMFiles(filepath);
+        // log("myFiles: " + JSON.stringify(myFiles));
+        return myFiles;
+      }
     case "none":
-      log(`ERROR: NONE (${expandedFilepath})`);
+      log(`ERROR: NONE (${filepath})`);
       return [];
   }
+}
+
+export function getAllFilepathsFromPath(p: string): string[] {
+  // log("checking : " + p);
+  if (p.startsWith('~') && os.homedir()) {
+    const replacedString = p.replace("~", os.homedir());
+    // return getFilesInPaths(replacedString);
+    return getFilesInPaths(path.resolve(replacedString));
+  }
+  return getFilesInPaths(path.resolve(p));
 }
 
 export function addDocumentFromPath(filepath: string): void {
   // check if the document it's not already added in the documentData list
   const alreadyInDocumentData = documentData.map((data) => data.getDocumentPath()).includes(filepath);
-
-  // TODO: add a diagnostic for this case
-  if (alreadyInDocumentData) {
-    log(`The filepath '${filepath} it has already been added.`);
-    return;
-  }
-
-  const doc = createDocumentFromFilepath(filepath);
-  addNewDocument(doc);
+  if (alreadyInDocumentData) return;
+  addNewDocument(createDocumentFromFilepath(filepath));
 }
 
 export function createDocumentFromFilepath(filepath: string): TextDocument {
@@ -221,9 +227,9 @@ function updatePostParsingDiagnostics(): void {
 }
 
 function getValidFunctionsDefinitionsNames(currentDoc: DocumentData): IFunctionDefinition[] {
-  const a = [
+  const a: IFunctionDefinition[] = [
     ...documentData
-      .filter((d) =>
+      .filter((d) => 
         currentDoc
           .getReferences()
           .map((ref) => ref.name)
@@ -256,20 +262,35 @@ function getValidFunctionsDefinitionsNames(currentDoc: DocumentData): IFunctionD
 /**
   * Checks that all documents are referencing to the listed documents.
   * if any document in the list it's not referenced will be removed.
+  * Default file should be consider, also the files in the current working directory.
   */
 function cleanUnreferencedDocuments(currentDocumentURI: string): void {
-  const referencedPaths = documentData.flatMap((data) => data.getLocallyReferencedPaths());
+  const validPaths: string[] = [];
+
+  // working directory files
+  const currentDirectoryFiles = getAllFilepathsFromPath(process.cwd());
+  const includedByDefault = documentData.filter((d) => currentDirectoryFiles.includes(d.getDocumentPath()));
+  validPaths.push(
+    ...includedByDefault.map((d) => d.getDocumentPath()),
+    ...includedByDefault.flatMap((d) => d.getLocallyReferencedPaths())
+  );
+
+  // added by default init file
   if (globalSettings.enableInitFile && globalSettings.defaultInitFile) {
-    referencedPaths.push(...getAllFilepathsFromPath(globalSettings.defaultInitFile));
+    const pathsIncludedByDefaultFile = getAllFilepathsFromPath(globalSettings.defaultInitFile);
+    const includedByDefaultFile = documentData.filter((d) => pathsIncludedByDefaultFile.includes(d.getDocumentPath()));
+    validPaths.push(
+      ...includedByDefaultFile.map((d) => d.getDocumentPath()),
+      ...includedByDefaultFile.flatMap((d) => d.getLocallyReferencedPaths())
+    );
   }
+
+  // log("validPaths: " + JSON.stringify(validPaths.map((p) => path.basename(p))));
+
+  // remove unvalid paths
   documentData.forEach((data) => {
-    if (data.getURI() !== currentDocumentURI && !referencedPaths.includes(data.getDocumentPath())) {
-      // log(`the doc ${data.getDocumentPath()} should not be referenced.`);
-      // log(`before removal docs: ${JSON.stringify(documentData.map((d) => d.getFileName()))}`);
+    if (!validPaths.includes(data.getDocumentPath()) && data.getURI() !== currentDocumentURI) {
       documentData.splice(documentData.indexOf(data), 1);
-      // log(`after removal docs: ${JSON.stringify(documentData.map((d) => d.getFileName()))}`);
     }
   });
-
-  // log(JSON.stringify(documentData.map((d) => d.getFileName())));
 }

@@ -14,6 +14,7 @@ import {
 import { getAllFilepathsFromPath, log } from "../server";
 import { TextDocument } from "vscode-languageserver-textdocument";
 import { randomUUID } from "crypto";
+import { completionData } from "../data";
 
 const commentPattern = /^\s*(?!%(?:{|})|#(?:{|}))[#%%].*/;
 
@@ -118,8 +119,10 @@ export class Parser {
   private lines: string[];
   private currentContext: IDepth[];
   private contextLog: IDepthLog[];
+  private uri: string;
 
   public constructor(document: TextDocument) {
+    this.uri = document.uri;
     this.text = document.getText();
     this.lines = this.text.split("\n");
     this.statements = [];
@@ -598,14 +601,28 @@ export class Parser {
     lineNumber: number
   ): [string, string] {
     this.pushNewContext(lineNumber);
-    return [
-      this.currentContext[this.currentContext.length - 2].context,
-      this.currentContext[this.currentContext.length - 1].context,
-    ];
+    if (
+      this.currentContext[this.currentContext.length - 2]?.context &&
+      this.currentContext[this.currentContext.length - 1]?.context
+    ) {
+      return [
+        this.currentContext[this.currentContext.length - 2].context,
+        this.currentContext[this.currentContext.length - 1].context,
+      ];
+    } else {
+      return [
+        "",
+        ""
+      ];
+    }
   }
 
   private helperGetVariableDefinitionDepth(): string {
-    return this.currentContext[this.currentContext.length - 1].context;
+    if (this.currentContext[this.currentContext.length - 1]?.context) {
+      return this.currentContext[this.currentContext.length - 1].context;
+    } else {
+      return "";
+    }
   }
 
   /**
@@ -815,7 +832,7 @@ export class Parser {
         name: match.groups?.name,
         start: Position.create(lineNumber, 0),
         end: Position.create(lineNumber, 0),
-        depth: this.currentContext.at(-1).context,
+        depth: this.currentContext.at(-1)?.context || "",
       });
       return;
     }
@@ -847,9 +864,9 @@ export class Parser {
     match: RegExpMatchArray;
     lineNumber: number;
   }): void {
-    const [depth, context] = this.helperGetStatementDepth();
+    const context = this.helperGetStatementDepth();
     const statement: IStatements = {
-      depth,
+      depth: context,
       type,
       start: Position.create(lineNumber, 0),
       context,
@@ -860,11 +877,12 @@ export class Parser {
   /**
    * Returns the depth of the current statement
    */
-  private helperGetStatementDepth(): [string, string] {
-    return [
-      this.currentContext[this.currentContext.length - 2].context,
-      this.currentContext[this.currentContext.length - 1].context,
-    ];
+  private helperGetStatementDepth(): string {
+    if (this.currentContext.at(-1)?.context) {
+      return this.currentContext.at(-1).context;
+    } else {
+      return "";
+    }
   }
 
   /**
@@ -902,8 +920,7 @@ export class Parser {
           let foundInReferencesFlag = false;
 
           // found in the imported references list
-          if (references.length > 0 && references.includes(ref.name))
-            foundInReferencesFlag = true;
+          if (references.length > 0 && references.includes(ref.name)) foundInReferencesFlag = true;
 
           // found in the local references based on the right context
           if (
@@ -1064,7 +1081,7 @@ export class Parser {
    * Returns the ordered list of context from the file context to the current one.
    */
   private helperGetReferenceDepth(): string[] {
-    return this.currentContext.map((context) => context.context);
+    return this.currentContext.map((context) => context?.context || "");
   }
 
   private handleReferenceAddPath({

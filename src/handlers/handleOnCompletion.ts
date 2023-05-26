@@ -76,6 +76,7 @@ export function getDocumentsToBeExecutable({
   const documentsReferences: CompletionItem[] = [];
   documentData.forEach((data) => {
     // log("currentDocument: " + currentDocument + ", doc.uri: " + data.getURI());
+    // TODO also consider the files added by the defaultInitFile, those should not be consider neither.
     if (currentDocument === data.getURI() || data.getDocumentPath() === defaultSettings.defaultInitFile) return;
     const newCompletionItem: CompletionItem = {
       label: data.getFileName(),

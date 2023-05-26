@@ -19,13 +19,6 @@ export function handleOnInitialize({params, connection }: IOnInitializeProps) {
   // const workspace = URI.parse(rootUri).fsPath;
   // const documentsInWorkspace = getFilesInWorkspace({workspace});
 
-  // fills the list of function references, to goToReference and goToDefinition
-  // updateFunctionList({documents: documentsInWorkspace});
-  //
-  // functionsMap.forEach((func) => {
-  //   log(`fn name: ${func.name}, in ${func.uri}`);
-  // });
-
   // Does the client support the `workspace/configuration` request?
   // If not, we fall back using global settings.
   hasConfigurationCapability = !!(
@@ -67,15 +60,12 @@ export function handleOnInitialize({params, connection }: IOnInitializeProps) {
 
 interface IOnInitializedProps {
   connection: _Connection;
-  params: InitializedParams;
 }
-export function handleOnInitialized({ params, connection }: IOnInitializedProps) {
-  // const rootUri = params.rootUri;
-  // const workspace = URI.parse(rootUri).fsPath;
-  // const documentsInWorkspace = getFilesInWorkspace({workspace});
-  // documentsInWorkspace.forEach((doc) => {
-  //   addNewDocument(doc);
-  // });
+export function handleOnInitialized({ connection }: IOnInitializedProps) {
+  const documentsInWorkspace = getFilesInWorkspace({workspace: process.cwd()});
+  documentsInWorkspace.forEach((doc) => {
+    addNewDocument(doc);
+  });
 
   log("initialized, default settings: " + JSON.stringify(globalSettings));
   if (hasConfigurationCapability) {
@@ -95,6 +85,4 @@ export function handleOnInitialized({ params, connection }: IOnInitializedProps)
   if (globalSettings.enableInitFile) {
     addDocumentFromPath(globalSettings.defaultInitFile);
   }
-
-  log("documentData: \n" + JSON.stringify(documentData));
 }

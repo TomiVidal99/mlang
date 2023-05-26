@@ -1,4 +1,4 @@
-import { TextDocument } from "vscode-languageserver-textdocument";
+import { TextDocument, Range } from "vscode-languageserver-textdocument";
 import { getPathFromURI } from "./getPathFromURI";
 import { addDocumentFromPath, documentData, log } from "../server";
 import {
@@ -103,9 +103,11 @@ export function getAllFunctionReferences(uri: string): IKeyword[] {
  * if given a uri, only returns the valid references for that uri.
  */
 export function getAllVariableReferences(uri?: string): IKeyword[] {
-  return documentData.flatMap((data) =>
-    data.getVariableReferences(uri && uri === data.getURI())
-  );
+  return [
+    ...documentData.flatMap((data) =>
+      data.getVariableReferences(uri && uri === data.getURI())
+    ),
+  ];
 }
 
 // TODO: optimize the mem usage by using the references of the parser
@@ -244,7 +246,7 @@ export class DocumentData {
           uris: allFilesInProject,
           functionsDefinitions,
           variablesDefinitions,
-          references,
+          references: references,
         }),
       ],
     };
@@ -307,16 +309,15 @@ export class DocumentData {
    * Methods that must be ran after updating the document and pushing it to the array.
    */
   public postUpdateHooks(): void {
-    this.getLocallyReferencedPaths()
-      .filter((p) => p !== this.getDocumentPath())
-      .forEach((p) => {
-        // this must be executed after pushing data to the documentData array
-        // TODO: consider when the path it's updated and the document it's not longer considered.
-        // what happens when multiple files references to the same files?
-        addDocumentFromPath(p);
-        log("p: " + p);
-      });
-
+    // this must be executed after pushing data to the documentData array
+    // TODO: consider when the path it's updated and the document it's not longer considered.
+    // what happens when multiple files references to the same files?
+    const paths = this.getLocallyReferencedPaths();
+    for (let i = 0; i < paths.length; i++) {
+      if (paths[i] !== this.getDocumentPath()) {
+        addDocumentFromPath(paths[i]);
+      }
+    }
     this.checkCorrectArguments();
   }
 }
