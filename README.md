@@ -49,6 +49,7 @@ end
 
 ## TODO
 
+- [ ] consider multiple commands per line (separaed by ;).
 - [ ] exclude the documents added by the defaultInitPath.
 - [ ] add: exclusive cases of references like (close all) which have spaces in between.
 - [ ] add: check duplicated name of file in the same project.
