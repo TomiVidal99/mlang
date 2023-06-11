@@ -125,10 +125,11 @@ export class DocumentData {
    */
   public updateDocumentData(): void {
     // TODO: get the other data
-    this.parser = new Parser(this.document);
-    this.functionsDefinitions = this.parser.getFunctionsDefinitions();
-    this.functionsReferences = this.parser.getFunctionsReferences();
-    this.updateDiagnostics(this.parser.getDiagnostics());
+
+    // this.parser = new Parser(this.document);
+    // this.functionsDefinitions = this.parser.getFunctionsDefinitions();
+    // this.functionsReferences = this.parser.getFunctionsReferences();
+    // this.updateDiagnostics(this.parser.getDiagnostics());
   }
 
   /**
