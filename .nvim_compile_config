@@ -1,1 +1,4 @@
+# compile the server
 yarn compile
+# compile the grammar for the parser
+yarn antlr4ts

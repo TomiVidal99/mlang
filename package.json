@@ -1,7 +1,7 @@
 {
   "name": "mlang",
   "description": "LSP implementation for octave programming language",
-  "version": "1.4.0",
+  "version": "2.0.0",
   "author": "Tomás Vidal",
   "license": "MIT",
   "engines": {
@@ -16,6 +16,7 @@
     "@types/recursive-readdir": "^2.2.1",
     "@typescript-eslint/eslint-plugin": "5.43.0",
     "@typescript-eslint/parser": "5.56.0",
+    "antlr4ts": "^0.5.0-alpha.4",
     "esbuild": "0.17.14",
     "eslint": "8.0.1",
     "recursive-readdir": "^2.2.3",
@@ -29,9 +30,11 @@
     "build": "tsc -b",
     "watch": "tsc -b -w",
     "lint": "eslint ./src --ext .ts",
-    "lint-fix": "eslint --fix ./src --ext .ts"
+    "lint-fix": "eslint --fix ./src --ext .ts",
+    "antlr4ts": "antlr4ts -visitor ./src/parser/OctaveMatlabSyntax.g4"
   },
   "devDependencies": {
+    "antlr4ts-cli": "^0.5.0-alpha.4",
     "eslint-config-standard-with-typescript": "34.0.1",
     "eslint-plugin-import": "2.25.2",
     "eslint-plugin-n": "15.0.0",

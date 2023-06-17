@@ -2,12 +2,15 @@ import { TextDocument } from "vscode-languageserver-textdocument";
 import { IKeyword } from "./getFunctionDefinitions";
 import { getPathFromURI } from "./getPathFromURI";
 import { addDocumentsFromPath, documentData, log } from "../server";
+import { ANTLRInputStream, CommonTokenStream } from 'antlr4ts';
 import {
   IFunctionDefinition,
   IFunctionReference,
   IReference,
   IVariableDefinition,
-  Parser,
+  OctaveMatlabSyntaxLexer,
+  OctaveMatlabSyntaxParser,
+  TreeListener,
 } from "../parser";
 import { Diagnostic, Position, Range, PublishDiagnosticsParams } from "vscode-languageserver";
 import { parseToIKeyword } from "./parseToIKeyword";
@@ -125,35 +128,52 @@ export class DocumentData {
    */
   public updateDocumentData(): void {
     // TODO: get the other data
-    this.parser = new Parser(this.document);
-    this.functionsDefinitions = this.parser.getFunctionsDefinitions();
-    this.functionsReferences = this.parser.getFunctionsReferences();
-    this.updateDiagnostics(this.parser.getDiagnostics());
+
+    const inputStream = new ANTLRInputStream(this.document.getText());
+    const lexer = new OctaveMatlabSyntaxLexer(inputStream);
+    const tokenStream = new CommonTokenStream(lexer);
+    const parser = new OctaveMatlabSyntaxParser(tokenStream);
+
+    // Disable the default error listener to avoid console error messages
+    parser.removeErrorListener(null);
+
+    // Parse the input, where `compilationUnit` is whatever entry point you defined
+    const tree = parser.program();
+
+    const listener = new TreeListener();
+    tree.enterRule(listener);
+
+    // this.parser =new Parser(this.document);
+    // this.functionsDefinitions = this.parser.getFunctionsDefinitions();
+    // this.functionsReferences = this.parser.getFunctionsReferences();
+    // this.updateDiagnostics(this.parser.getDiagnostics());
   }
 
   /**
    * Get all the variable references of the current document.
    */
   public getVariableReferences(currentDoc?: boolean): IKeyword[] {
-    if (currentDoc) {
-      return this.parser.getVariableReferences().map((v) => 
-        parseToIKeyword(v, this.getURI())
-      );
-    }
-    return this.parser.getVariableReferences()
-      .filter((v) => v.depth === "")
-      .map((v) => parseToIKeyword(v, this.getURI()));
+    return [];
+    // if (currentDoc) {
+    //   return this.parser.getVariableReferences().map((v) => 
+    //     parseToIKeyword(v, this.getURI())
+    //   );
+    // }
+    // return this.parser.getVariableReferences()
+    //   .filter((v) => v.depth === "")
+    //   .map((v) => parseToIKeyword(v, this.getURI()));
   }
 
   /**
    * Returns the variable definitions of the document.
    */
   public getVariableDefinitions(lineNumber?: number, currentDoc?: boolean): IVariableDefinition[] {
-    if (currentDoc) {
-      // return this.parser.getVariableDefinitions().filter((v) => this.parser.getCursorDepth(lineNumber+1).includes(v.depth));
-      return this.parser.getVariableDefinitions().filter((v) => v.start.line < lineNumber);
-    }
-    return this.parser.getVariableDefinitions().filter((v) => v.depth === "");
+    return [];
+    // if (currentDoc) {
+    //   // return this.parser.getVariableDefinitions().filter((v) => this.parser.getCursorDepth(lineNumber+1).includes(v.depth));
+    //   return this.parser.getVariableDefinitions().filter((v) => v.start.line < lineNumber);
+    // }
+    // return this.parser.getVariableDefinitions().filter((v) => v.depth === "");
   }
 
   /**
@@ -193,12 +213,13 @@ export class DocumentData {
     lineNumber?: number,
     currentDoc?: boolean,
   ): IFunctionDefinition[] {
-    if (currentDoc) {
-      const dep = this.parser.getCursorDepth(lineNumber);
-      // log("current context: " + JSON.stringify(dep));
-      return this.functionsDefinitions.filter((fn) => dep.includes(fn.depth));
-    }
-    return this.functionsDefinitions.filter((fn) => fn.depth === "");
+    // if (currentDoc) {
+    //   const dep = this.parser.getCursorDepth(lineNumber);
+    //   // log("current context: " + JSON.stringify(dep));
+    //   return this.functionsDefinitions.filter((fn) => dep.includes(fn.depth));
+    // }
+    // return this.functionsDefinitions.filter((fn) => fn.depth === "");
+    return [];
   }
 
   /**
@@ -223,12 +244,12 @@ export class DocumentData {
       uri: this.getURI(),
       diagnostics: [
         ...this.diagnostics,
-        ...this.parser.validateReferences({
-          uris: allFilesInProject,
-          functionsDefinitions,
-          variablesDefinitions,
-          references
-        }),
+        // ...this.parser.validateReferences({
+        //   uris: allFilesInProject,
+        //   functionsDefinitions,
+        //   variablesDefinitions,
+        //   references
+        // }),
       ],
     };
   }
@@ -237,7 +258,8 @@ export class DocumentData {
    * Returns the content of the document splitted by '\n'
    */
   public getLines(): string[] {
-    return this.parser.getLines();
+    // return this.parser.getLines();
+    return this.document.getText().split("");
   }
 
   public getFileName(): string {
@@ -245,7 +267,8 @@ export class DocumentData {
   }
 
   public getLocallyReferencedPaths(): string[] {
-    return this.parser.getAddedPaths();
+    // return this.parser.getAddedPaths();
+    return [];
   }
 
   /**
@@ -275,7 +298,8 @@ export class DocumentData {
    * @returns {IReference[]} - variables and files references.
    */
   public getReferences(): IReference[] {
-    return this.parser.getReferences();
+    // return this.parser.getReferences();
+    return [];
   }
 
   /**
