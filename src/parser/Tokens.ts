@@ -1,0 +1,17 @@
+export const Tokens = {
+  EQUALS: "=",
+  SUBTRACTION: "-",
+  ADDITION: "+",
+  MULTIPLICATION: "*",
+  DIVISION: "/",
+  MODULUS: "%",
+  EXPONENTIATION: "^",
+  PERIOD: ".",
+  SEMICOLON: ";",
+  LBRACKET: "[",
+  RBRACKET: "]",
+  LSQUIRLY: "{",
+  RSQUIRLY: "}",
+  LPARENT: "(",
+  RPARENT: ")",
+} as const;
