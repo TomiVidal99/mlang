@@ -1,3 +1,4 @@
+import { isRegExp } from "util/types";
 import { Token, TokenType } from ".";
 
 /**
@@ -6,6 +7,8 @@ import { Token, TokenType } from ".";
  * @enum {string}
  */
 export const Symbols = {
+  QUOTATION: /"?'?/,
+  COMMA: ",",
   EQUALS: "=",
   SUBTRACTION: "-",
   ADDITION: "+",
@@ -23,13 +26,26 @@ export const Symbols = {
   RPARENT: ")",
 } as const;
 
+/**
+ * Returns a token corresponding to the given symbol
+ * If the given symbol does not exist it returns 'undefined'
+ * @returns {Token | undefined} Token symbol | undefined
+ */
 export function getTokenFromSymbols(char: string): Token | undefined {
   for (const [key, value] of Object.entries(Symbols)) {
-    if (value === char) {
+    if (typeof (value) === "string" && value === char) {
+      return {
+        content: char,
+        type: key as TokenType,
+      };
+    }
+    if (value instanceof RegExp && value.exec(char)[0] !== "") {
       return {
         content: char,
         type: key as TokenType,
       };
     }
   }
+
+  return undefined;
 }

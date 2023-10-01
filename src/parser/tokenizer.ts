@@ -31,16 +31,12 @@ export class Tokenizer {
 
     if (isLetter(this.currChar)) {
       const literal = this.readLiteral();
-      console.log("got literal: ", literal);
-      this.readChar();
       return {
         type: "LITERAL",
         content: literal,
       };
     } else if (isNumber(this.currChar)) {
       const number = this.readNumber();
-      console.log("got number: ", number);
-      this.readChar();
       return {
         type: "NUMBER",
         content: number,
@@ -92,10 +88,10 @@ export class Tokenizer {
    */
   private readLiteral(): string {
     let literal = '';
-    do {
+    while (/[a-zA-Z0-9_]/.test(this.currChar) && this.currPos < this.text.length) {
       literal += this.currChar;
       this.readChar();
-    } while (/[a-zA-Z0-9_]/.test(this.currChar) && this.currPos < this.text.length);
+    }
     return literal;
   }
 
