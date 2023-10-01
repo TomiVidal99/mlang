@@ -24,7 +24,7 @@ test("Test tokenizer, testing literals", function() {
   const text = "abcde_10 adbdc 1000 1e-3";
 
   const symbols: TokenType[] = [
-    "LITERAL", "LITERAL", "NUMBER", "NUMBER", "EOF"
+    "IDENTIFIER", "IDENTIFIER", "NUMBER", "NUMBER", "EOF"
   ];
 
   const tokenizer = new Tokenizer(text);
@@ -44,11 +44,11 @@ test("Test tokenizer, complete test", function() {
   `;
 
   const symbols: TokenType[] = [
-    "LITERAL", "LBRACKET", "LITERAL", "COMMA", "LITERAL", "RBRACKET", "EQUALS",
-    "LITERAL", "LPARENT", "LITERAL", "COMMA", "LITERAL", "COMMA", "LITERAL", "RPARENT",
-    "LITERAL", "EQUALS", "LITERAL", "ADDITION", "LITERAL", "ADDITION", "QUOTATION",
-    "LITERAL", "LITERAL", "QUOTATION", "SEMICOLON", "LITERAL", "EQUALS", "LITERAL",
-    "MULTIPLICATION", "NUMBER", "SEMICOLON", "LITERAL",
+    "KEYWORD", "LBRACKET", "IDENTIFIER", "COMMA", "IDENTIFIER", "RBRACKET", "EQUALS",
+    "IDENTIFIER", "LPARENT", "IDENTIFIER", "COMMA", "IDENTIFIER", "COMMA", "IDENTIFIER", "RPARENT",
+    "IDENTIFIER", "EQUALS", "IDENTIFIER", "ADDITION", "IDENTIFIER", "ADDITION", "QUOTATION",
+    "IDENTIFIER", "IDENTIFIER", "QUOTATION", "SEMICOLON", "IDENTIFIER", "EQUALS", "IDENTIFIER",
+    "MULTIPLICATION", "NUMBER", "SEMICOLON", "KEYWORD",
   ];
 
   const tokenizer = new Tokenizer(text);

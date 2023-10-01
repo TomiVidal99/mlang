@@ -1,5 +1,5 @@
 import { Token, getTokenFromSymbols } from "../types";
-import { isLetter, isNumber } from "../utils";
+import { getKeywordsFromCompletion, isLetter, isNumber } from "../utils";
 
 export class Tokenizer {
   private currPos = 0;
@@ -7,10 +7,12 @@ export class Tokenizer {
   private text: string;
   private currChar: string;
   private nextChar: string;
+  private tokens: Token[];
 
   constructor(text: string) {
     this.text = text;
     this.readChar();
+    this.tokens = [];
   }
 
   /**
@@ -26,29 +28,50 @@ export class Tokenizer {
     const token = getTokenFromSymbols(this.currChar);
     if (token) {
       this.readChar();
-      return token;
+      return this.addToken(token);
     }
 
     if (isLetter(this.currChar)) {
       const literal = this.readLiteral();
-      return {
-        type: "LITERAL",
-        content: literal,
-      };
+      return this.addToken(this.tokenFromLiteral(literal));
     } else if (isNumber(this.currChar)) {
       const number = this.readNumber();
-      return {
+      return this.addToken({
         type: "NUMBER",
         content: number,
-      };
+      });
     } else {
       this.readChar();
-      return {
+      return this.addToken({
         type: "EOF",
         content: "eof",
-      };
+      });
     }
 
+  }
+
+  private addToken(token: Token): Token {
+    this.tokens.push(token);
+    return token;
+  }
+
+  /**
+   * Returns the Token corresponding to keywords or literals.
+   */
+  private tokenFromLiteral(literal: string): Token {
+    const keywords = getKeywordsFromCompletion();
+    for (const keyword of keywords) {
+      if (keyword === literal) {
+        return {
+          type: "KEYWORD",
+          content: literal,
+        };
+      }
+    }
+    return {
+      type: "IDENTIFIER",
+      content: literal,
+    };
   }
 
   /**
