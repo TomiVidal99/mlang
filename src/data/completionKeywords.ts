@@ -6,7 +6,7 @@ import {
   Position,
 } from "vscode-languageserver";
 
-export function completionData(position?: Position): CompletionItem[] {
+export function completionKeywords(position?: Position): CompletionItem[] {
   return [
     {
       label: "quad",

@@ -1,1 +1,4 @@
+# compile
 yarn compile
+# test
+bun test
