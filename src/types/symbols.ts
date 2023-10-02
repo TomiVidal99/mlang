@@ -7,6 +7,9 @@ import { Token, TokenType } from ".";
  * @enum {string}
  */
 export const Symbols = {
+  EOF: "\0",
+  AT: "@",
+  COLON: ":",
   QUOTATION: /"?'?/,
   COMMA: ",",
   EQUALS: "=",
@@ -35,7 +38,7 @@ export function getTokenFromSymbols(char: string): Token | undefined {
   for (const [key, value] of Object.entries(Symbols)) {
     if (typeof (value) === "string" && value === char) {
       return {
-        content: char,
+        content: key === "EOF" ? "eof" : char,
         type: key as TokenType,
       };
     }

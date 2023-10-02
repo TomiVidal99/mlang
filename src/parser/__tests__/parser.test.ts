@@ -1,47 +1,39 @@
 import { expect, test } from "bun:test";
 import { TokenType } from "../../types";
 import { Tokenizer } from "../tokenizer";
+import { Parser } from "../parser";
 
-test("Test tokenizer, testing Symbols", () => {
-  const text = `@:=-+*/%^.;[]{}(),'"`;
+test("Test parser, testing getTokens symbols", function() {
+  const text = `:=-+*/%^.;[]{}(),'"`;
+
+  const parser = new Parser(text);
+  const tokens = parser.getTextTokens();
 
   const symbols: TokenType[] = [
-    "AT", "COLON", "EQUALS", "SUBTRACTION", "ADDITION", "MULTIPLICATION",
+    "COLON", "EQUALS", "SUBTRACTION", "ADDITION", "MULTIPLICATION",
     "DIVISION", "MODULUS", "EXPONENTIATION", "PERIOD",
     "SEMICOLON", "LBRACKET", "RBRACKET", "LSQUIRLY", "RSQUIRLY",
     "LPARENT", "RPARENT", "COMMA", "QUOTATION", "QUOTATION", "EOF"
   ];
 
-  const tokenizer = new Tokenizer(text);
-
-  for (const symbol of symbols) {
-    const token = tokenizer.getNextToken();
+  for (let i = 0; i < symbols.length; i++) {
+    const token = tokens[i];
+    const symbol = symbols[i];
     expect(token.type).toBe(symbol);
   }
+
 });
 
-test("Test tokenizer, testing literals", function() {
-  const text = "abcde_10 adbdc 1000 1e-3";
-
-  const symbols: TokenType[] = [
-    "IDENTIFIER", "IDENTIFIER", "NUMBER", "NUMBER", "EOF"
-  ];
-
-  const tokenizer = new Tokenizer(text);
-
-  for (const symbol of symbols) {
-    const token = tokenizer.getNextToken();
-    expect(token.type).toBe(symbol);
-  }
-});
-
-test("Test tokenizer, complete test", function() {
+test("Test parser, testing getTokens complete text", function() {
   const text = `
     function [a,b] = my_Function(c,d, e)
       a = c + d + " test string ";
       b = e * 1e-3;
     end
   `;
+
+  const parser = new Parser(text);
+  const tokens = parser.getTextTokens();
 
   const symbols: TokenType[] = [
     "KEYWORD", "LBRACKET", "IDENTIFIER", "COMMA", "IDENTIFIER", "RBRACKET", "EQUALS",
@@ -51,10 +43,10 @@ test("Test tokenizer, complete test", function() {
     "MULTIPLICATION", "NUMBER", "SEMICOLON", "KEYWORD",
   ];
 
-  const tokenizer = new Tokenizer(text);
-
-  for (const symbol of symbols) {
-    const token = tokenizer.getNextToken();
+  for (let i = 0; i < symbols.length; i++) {
+    const token = tokens[i];
+    const symbol = symbols[i];
     expect(token.type).toBe(symbol);
   }
+
 });

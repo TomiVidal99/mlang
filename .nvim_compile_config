@@ -2,3 +2,5 @@
 yarn compile
 # test
 bun test
+# Run with bun
+bun src/server.ts

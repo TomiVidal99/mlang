@@ -7,12 +7,10 @@ export class Tokenizer {
   private text: string;
   private currChar: string;
   private nextChar: string;
-  private tokens: Token[];
 
   constructor(text: string) {
     this.text = text;
     this.readChar();
-    this.tokens = [];
   }
 
   /**
@@ -43,15 +41,14 @@ export class Tokenizer {
     } else {
       this.readChar();
       return this.addToken({
-        type: "EOF",
-        content: "eof",
+        type: "ILLEGAL",
+        content: "illegal",
       });
     }
 
   }
 
   private addToken(token: Token): Token {
-    this.tokens.push(token);
     return token;
   }
 
