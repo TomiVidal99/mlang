@@ -38,6 +38,13 @@ export class Tokenizer {
         type: "NUMBER",
         content: number,
       });
+    } else if (this.currChar === '"' || this.currChar === "'") {
+      const str = this.readLiteralString();
+      console.log("got literal string: ", { str });
+      return this.addToken({
+        type: "STRING",
+        content: str,
+      });
     } else {
       this.readChar();
       return this.addToken({
@@ -69,6 +76,19 @@ export class Tokenizer {
       type: "IDENTIFIER",
       content: literal,
     };
+  }
+
+  /**
+ * Returns the rows and columns corresponding to the current position in the text.
+ * @returns {[number, number]} An array containing the row and column.
+ */
+  private getRowsColsCursor(): [number, number] {
+    const textUntilCurrentPosition = this.text.slice(0, this.currPos);
+    const rows = textUntilCurrentPosition.split('\n');
+    const currentRow = rows.length;
+    const currentColumn = rows[currentRow - 1].length + 1;
+
+    return [currentRow, currentColumn];
   }
 
   /**
@@ -122,12 +142,28 @@ export class Tokenizer {
   private readNumber(): string {
     let literal = '';
 
-    while (/\d/.test(this.currChar) || 
-      /\.\d/.test(this.currChar+this.nextChar) ||
-      /e\d/.test(this.currChar+this.nextChar) ||
-      /e[++-]/.test(this.currChar+this.nextChar) ||
-      /-\d/.test(this.currChar+this.nextChar)
+    while (/\d/.test(this.currChar) ||
+      /\.\d/.test(this.currChar + this.nextChar) ||
+      /e\d/.test(this.currChar + this.nextChar) ||
+      /e[++-]/.test(this.currChar + this.nextChar) ||
+      /-\d/.test(this.currChar + this.nextChar)
     ) {
+      literal += this.currChar;
+      this.readChar();
+    }
+
+    return literal;
+  }
+
+  /**
+   * Gets a literal string from the text.
+   */
+  private readLiteralString() {
+    let literal = '';
+
+    literal += this.currChar;
+    this.readChar();
+    while (this.currChar !== '"' && this.currPos !== this.text.length) {
       literal += this.currChar;
       this.readChar();
     }

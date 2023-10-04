@@ -10,7 +10,6 @@ export const Symbols = {
   EOF: "\0",
   AT: "@",
   COLON: ":",
-  QUOTATION: /"?'?/,
   COMMA: ",",
   EQUALS: "=",
   SUBTRACTION: "-",
@@ -36,15 +35,9 @@ export const Symbols = {
  */
 export function getTokenFromSymbols(char: string): Token | undefined {
   for (const [key, value] of Object.entries(Symbols)) {
-    if (typeof (value) === "string" && value === char) {
+    if (value === char) {
       return {
         content: key === "EOF" ? "eof" : char,
-        type: key as TokenType,
-      };
-    }
-    if (value instanceof RegExp && value.exec(char)[0] !== "") {
-      return {
-        content: char,
         type: key as TokenType,
       };
     }

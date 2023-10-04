@@ -1,10 +1,9 @@
 import { expect, test } from "bun:test";
 import { TokenType } from "../../types";
-import { Tokenizer } from "../tokenizer";
 import { Parser } from "../parser";
 
 test("Test parser, testing getTokens symbols", function() {
-  const text = `:=-+*/%^.;[]{}(),'"`;
+  const text = `:=-+*/%^.;[]{}(),`;
 
   const parser = new Parser(text);
   const tokens = parser.getTextTokens();
@@ -13,7 +12,7 @@ test("Test parser, testing getTokens symbols", function() {
     "COLON", "EQUALS", "SUBTRACTION", "ADDITION", "MULTIPLICATION",
     "DIVISION", "MODULUS", "EXPONENTIATION", "PERIOD",
     "SEMICOLON", "LBRACKET", "RBRACKET", "LSQUIRLY", "RSQUIRLY",
-    "LPARENT", "RPARENT", "COMMA", "QUOTATION", "QUOTATION", "EOF"
+    "LPARENT", "RPARENT", "COMMA", "EOF"
   ];
 
   for (let i = 0; i < symbols.length; i++) {
@@ -38,8 +37,8 @@ test("Test parser, testing getTokens complete text", function() {
   const symbols: TokenType[] = [
     "KEYWORD", "LBRACKET", "IDENTIFIER", "COMMA", "IDENTIFIER", "RBRACKET", "EQUALS",
     "IDENTIFIER", "LPARENT", "IDENTIFIER", "COMMA", "IDENTIFIER", "COMMA", "IDENTIFIER", "RPARENT",
-    "IDENTIFIER", "EQUALS", "IDENTIFIER", "ADDITION", "IDENTIFIER", "ADDITION", "QUOTATION",
-    "IDENTIFIER", "IDENTIFIER", "QUOTATION", "SEMICOLON", "IDENTIFIER", "EQUALS", "IDENTIFIER",
+    "IDENTIFIER", "EQUALS", "IDENTIFIER", "ADDITION", "IDENTIFIER", "ADDITION", "STRING",
+    "SEMICOLON", "IDENTIFIER", "EQUALS", "IDENTIFIER",
     "MULTIPLICATION", "NUMBER", "SEMICOLON", "KEYWORD",
   ];
 

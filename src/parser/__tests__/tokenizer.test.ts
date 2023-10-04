@@ -3,13 +3,13 @@ import { TokenType } from "../../types";
 import { Tokenizer } from "../tokenizer";
 
 test("Test tokenizer, testing Symbols", () => {
-  const text = `@:=-+*/%^.;[]{}(),'"`;
+  const text = `@:=-+*/%^.;[]{}(),`;
 
   const symbols: TokenType[] = [
     "AT", "COLON", "EQUALS", "SUBTRACTION", "ADDITION", "MULTIPLICATION",
     "DIVISION", "MODULUS", "EXPONENTIATION", "PERIOD",
     "SEMICOLON", "LBRACKET", "RBRACKET", "LSQUIRLY", "RSQUIRLY",
-    "LPARENT", "RPARENT", "COMMA", "QUOTATION", "QUOTATION", "EOF"
+    "LPARENT", "RPARENT", "COMMA", "EOF"
   ];
 
   const tokenizer = new Tokenizer(text);
@@ -46,8 +46,8 @@ test("Test tokenizer, complete test", function() {
   const symbols: TokenType[] = [
     "KEYWORD", "LBRACKET", "IDENTIFIER", "COMMA", "IDENTIFIER", "RBRACKET", "EQUALS",
     "IDENTIFIER", "LPARENT", "IDENTIFIER", "COMMA", "IDENTIFIER", "COMMA", "IDENTIFIER", "RPARENT",
-    "IDENTIFIER", "EQUALS", "IDENTIFIER", "ADDITION", "IDENTIFIER", "ADDITION", "QUOTATION",
-    "IDENTIFIER", "IDENTIFIER", "QUOTATION", "SEMICOLON", "IDENTIFIER", "EQUALS", "IDENTIFIER",
+    "IDENTIFIER", "EQUALS", "IDENTIFIER", "ADDITION", "IDENTIFIER", "ADDITION", "STRING",
+    "SEMICOLON", "IDENTIFIER", "EQUALS", "IDENTIFIER",
     "MULTIPLICATION", "NUMBER", "SEMICOLON", "KEYWORD",
   ];
 
