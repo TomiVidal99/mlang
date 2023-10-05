@@ -40,7 +40,6 @@ export class Tokenizer {
       });
     } else if (this.currChar === '"' || this.currChar === "'") {
       const str = this.readLiteralString();
-      console.log("got literal string: ", { str });
       return this.addToken({
         type: "STRING",
         content: str,
@@ -159,14 +158,13 @@ export class Tokenizer {
    * Gets a literal string from the text.
    */
   private readLiteralString() {
-    let literal = '';
+    let literal = '"';
 
-    literal += this.currChar;
-    this.readChar();
-    while (this.currChar !== '"' && this.currPos !== this.text.length) {
-      literal += this.currChar;
+    do {
       this.readChar();
-    }
+      literal += this.currChar;
+    } while (this.currChar !== '"' && this.currPos < this.text.length);
+    this.readChar();
 
     return literal;
   }
