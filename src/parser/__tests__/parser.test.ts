@@ -134,3 +134,85 @@ test("Octave/Matlab Parser, should parse a multiple output assignment statement"
 
   expect(parsedResult).toStrictEqual(expectedAST);
 });
+
+
+test("Octave/Matlab Parser, should parse  MO_ASSIGNMENT and two ASSIGNMENTs", function() {
+  const inputCode = `
+    [a,b] = myFunction(c,d)
+    myOtherVariable = "Test"
+    testVar = a + 1e3;
+`;
+
+  const tokenizer = new Tokenizer(inputCode);
+  const tokens = tokenizer.getAllTokens();
+  const parser = new Parser(tokens);
+  const parsedResult = parser.makeAST();
+
+  // Define your expected AST structure here based on the input
+  const expectedAST: Program = {
+    type: "Program",
+    body: [
+      {
+        type: "MO_ASSIGNMENT",
+        operator: "=",
+        supressOutput: false,
+        LHE: {
+          type: "VARIABLE_VECTOR",
+          value: ["a", "b"],
+        },
+        RHE: {
+          type: "FUNCTION_CALL",
+          value: "myFunction",
+          functionData: {
+            args: [
+              {
+                type: "IDENTIFIER",
+                content: "c",
+              },
+              {
+                type: "IDENTIFIER",
+                content: "d",
+              }
+            ]
+          }
+        }
+      },
+      {
+        type: "ASSIGNMENT",
+        operator: "=",
+        supressOutput: false,
+        LHE: {
+          type: "IDENTIFIER",
+          value: "myOtherVariable",
+        },
+        RHE: {
+          type: "STRING",
+          value: "\"Test\"",
+        }
+      },
+      {
+        type: "ASSIGNMENT",
+        operator: "=",
+        supressOutput: true,
+        LHE: {
+          type: "IDENTIFIER",
+          value: "testVar",
+        },
+        RHE: {
+          type: "BINARY_OPERATION",
+          value: "+",
+          LHO: {
+            type: "IDENTIFIER",
+            value: "a",
+          },
+          RHO: {
+            type: "NUMBER",
+            value: "1e3",
+          },
+        }
+      },
+    ]
+  };
+
+  expect(parsedResult).toStrictEqual(expectedAST);
+});

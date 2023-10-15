@@ -29,6 +29,19 @@ export class Parser {
     }
   }
 
+  /*
+  * Helper function to advance to the next token
+  */
+  private getPrevToken(): Token | undefined {
+    if (this.currentTokenIndex <= 0) {
+      return undefined;
+    } else {
+      this.currentTokenIndex--;
+      return this.getCurrentToken();
+    }
+  }
+
+
   /**
    * Parses an statement
    */
@@ -71,7 +84,9 @@ export class Parser {
       const args = this.getFunctionArguments();
       this.getNextToken();
       const supressOutput = this.isOutputSupressed();
-      this.getNextToken();
+      if (supressOutput) {
+        this.getNextToken();
+      }
       return {
         type: "MO_ASSIGNMENT",
         operator: "=",
@@ -89,8 +104,12 @@ export class Parser {
         }
       };
     } else if (currToken.type !== "EOF") {
+      console.log("prev token: ", this.tokens[this.currentTokenIndex - 1]);
+      console.log("currToken: ", this.getCurrentToken());
       throw new Error("Expected a valid token for a statement");
     }
+
+    this.getNextToken();
 
     console.log("Finished parsing");
 
@@ -152,6 +171,7 @@ export class Parser {
         break;
       case "IDENTIFIER":
         lho = this.parseFunctionCall();
+        this.getPrevToken();
         break;
       case "LPARENT":
         this.getNextToken();
@@ -181,11 +201,15 @@ export class Parser {
   private parseFunctionCall(): Expression {
     const currToken = this.getCurrentToken();
     if (this.getNextToken().type === "LPARENT") {
+      this.getPrevToken();
+      const args = this.getFunctionArguments();
+      console.log("args: ", args);
+      console.log("current token: ", this.getCurrentToken());
       return {
         type: "FUNCTION_CALL",
         value: currToken.content,
         functionData: {
-          args: this.getFunctionArguments(),
+          args,
         }
       };
     } else {
@@ -213,6 +237,9 @@ export class Parser {
           // TODO handle function composition
           this.getFunctionArguments(); // just for now so it gets rid of the function call (advances the tokens)
         }
+      } else if (identifier.type === "RPARENT") {
+        // When it's a call withot any arguments
+        return [];
       } else {
         throw new Error(`Expected IDENTIFIER. Got ${identifier}`);
       }
