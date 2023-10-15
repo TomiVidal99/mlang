@@ -41,11 +41,11 @@ export class Parser {
       return;
     }
 
-    // ASSIGNMENT STATEMENT FOUND
     if (currToken.type === "IDENTIFIER" && nextToken.type === "EQUALS") {
+      // SINGLE OUTPUT ASSIGNMENT STATEMENT
       this.getNextToken();
       const RHE = this.parseExpression();
-      const supressOutput = this.getCurrentToken().type === "SEMICOLON";
+      const supressOutput = this.isOutputSupressed();
       if (supressOutput) {
         this.getNextToken();
       }
@@ -60,10 +60,70 @@ export class Parser {
         RHE,
         // position: , TODO
       };
-    } else {
+    } else if (currToken.type === "LBRACKET" && nextToken.type === "IDENTIFIER") {
+      // MULTIPLE OUTPUT ASSIGNMENT STATEMENT
+      const outputs = this.getVariableVector().map(t => t.content);
+      if (this.getCurrentToken().type !== "EQUALS") {
+        throw new Error(`Expected ASSIGNMENT STATEMENT SYMBOL '='. ${JSON.stringify(this.getCurrentToken())}`);
+      }
+      const functionIdentifier = this.getNextToken().content;
+      this.getNextToken();
+      const args = this.getFunctionArguments();
+      this.getNextToken();
+      const supressOutput = this.isOutputSupressed();
+      this.getNextToken();
+      return {
+        type: "MO_ASSIGNMENT",
+        operator: "=",
+        supressOutput,
+        LHE: {
+          type: "VARIABLE_VECTOR",
+          value: outputs,
+        },
+        RHE: {
+          type: "FUNCTION_CALL",
+          value: functionIdentifier,
+          functionData: {
+            args,
+          }
+        }
+      };
+    } else if (currToken.type !== "EOF") {
       throw new Error("Expected a valid token for a statement");
     }
 
+    console.log("Finished parsing");
+
+  }
+
+  /**
+   * Helper that checks if the last token of the current statement it's a SEMICOLON
+   */
+  private isOutputSupressed(): boolean {
+    return this.getCurrentToken().type === "SEMICOLON";
+  }
+
+  /**
+   * Helper that returns a list of identifiers of a list of variables 
+   * i.e [a,b,c,d,...,N] = FUNCTION_CALL(), it returns a through N
+   */
+  private getVariableVector(): Token[] {
+    const tokens: Token[] = [];
+    do {
+      if (this.getCurrentToken().type !== "IDENTIFIER") {
+        throw new Error(`Expected IDENTIFIER. Got: ${this.getCurrentToken()}`);
+      }
+      tokens.push(this.getCurrentToken());
+      const nextTokenType = this.getNextToken().type;
+      if (nextTokenType !== "COMMA" && nextTokenType !== "RBRACKET") {
+        throw new Error(`Expected COMMA. Got: ${this.getCurrentToken()}`);
+      }
+      this.getNextToken();
+      if (nextTokenType === "RBRACKET") {
+        break;
+      }
+    } while (tokens[tokens.length - 1].type !== "RBRACKET");
+    return tokens;
   }
 
   /**
@@ -91,12 +151,10 @@ export class Parser {
         };
         break;
       case "IDENTIFIER":
-        // TODO: make this better
         lho = this.parseFunctionCall();
         break;
       case "LPARENT":
         this.getNextToken();
-        // console.log("curr token: ", this.getCurrentToken());
         lho = this.parseExpression();
         if (this.getCurrentToken().type !== "RPARENT") {
           throw new Error("Expected closing parenthesis ')'");
@@ -145,14 +203,29 @@ export class Parser {
    */
   private getFunctionArguments(): Token[] {
     const tokens: Token[] = [];
+    if (this.getCurrentToken().type !== "LPARENT") {
+      throw new Error(`Expected '(' for function call. Got: ${this.getCurrentToken()}`);
+    }
     do {
-      tokens.push(this.getNextToken());
-    } while (tokens[tokens.length - 1].type !== "RPARENT" || tokens[tokens.length - 1].type !== "EOF");
-    if (tokens[tokens.length - 1].type !== "EOF") {
+      const identifier = this.getNextToken();
+      if (identifier.type === "IDENTIFIER") {
+        if (this.getNextToken().type === "LPARENT") {
+          // TODO handle function composition
+          this.getFunctionArguments(); // just for now so it gets rid of the function call (advances the tokens)
+        }
+      } else {
+        throw new Error(`Expected IDENTIFIER. Got ${identifier}`);
+      }
+      tokens.push(identifier);
+      const commaOrRParen = this.getCurrentToken();
+      if (commaOrRParen.type !== "COMMA" && commaOrRParen.type !== "RPARENT") {
+        throw new Error(`Expected COMMA or RPARENT. Got ${commaOrRParen}`);
+      }
+    } while (this.getCurrentToken().type !== "RPARENT" && this.getCurrentToken().type !== "EOF");
+    if (this.getCurrentToken().type === "EOF") {
       throw new Error("Expected closing parenthesis ')' for function call");
       // TODO here should send diagnostics
     }
-    tokens.pop();
     return tokens;
   }
 

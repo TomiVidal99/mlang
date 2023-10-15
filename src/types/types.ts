@@ -15,22 +15,22 @@ export interface FunctionData {
 }
 
 export interface Expression {
-  type: TokenType | "BINARY_OPERATION" | "FUNCTION_CALL";
-  value: string;
+  type: TokenType | "BINARY_OPERATION" | "FUNCTION_CALL" | "VARIABLE_VECTOR";
+  value: string | string[];
   LHO?: Expression;
   RHO?: Expression;
   operator?: string;
   functionData?: FunctionData;
 }
 
-export type StatementType = "ASSIGNMENT";
+export type StatementType = "ASSIGNMENT" | "FUNCTION_CALL" | "MO_ASSIGNMENT";
 
 export interface Statement {
   type: StatementType
-  operator: string;
-  LHE: Expression;
-  RHE: Expression;
   supressOutput: boolean;
+  operator?: string;
+  LHE?: Expression;
+  RHE?: Expression;
   position?: Range;
 }
 
