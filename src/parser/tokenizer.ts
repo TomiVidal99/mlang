@@ -4,13 +4,23 @@ import { getKeywordsFromCompletion, isLetter, isNumber } from "../utils";
 export class Tokenizer {
   private currPos = 0;
   private nextPos = 0;
-  private text: string;
   private currChar: string;
   private nextChar: string;
 
-  constructor(text: string) {
-    this.text = text;
+  constructor(private text: string) {
     this.readChar();
+  }
+
+  /**
+   * Returns all tokens in the text
+   */
+  public getAllTokens(): Token[] {
+    const tokens: Token[] = [];
+    do {
+      tokens.push(this.getNextToken());
+    } while (tokens[tokens.length-1].type !== "EOF");
+
+    return tokens;
   }
 
   /**

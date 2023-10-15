@@ -1,51 +1,38 @@
 import { expect, test } from "bun:test";
 import { TokenType } from "../../types";
 import { Parser } from "../parser";
+import { Tokenizer } from "../tokenizer";
 
-test("Test parser, testing getTokens symbols", function() {
-  const text = `:=-+*/%^.;[]{}(),`;
+test("Octave/Matlab Parser, should parse a simple assignment statement", function() {
+  const inputCode = 'x = 10 + 5;';
 
-  const parser = new Parser(text);
-  const tokens = parser.getTextTokens();
+  const tokenizer = new Tokenizer(inputCode);
+  const tokens = tokenizer.getAllTokens();
+  const parser = new Parser(tokens);
+  const parsedResult = parser.parseStatement();
 
-  const symbols: TokenType[] = [
-    "COLON", "EQUALS", "SUBTRACTION", "ADDITION", "MULTIPLICATION",
-    "DIVISION", "MODULUS", "EXPONENTIATION", "PERIOD",
-    "SEMICOLON", "LBRACKET", "RBRACKET", "LSQUIRLY", "RSQUIRLY",
-    "LPARENT", "RPARENT", "COMMA", "EOF"
-  ];
+  // Define your expected AST structure here based on the input
+  const expectedAST =
+    {
+      type: "ASSIGNMENT",
+      operator: "=",
+      LHE: {
+        type: "IDENTIFIER",
+        value: "x"
+      },
+      RHE: {
+        type: "BINARY_OPERATION",
+        value: "+",
+        RHO: {
+          type: "NUMBER",
+          value: "5"
+        },
+        LHO: {
+          type: "NUMBER",
+          value: "10"
+        }
+      }
+    };
 
-  for (let i = 0; i < symbols.length; i++) {
-    const token = tokens[i];
-    const symbol = symbols[i];
-    expect(token.type).toBe(symbol);
-  }
-
-});
-
-test("Test parser, testing getTokens complete text", function() {
-  const text = `
-    function [a,b] = my_Function(c,d, e)
-      a = c + d + " test string ";
-      b = e * 1e-3;
-    end
-  `;
-
-  const parser = new Parser(text);
-  const tokens = parser.getTextTokens();
-
-  const symbols: TokenType[] = [
-    "KEYWORD", "LBRACKET", "IDENTIFIER", "COMMA", "IDENTIFIER", "RBRACKET", "EQUALS",
-    "IDENTIFIER", "LPARENT", "IDENTIFIER", "COMMA", "IDENTIFIER", "COMMA", "IDENTIFIER", "RPARENT",
-    "IDENTIFIER", "EQUALS", "IDENTIFIER", "ADDITION", "IDENTIFIER", "ADDITION", "STRING",
-    "SEMICOLON", "IDENTIFIER", "EQUALS", "IDENTIFIER",
-    "MULTIPLICATION", "NUMBER", "SEMICOLON", "KEYWORD",
-  ];
-
-  for (let i = 0; i < symbols.length; i++) {
-    const token = tokens[i];
-    const symbol = symbols[i];
-    expect(token.type).toBe(symbol);
-  }
-
+  expect(parsedResult).toStrictEqual(expectedAST);
 });

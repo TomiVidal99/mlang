@@ -1,4 +1,3 @@
-import { isRegExp } from "util/types";
 import { Token, TokenType } from ".";
 
 /**

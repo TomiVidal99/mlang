@@ -1,56 +1,113 @@
-import { Position, Range } from "vscode-languageserver";
-import { FunctionDefinition, Token, VariableDefinition } from "../types";
+import { Expression, Program, Statement, Token, TokenType } from "../types";
 import { Tokenizer } from "./tokenizer";
 
 /**
- * Parses a string (text) into an AST.
+ * Takes in a list of Tokens and makes an AST
  */
 export class Parser {
+  private currentTokenIndex = 0;
+  private statements: Statement[] = [];
 
-  private tokens: Token[] = [];
-  private functionDefinitions: FunctionDefinition[];
-  private variableDefinitions: VariableDefinition[];
-
-  constructor(private text: string) {
-    this.functionDefinitions = [];
-    this.variableDefinitions = [];
-    this.getAllTokens();
+  constructor(private tokens: Token[]) {
   }
 
-  private getAllTokens(): void {
-    const tokenizer = new Tokenizer(this.text);
-    let token: Token;
-    do {
-      token = tokenizer.getNextToken();
-      this.tokens.push(token);
-    } while (token.type !== "EOF");
+  /*
+  *Helper function to get the current token
+  */
+  private getCurrentToken(): Token {
+    return this.tokens[this.currentTokenIndex];
   }
 
-  /**
-   * Extracts the functions definitions from the tokens in the text.
-   * @returns {void} void
-   */
-  private createGrammar(): void {
-    for (let i = 0; i < this.tokens.length - 1; i++) {
-      const currentToken = this.tokens[i];
-      const nextToken = this.tokens[i + 1];
-
-      if (currentToken.type === "IDENTIFIER" && nextToken.type === "EQUALS") {
-        this.variableDefinitions.push({
-          name: currentToken.content,
-          content: "content",
-          position: Range.create(Position.create(0, 0), Position.create(0, 0))
-        });
-      }
-
+  /*
+  * Helper function to advance to the next token
+  */
+  private getNextToken(): Token | undefined {
+    if (this.currentTokenIndex >= this.tokens.length) {
+      return undefined;
+    } else {
+      this.currentTokenIndex++;
+      return this.getCurrentToken();
     }
   }
 
   /**
-   * Returns all the found tokens in a text
+   * Parses an statement
    */
-  public getTextTokens(): Token[] {
-    return this.tokens;
+  public parseStatement(): Statement {
+    const currToken = this.getCurrentToken();
+    const nextToken = this.getNextToken();
+
+    if (!nextToken) {
+      console.warn("Required at least two tokens");
+      return;
+    }
+
+    // ASSIGNMENT STATEMENT FOUND
+    if (currToken.type === "IDENTIFIER" && nextToken.type === "EQUALS") {
+      this.getNextToken();
+      const RHE = this.parseExpression();
+      return {
+        type: "ASSIGNMENT",
+        operator: nextToken.content,
+        LHE: {
+          type: "IDENTIFIER",
+          value: currToken.content,
+        },
+        RHE,
+        // position: , TODO
+      };
+
+    }
+
+    throw new Error("Expected to parse an statement");
+  }
+
+  /**
+  * Helper that parses an expression
+  * @throws error
+  */
+  private parseExpression(): Expression {
+    const currToken = this.getCurrentToken();
+    let lho: Expression | undefined = undefined;
+
+    switch (currToken.type) {
+      case "EOF":
+        throw new Error("Unexpected EOF");
+      case "STRING":
+        lho = {
+          type: "STRING",
+          value: currToken.content,
+        };
+        break;
+      case "NUMBER":
+        lho = {
+          type: "NUMBER",
+          value: currToken.content,
+        };
+        break;
+      default:
+        throw new Error(`Unexpected token. ${JSON.stringify(currToken)}`);
+    }
+
+    const nextToken = this.getNextToken();
+    if (this.isBinaryOperator(nextToken.type)) {
+      this.getNextToken();
+      return {
+        type: "BINARY_OPERATION",
+        value: nextToken.content,
+        RHO: this.parseExpression(),
+        LHO: lho,
+      };
+    }
+
+    return lho;
+  }
+
+  /**
+  * Helper that returns weather a token type is a BinaryOperator
+  */
+  private isBinaryOperator(type: TokenType): boolean {
+    return type === "SUBTRACTION" || type === "DIVISION" || type === "ADDITION" || type === "MULTIPLICATION";
   }
 
 }
