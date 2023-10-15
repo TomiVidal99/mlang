@@ -92,20 +92,7 @@ export class Parser {
         break;
       case "IDENTIFIER":
         // TODO: make this better
-        if (this.getNextToken().type === "LPARENT") {
-          lho = {
-            type: "FUNCTION_CALL",
-            value: currToken.content,
-            functionData: {
-              args: this.getFunctionData(),
-            }
-          };
-        } else {
-          lho = {
-            type: currToken.type,
-            value: currToken.content,
-          };
-        }
+        lho = this.parseFunctionCall();
         break;
       case "LPARENT":
         this.getNextToken();
@@ -133,16 +120,38 @@ export class Parser {
     return lho;
   }
 
+  private parseFunctionCall(): Expression {
+    const currToken = this.getCurrentToken();
+    if (this.getNextToken().type === "LPARENT") {
+      return {
+        type: "FUNCTION_CALL",
+        value: currToken.content,
+        functionData: {
+          args: this.getFunctionArguments(),
+        }
+      };
+    } else {
+      return {
+        type: currToken.type,
+        value: currToken.content,
+      };
+    }
+  }
+
   /**
    * Returns the list of arguments of a function call.
    * Its expected that the current token it's the LPARENT
    * TODO: implement check of correct grammar in arguments
    */
-  private getFunctionData(): Token[] {
+  private getFunctionArguments(): Token[] {
     const tokens: Token[] = [];
     do {
       tokens.push(this.getNextToken());
-    } while (tokens[tokens.length - 1].type !== "RPARENT");
+    } while (tokens[tokens.length - 1].type !== "RPARENT" || tokens[tokens.length - 1].type !== "EOF");
+    if (tokens[tokens.length - 1].type !== "EOF") {
+      throw new Error("Expected closing parenthesis ')' for function call");
+      // TODO here should send diagnostics
+    }
     tokens.pop();
     return tokens;
   }
