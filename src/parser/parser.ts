@@ -103,9 +103,37 @@ export class Parser {
           }
         }
       };
+    } else if (currToken.type === "KEYWORD" && currToken.content === "function") {
+      // FUNCTION DEFINITION STATEMENT
+      const functionName = this.getNextToken();
+      if (functionName.type !== "IDENTIFIER") {
+        // TODO send linting message
+        throw new Error(`Expected IDENTIFIER. Got: ${functionName}`);
+      }
+      this.getPrevToken();
+      const args = this.getFunctionArguments();
+      this.getNextToken();
+      const statements: Statement[] = [];
+      do {
+        statements.push(this.parseStatement());
+      } while (this.getCurrentToken().content !== "end" && this.getCurrentToken().content !== "endfunction");
+      this.getNextToken();
+      return {
+        type: "FUNCTION_DEFINITION",
+        supressOutput: true,
+        LHE: {
+          type: "KEYWORD",
+          value: "function",
+          functionData: {
+            args,
+          }
+        },
+        RHE: statements,
+      };
     } else if (currToken.type !== "EOF") {
       console.log("prev token: ", this.tokens[this.currentTokenIndex - 1]);
       console.log("currToken: ", this.getCurrentToken());
+      console.log("currToken: ", currToken);
       throw new Error("Expected a valid token for a statement");
     }
 
@@ -228,7 +256,7 @@ export class Parser {
   private getFunctionArguments(): Token[] {
     const tokens: Token[] = [];
     if (this.getCurrentToken().type !== "LPARENT") {
-      throw new Error(`Expected '(' for function call. Got: ${this.getCurrentToken()}`);
+      throw new Error(`Expected '(' for function call. Got: ${JSON.stringify(this.getCurrentToken())}`);
     }
     do {
       const identifier = this.getNextToken();

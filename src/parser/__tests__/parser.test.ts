@@ -216,3 +216,62 @@ test("Octave/Matlab Parser, should parse  MO_ASSIGNMENT and two ASSIGNMENTs", fu
 
   expect(parsedResult).toStrictEqual(expectedAST);
 });
+
+test("Octave/Matlab Parser, should parse a function definition", function() {
+  const inputCode = `
+    function(c,d)
+      a = 1;
+    end
+`;
+
+  const tokenizer = new Tokenizer(inputCode);
+  const tokens = tokenizer.getAllTokens();
+  const parser = new Parser(tokens);
+  const parsedResult = parser.makeAST();
+
+  // Define your expected AST structure here based on the input
+  const expectedAST: Program = {
+    type: "Program",
+    body: [
+      {
+        type: "FUNCTION_DEFINITION",
+        supressOutput: true,
+        LHE: {
+          type: "KEYWORD",
+          value: "function",
+          functionData: {
+            args: [
+              {
+                type: "IDENTIFIER",
+                content: "c",
+              },
+              {
+                type: "IDENTIFIER",
+                content: "d",
+              },
+            ]
+          }
+        },
+        RHE: [
+          {
+            type: "ASSIGNMENT",
+            operator: "=",
+            supressOutput: true,
+            LHE: {
+              type: "IDENTIFIER",
+              value: "a",
+            },
+            RHE: {
+              type: "NUMBER",
+              value: "1",
+            }
+          },
+        ]
+      },
+    ]
+  };
+
+  console.log(JSON.stringify(parsedResult));
+
+  expect(parsedResult).toStrictEqual(expectedAST);
+});

@@ -23,14 +23,14 @@ export interface Expression {
   functionData?: FunctionData;
 }
 
-export type StatementType = "ASSIGNMENT" | "FUNCTION_CALL" | "MO_ASSIGNMENT";
+export type StatementType = "ASSIGNMENT" | "FUNCTION_CALL" | "MO_ASSIGNMENT" | "FUNCTION_DEFINITION";
 
 export interface Statement {
   type: StatementType
   supressOutput: boolean;
   operator?: string;
   LHE?: Expression;
-  RHE?: Expression;
+  RHE?: Expression | Statement[];
   position?: Range;
 }
 
