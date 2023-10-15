@@ -271,7 +271,106 @@ test("Octave/Matlab Parser, should parse a function definition", function() {
     ]
   };
 
-  console.log(JSON.stringify(parsedResult));
+  expect(parsedResult).toStrictEqual(expectedAST);
+});
+
+test("Octave/Matlab Parser, should parse a function definition with multiple statements inside", function() {
+  const inputCode = `
+    function(c,d)
+      a = 1;
+      someothervariable = "Test"
+      result = 10050.2 + 0.1 - 1e-3;
+    end
+`;
+
+  const tokenizer = new Tokenizer(inputCode);
+  const tokens = tokenizer.getAllTokens();
+  const parser = new Parser(tokens);
+  const parsedResult = parser.makeAST();
+
+  // Define your expected AST structure here based on the input
+  const expectedAST: Program = {
+    type: "Program",
+    body: [
+      {
+        type: "FUNCTION_DEFINITION",
+        supressOutput: true,
+        LHE: {
+          type: "KEYWORD",
+          value: "function",
+          functionData: {
+            args: [
+              {
+                type: "IDENTIFIER",
+                content: "c",
+              },
+              {
+                type: "IDENTIFIER",
+                content: "d",
+              },
+            ]
+          }
+        },
+        RHE: [
+          {
+            type: "ASSIGNMENT",
+            operator: "=",
+            supressOutput: true,
+            LHE: {
+              type: "IDENTIFIER",
+              value: "a",
+            },
+            RHE: {
+              type: "NUMBER",
+              value: "1",
+            }
+          },
+          {
+            type: "ASSIGNMENT",
+            operator: "=",
+            supressOutput: false,
+            LHE: {
+              type: "IDENTIFIER",
+              value: "someothervariable",
+            },
+            RHE: {
+              type: "STRING",
+              value: "\"Test\"",
+            }
+          },
+          {
+            type: "ASSIGNMENT",
+            operator: "=",
+            supressOutput: true,
+            LHE: {
+              type: "IDENTIFIER",
+              value: "result",
+            },
+            RHE: {
+              type: "BINARY_OPERATION",
+              value: "+",
+              LHO: {
+                type: "NUMBER",
+                value: "10050.2",
+              },
+              RHO: {
+                type: "BINARY_OPERATION",
+                value: "-",
+                LHO: {
+                  type: "NUMBER",
+                  value: "0.1",
+                },
+                RHO: {
+                  type: "NUMBER",
+                  value: "1e-3",
+                }
+              }
+            }
+          },
+        ]
+      },
+    ]
+  };
 
   expect(parsedResult).toStrictEqual(expectedAST);
 });
