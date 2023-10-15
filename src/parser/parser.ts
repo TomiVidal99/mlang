@@ -1,4 +1,4 @@
-import { Expression, Statement, Token, TokenType } from "../types";
+import { Expression, Program, Statement, Token, TokenType } from "../types";
 
 /**
  * Takes in a list of Tokens and makes an AST
@@ -45,9 +45,14 @@ export class Parser {
     if (currToken.type === "IDENTIFIER" && nextToken.type === "EQUALS") {
       this.getNextToken();
       const RHE = this.parseExpression();
+      const supressOutput = this.getCurrentToken().type === "SEMICOLON";
+      if (supressOutput) {
+        this.getNextToken();
+      }
       return {
         type: "ASSIGNMENT",
         operator: nextToken.content,
+        supressOutput,
         LHE: {
           type: "IDENTIFIER",
           value: currToken.content,
@@ -55,10 +60,10 @@ export class Parser {
         RHE,
         // position: , TODO
       };
-
+    } else {
+      throw new Error("Expected a valid token for a statement");
     }
 
-    throw new Error("Expected to parse an statement");
   }
 
   /**
@@ -68,28 +73,54 @@ export class Parser {
   private parseExpression(): Expression {
     const currToken = this.getCurrentToken();
     let lho: Expression | undefined = undefined;
+    let isValidBinary = true;
 
     switch (currToken.type) {
-      case "EOF":
-        throw new Error("Unexpected EOF");
       case "STRING":
+      case "VECTOR":
+        isValidBinary = false;
         lho = {
-          type: "STRING",
+          type: currToken.type,
           value: currToken.content,
         };
         break;
       case "NUMBER":
         lho = {
-          type: "NUMBER",
+          type: currToken.type,
           value: currToken.content,
         };
+        break;
+      case "IDENTIFIER":
+        // TODO: make this better
+        if (this.getNextToken().type === "LPARENT") {
+          lho = {
+            type: "FUNCTION_CALL",
+            value: currToken.content,
+            functionData: {
+              args: this.getFunctionData(),
+            }
+          };
+        } else {
+          lho = {
+            type: currToken.type,
+            value: currToken.content,
+          };
+        }
+        break;
+      case "LPARENT":
+        this.getNextToken();
+        // console.log("curr token: ", this.getCurrentToken());
+        lho = this.parseExpression();
+        if (this.getCurrentToken().type !== "RPARENT") {
+          throw new Error("Expected closing parenthesis ')'");
+        }
         break;
       default:
         throw new Error(`Unexpected token. ${JSON.stringify(currToken)}`);
     }
 
     const nextToken = this.getNextToken();
-    if (this.isBinaryOperator(nextToken.type)) {
+    if (isValidBinary && this.isBinaryOperator(nextToken.type)) {
       this.getNextToken();
       return {
         type: "BINARY_OPERATION",
@@ -103,10 +134,35 @@ export class Parser {
   }
 
   /**
+   * Returns the list of arguments of a function call.
+   * Its expected that the current token it's the LPARENT
+   * TODO: implement check of correct grammar in arguments
+   */
+  private getFunctionData(): Token[] {
+    const tokens: Token[] = [];
+    do {
+      tokens.push(this.getNextToken());
+    } while (tokens[tokens.length - 1].type !== "RPARENT");
+    tokens.pop();
+    return tokens;
+  }
+
+  /**
   * Helper that returns weather a token type is a BinaryOperator
   */
   private isBinaryOperator(type: TokenType): boolean {
     return type === "SUBTRACTION" || type === "DIVISION" || type === "ADDITION" || type === "MULTIPLICATION";
+  }
+
+  public makeAST(): Program {
+    do {
+      this.statements.push(this.parseStatement());
+    } while (this.getCurrentToken().type !== "EOF");
+
+    return {
+      type: "Program",
+      body: this.statements,
+    };
   }
 
 }

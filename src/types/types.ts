@@ -1,7 +1,7 @@
 import { Range } from "vscode-languageserver";
 import { Symbols } from ".";
 
-export type TokenType = keyof typeof Symbols | "NUMBER" | "ILLEGAL" | "IDENTIFIER" | "STRING" | "KEYWORD";
+export type TokenType = keyof typeof Symbols | "NUMBER" | "ILLEGAL" | "IDENTIFIER" | "STRING" | "KEYWORD" | "VECTOR";
 
 export type Token = {
   content: string,
@@ -10,12 +10,17 @@ export type Token = {
 
 export type ExpressionType = "IDENTIFIER" | "NUMBER" | "STRING";
 
+export interface FunctionData {
+  args?: Token[];
+}
+
 export interface Expression {
-  type: TokenType | "BINARY_OPERATION";
+  type: TokenType | "BINARY_OPERATION" | "FUNCTION_CALL";
   value: string;
   LHO?: Expression;
   RHO?: Expression;
   operator?: string;
+  functionData?: FunctionData;
 }
 
 export type StatementType = "ASSIGNMENT";
@@ -25,6 +30,7 @@ export interface Statement {
   operator: string;
   LHE: Expression;
   RHE: Expression;
+  supressOutput: boolean;
   position?: Range;
 }
 
