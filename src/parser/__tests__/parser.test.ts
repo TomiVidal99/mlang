@@ -1,10 +1,12 @@
 import { expect, test } from "bun:test";
-import { TokenType } from "../../types";
 import { Parser } from "../parser";
 import { Tokenizer } from "../tokenizer";
+import { randomInt } from "crypto";
 
 test("Octave/Matlab Parser, should parse a simple assignment statement", function() {
-  const inputCode = 'x = 10 + 5;';
+  const number1 = randomInt(1000);
+  const number2 = randomInt(1000);
+  const inputCode = `x = ${number1} + ${number2};`;
 
   const tokenizer = new Tokenizer(inputCode);
   const tokens = tokenizer.getAllTokens();
@@ -23,14 +25,14 @@ test("Octave/Matlab Parser, should parse a simple assignment statement", functio
       RHE: {
         type: "BINARY_OPERATION",
         value: "+",
-        RHO: {
-          type: "NUMBER",
-          value: "5"
-        },
         LHO: {
           type: "NUMBER",
-          value: "10"
-        }
+          value: `${number1}`,
+        },
+        RHO: {
+          type: "NUMBER",
+          value: `${number2}`,
+        },
       }
     };
 

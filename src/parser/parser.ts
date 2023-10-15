@@ -1,5 +1,4 @@
-import { Expression, Program, Statement, Token, TokenType } from "../types";
-import { Tokenizer } from "./tokenizer";
+import { Expression, Statement, Token, TokenType } from "../types";
 
 /**
  * Takes in a list of Tokens and makes an AST
