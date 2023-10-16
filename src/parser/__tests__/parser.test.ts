@@ -267,7 +267,7 @@ test("Octave/Matlab Parser, should parse  MO_ASSIGNMENT and two ASSIGNMENTs", fu
 
 test("Octave/Matlab Parser, should parse a function definition", function() {
   const inputCode = `
-    function(c,d)
+    function myFunction(c,d)
       a = 1;
     end
 `;
@@ -285,8 +285,8 @@ test("Octave/Matlab Parser, should parse a function definition", function() {
         type: "FUNCTION_DEFINITION",
         supressOutput: true,
         LHE: {
-          type: "KEYWORD",
-          value: "function",
+          type: "IDENTIFIER",
+          value: "myFunction",
           functionData: {
             description: "",
             args: [
@@ -327,7 +327,7 @@ test("Octave/Matlab Parser, should parse a function definition with multiple sta
   const inputCode = `
     % this is a comment 1
     % this is a comment 2
-    function(c,d)
+    function myFunction(c,d)
       a = 1;
       someothervariable = "Test"
       result = 10050.2 + 0.1 - 1e-3;
@@ -347,8 +347,8 @@ test("Octave/Matlab Parser, should parse a function definition with multiple sta
         type: "FUNCTION_DEFINITION",
         supressOutput: true,
         LHE: {
-          type: "KEYWORD",
-          value: "function",
+          type: "IDENTIFIER",
+          value: "myFunction",
           functionData: {
             description: "% this is a comment 1\n% this is a comment 2",
             args: [
@@ -429,7 +429,7 @@ test("Octave/Matlab Parser, should parse a function definition with multiple sta
 
 test("Octave/Matlab Parser, should parse a function definition with multiple statements inside and comment after", function() {
   const inputCode = `
-    function(c,d)
+    function myFunction(c,d)
       % this is a comment 1
       % this is a comment 2
       a = 1;
@@ -451,8 +451,8 @@ test("Octave/Matlab Parser, should parse a function definition with multiple sta
         type: "FUNCTION_DEFINITION",
         supressOutput: true,
         LHE: {
-          type: "KEYWORD",
-          value: "function",
+          type: "IDENTIFIER",
+          value: "myFunction",
           functionData: {
             description: "% this is a comment 1\n% this is a comment 2",
             args: [
@@ -524,6 +524,230 @@ test("Octave/Matlab Parser, should parse a function definition with multiple sta
             }
           },
         ]
+      },
+    ]
+  };
+
+  expect(parsedResult).toStrictEqual(expectedAST);
+});
+
+test("Octave/Matlab Parser, should parse a function definition with a single output", function() {
+  const inputCode = `
+    function result = myFunction(c,d)
+      % this is a comment 1
+      % this is a comment 2
+      a = 1;
+      someothervariable = "Test"
+      result = 10050.2 + 0.1 - 1e-3;
+    end
+`;
+
+  const tokenizer = new Tokenizer(inputCode);
+  const tokens = tokenizer.getAllTokens();
+  const parser = new Parser(tokens);
+  const parsedResult = parser.makeAST();
+
+  // Define your expected AST structure here based on the input
+  const expectedAST: Program = {
+    type: "Program",
+    body: [
+      {
+        type: "ASSIGNMENT",
+        supressOutput: true,
+        LHE: {
+          type: "IDENTIFIER",
+          value: "result",
+        },
+        RHE: {
+          type: "FUNCTION_DEFINITION",
+          value: "function",
+          LHO: {
+            type: "IDENTIFIER",
+            value: "myFunction",
+            functionData: {
+              args: [
+                {
+                  type: "IDENTIFIER",
+                  content: "c"
+                },
+                {
+                  type: "IDENTIFIER",
+                  content: "d"
+                }
+              ],
+              description: "% this is a comment 1\n% this is a comment 2"
+            }
+          },
+          RHO: [
+            {
+              type: "ASSIGNMENT",
+              operator: "=",
+              supressOutput: true,
+              LHE: {
+                type: "IDENTIFIER",
+                value: "a",
+              },
+              RHE: {
+                type: "NUMBER",
+                value: "1",
+              }
+            },
+            {
+              type: "ASSIGNMENT",
+              operator: "=",
+              supressOutput: false,
+              LHE: {
+                type: "IDENTIFIER",
+                value: "someothervariable",
+              },
+              RHE: {
+                type: "STRING",
+                value: "\"Test\"",
+              }
+            },
+            {
+              type: "ASSIGNMENT",
+              operator: "=",
+              supressOutput: true,
+              LHE: {
+                type: "IDENTIFIER",
+                value: "result",
+              },
+              RHE: {
+                type: "BINARY_OPERATION",
+                value: "+",
+                LHO: {
+                  type: "NUMBER",
+                  value: "10050.2",
+                },
+                RHO: {
+                  type: "BINARY_OPERATION",
+                  value: "-",
+                  LHO: {
+                    type: "NUMBER",
+                    value: "0.1",
+                  },
+                  RHO: {
+                    type: "NUMBER",
+                    value: "1e-3",
+                  }
+                }
+              }
+            },
+          ]
+        },
+      },
+    ]
+  };
+
+  expect(parsedResult).toStrictEqual(expectedAST);
+});
+
+test("Octave/Matlab Parser, should parse a function definition with multiple outputs", function() {
+  const inputCode = `
+    function [a,b,c] = myFunction(c,d)
+      % this is a comment 1
+      % this is a comment 2
+      a = 1;
+      someothervariable = "Test"
+      result = 10050.2 + 0.1 - 1e-3;
+    end
+`;
+
+  const tokenizer = new Tokenizer(inputCode);
+  const tokens = tokenizer.getAllTokens();
+  const parser = new Parser(tokens);
+  const parsedResult = parser.makeAST();
+
+  // Define your expected AST structure here based on the input
+  const expectedAST: Program = {
+    type: "Program",
+    body: [
+      {
+        type: "ASSIGNMENT",
+        supressOutput: true,
+        LHE: {
+          type: "VARIABLE_VECTOR",
+          value: ["a", "b", "c"],
+        },
+        RHE: {
+          type: "FUNCTION_DEFINITION",
+          value: "function",
+          LHO: {
+            type: "IDENTIFIER",
+            value: "myFunction",
+            functionData: {
+              args: [
+                {
+                  type: "IDENTIFIER",
+                  content: "c"
+                },
+                {
+                  type: "IDENTIFIER",
+                  content: "d"
+                }
+              ],
+              description: "% this is a comment 1\n% this is a comment 2"
+            }
+          },
+          RHO: [
+            {
+              type: "ASSIGNMENT",
+              operator: "=",
+              supressOutput: true,
+              LHE: {
+                type: "IDENTIFIER",
+                value: "a",
+              },
+              RHE: {
+                type: "NUMBER",
+                value: "1",
+              }
+            },
+            {
+              type: "ASSIGNMENT",
+              operator: "=",
+              supressOutput: false,
+              LHE: {
+                type: "IDENTIFIER",
+                value: "someothervariable",
+              },
+              RHE: {
+                type: "STRING",
+                value: "\"Test\"",
+              }
+            },
+            {
+              type: "ASSIGNMENT",
+              operator: "=",
+              supressOutput: true,
+              LHE: {
+                type: "IDENTIFIER",
+                value: "result",
+              },
+              RHE: {
+                type: "BINARY_OPERATION",
+                value: "+",
+                LHO: {
+                  type: "NUMBER",
+                  value: "10050.2",
+                },
+                RHO: {
+                  type: "BINARY_OPERATION",
+                  value: "-",
+                  LHO: {
+                    type: "NUMBER",
+                    value: "0.1",
+                  },
+                  RHO: {
+                    type: "NUMBER",
+                    value: "1e-3",
+                  }
+                }
+              }
+            },
+          ]
+        },
       },
     ]
   };

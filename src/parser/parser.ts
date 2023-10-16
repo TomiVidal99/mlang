@@ -109,37 +109,18 @@ export class Parser {
       };
     } else if (currToken.type === "KEYWORD" && currToken.content === "function") {
       // FUNCTION DEFINITION STATEMENT
-      // TODO: consider output with a single variable and a variable vector
-      let description = this.getFunctionDefinitionDescription(true);
-      const functionName = this.getNextToken();
-      if (functionName.type !== "IDENTIFIER") {
-        // TODO send linting message
-        throw new Error(`Expected IDENTIFIER. Got: ${functionName}`);
-      }
+      const nextToken = this.getCurrentToken();
+      const next2Token = this.getNextToken();
       this.getPrevToken();
-      const args = this.getFunctionArguments();
-      this.getNextToken();
-      if (description === "") {
-        description = this.getFunctionDefinitionDescription(false);
+      this.getPrevToken();
+      if (nextToken.type === "IDENTIFIER" && next2Token.type === "EQUALS") {
+        return this.getFunctionDefintionWithOutput(true);
+      } else if (nextToken.type === "LBRACKET") {
+        return this.getFunctionDefintionWithOutput(false);
+      } else {
+        return this.getFunctionDefintionWithoutOutput();
       }
-      const statements: Statement[] = [];
-      do {
-        statements.push(this.parseStatement());
-      } while (this.getCurrentToken().content !== "end" && this.getCurrentToken().content !== "endfunction");
-      this.getNextToken();
-      return {
-        type: "FUNCTION_DEFINITION",
-        supressOutput: true,
-        LHE: {
-          type: "KEYWORD",
-          value: "function",
-          functionData: {
-            args,
-            description,
-          }
-        },
-        RHE: statements,
-      };
+
     } else {
       console.log("prev token: ", this.tokens[this.currentTokenIndex - 1]);
       console.log("currToken: ", this.getCurrentToken());
@@ -150,13 +131,114 @@ export class Parser {
   }
 
   /**
+   * Helper that extracts the statement of a function definition with output/outputs
+   * @args isSingleOutput - Weather the statement returns one or more outputs.
+   */
+  private getFunctionDefintionWithOutput(isSingleOutput: boolean): Statement {
+    let description = this.getFunctionDefinitionDescription(true);
+    let output: Token;
+    let outputs: Token[];
+    if (isSingleOutput) {
+      output = this.getNextToken();
+      this.getNextToken();
+    } else {
+      this.getNextToken();
+      this.getNextToken();
+      outputs = this.getVariableVector();
+    }
+    const functionName = this.getNextToken();
+    if (functionName.type !== "IDENTIFIER") {
+      // TODO send linting message
+      throw new Error(`Expected IDENTIFIER. Got: ${functionName}`);
+    }
+    this.getNextToken();
+    const args = this.getFunctionArguments();
+    if (description === "") {
+      description = this.getFunctionDefinitionDescription(false);
+    }
+    this.getNextToken();
+    const statements: Statement[] = [];
+    do {
+      statements.push(this.parseStatement());
+    } while (this.getCurrentToken().content !== "end" && this.getCurrentToken().content !== "endfunction");
+    this.getNextToken();
+    return {
+      type: "ASSIGNMENT",
+      supressOutput: true,
+      LHE: {
+        type: isSingleOutput ? "IDENTIFIER" : "VARIABLE_VECTOR",
+        value: isSingleOutput ? output.content : outputs.map(t => t.content),
+      },
+      RHE: {
+        type: "FUNCTION_DEFINITION",
+        value: "function",
+        LHO: {
+          type: "IDENTIFIER",
+          value: functionName.content,
+          functionData: {
+            args,
+            description,
+          }
+        },
+        RHO: statements,
+      },
+    };
+  }
+
+  /**
+   * Helper that extracts the statement of a function definition without output
+   */
+  private getFunctionDefintionWithoutOutput(): Statement {
+    let description = this.getFunctionDefinitionDescription(true);
+    const functionName = this.getNextToken();
+    if (functionName.type !== "IDENTIFIER") {
+      // TODO send linting message
+      throw new Error(`Expected IDENTIFIER. Got: ${functionName}`);
+    }
+    this.getNextToken();
+    const args = this.getFunctionArguments();
+    this.getNextToken();
+    if (description === "") {
+      this.getPrevToken();
+      description = this.getFunctionDefinitionDescription(false);
+      this.getNextToken();
+    }
+    const statements: Statement[] = [];
+    do {
+      statements.push(this.parseStatement());
+    } while (this.getCurrentToken().content !== "end" && this.getCurrentToken().content !== "endfunction");
+    this.getNextToken();
+    return {
+      type: "FUNCTION_DEFINITION",
+      supressOutput: true,
+      LHE: {
+        type: "IDENTIFIER",
+        value: functionName.content,
+        functionData: {
+          args,
+          description,
+        }
+      },
+      RHE: statements,
+    };
+  }
+
+  /**
+   * Helper that returns weather the next token it's or not a certain type
+   */
+  private isNextToken(type: TokenType[]): boolean {
+    const result = type.includes(this.getNextToken().type);
+    this.getPrevToken();
+    return result;
+  }
+
+  /**
    * Helper that extracts the comments before and after a function definition
    * @param beforeFunction - If should search for a description before the definition.
    */
   private getFunctionDefinitionDescription(beforeFunction: boolean): string {
     const comments: Token[] = [];
     const currentIndex = this.currentTokenIndex;
-    this.getPrevToken();
     if (beforeFunction) {
       do {
         if (this.currentTokenIndex === 0) {
@@ -177,7 +259,8 @@ export class Parser {
       } while (this.getCurrentToken().type === "COMMENT");
     }
     this.currentTokenIndex = currentIndex;
-    return comments.map(t => t.content).join("\n");
+    const ret = comments.map(t => t.content).join("\n");
+    return ret;
   }
 
   /**
