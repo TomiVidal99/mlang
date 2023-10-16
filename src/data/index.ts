@@ -1,2 +1,2 @@
-export * from './completionData';
+export * from './completionKeywords';
 export * from './defaultSettings';
