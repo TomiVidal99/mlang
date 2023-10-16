@@ -46,6 +46,11 @@ export class Parser {
    * Parses an statement
    */
   public parseStatement(): Statement {
+    // ignore comments
+    while (this.getCurrentToken().type === "COMMENT") {
+      this.getNextToken();
+    }
+
     const currToken = this.getCurrentToken();
     const nextToken = this.getNextToken();
 

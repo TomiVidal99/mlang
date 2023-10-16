@@ -487,3 +487,69 @@ test("Octave/Matlab Parser, should parse an anonymous function definition", func
 
   expect(parsedResult).toStrictEqual(expectedAST);
 });
+
+test("Octave/Matlab Parser, should parse an anonymous function definition ignoring a comment", function() {
+  const inputCode = `
+    # this a comment before the function
+    a = @(b,c) b + c + 100;
+`;
+
+  const tokenizer = new Tokenizer(inputCode);
+  const tokens = tokenizer.getAllTokens();
+  const parser = new Parser(tokens);
+  const parsedResult = parser.makeAST();
+
+  // Define your expected AST structure here based on the input
+  const expectedAST: Program = {
+    type: "Program",
+    body: [
+      {
+        type: "ASSIGNMENT",
+        supressOutput: true,
+        operator: "=",
+        LHE: {
+          type: "IDENTIFIER",
+          value: "a",
+        },
+        RHE: {
+          type: "ANONYMOUS_FUNCTION_DEFINITION",
+          value: "@",
+          functionData: {
+            args: [
+              {
+                type: "IDENTIFIER",
+                content: "b",
+              },
+              {
+                type: "IDENTIFIER",
+                content: "c",
+              },
+            ]
+          },
+          RHO: {
+            type: "BINARY_OPERATION",
+            value: "+",
+            RHO: {
+              type: "BINARY_OPERATION",
+              value: "+",
+              RHO: {
+                type: "NUMBER",
+                value: "100"
+              },
+              LHO: {
+                type: "IDENTIFIER",
+                value: "c"
+              }
+            },
+            LHO: {
+              type: "IDENTIFIER",
+              value: `b`,
+            },
+          },
+        }
+      },
+    ]
+  };
+
+  expect(parsedResult).toStrictEqual(expectedAST);
+});
