@@ -308,6 +308,10 @@ export class Parser {
     return type === "SUBTRACTION" || type === "DIVISION" || type === "ADDITION" || type === "MULTIPLICATION";
   }
 
+  /**
+  * Makes the Abstract Syntax Tree with the given tokens.
+  * @returns {Program} AST.
+  */
   public makeAST(): Program {
     do {
       const statement = this.parseStatement();
