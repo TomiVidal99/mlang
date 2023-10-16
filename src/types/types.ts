@@ -22,6 +22,7 @@ export interface Expression {
   RHO?: Expression | Statement[];
   operator?: string;
   functionData?: FunctionData;
+  position?: Range;
 }
 
 export type StatementType = "ASSIGNMENT" | "FUNCTION_CALL" | "MO_ASSIGNMENT" | "FUNCTION_DEFINITION";
@@ -32,7 +33,6 @@ export interface Statement {
   operator?: string;
   LHE?: Expression;
   RHE?: Expression | Statement[];
-  position?: Range;
 }
 
 export interface Program {
@@ -51,4 +51,8 @@ export interface FunctionDefinition extends IDefinition {
 
 export interface VariableDefinition extends IDefinition {
   content: string;
+}
+
+export interface Reference extends IDefinition {
+  opt?: any;
 }

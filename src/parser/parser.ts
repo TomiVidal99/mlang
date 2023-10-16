@@ -45,7 +45,7 @@ export class Parser {
   /**
    * Parses an statement
    */
-  public parseStatement(): Statement {
+  public parseStatement(): Statement | undefined {
     // ignore comments
     while (this.getCurrentToken().type === "COMMENT") {
       this.getNextToken();
@@ -53,6 +53,10 @@ export class Parser {
 
     const currToken = this.getCurrentToken();
     const nextToken = this.getNextToken();
+
+    if (currToken.type === "KEYWORD" && currToken.content === "end" || currToken.content === "endfunction") {
+      return undefined;
+    }
 
     if (currToken.type === "EOF" || !nextToken) {
       return;
@@ -158,9 +162,13 @@ export class Parser {
     }
     this.getNextToken();
     const statements: Statement[] = [];
-    do {
-      statements.push(this.parseStatement());
-    } while (this.getCurrentToken().content !== "end" && this.getCurrentToken().content !== "endfunction");
+    while (this.getCurrentToken().content !== "end" && this.getCurrentToken().content !== "endfunction") {
+      const statement = this.parseStatement();
+      if (!statement) {
+        break;
+      }
+      statements.push(statement);
+    }
     this.getNextToken();
     return {
       type: "ASSIGNMENT",
@@ -204,9 +212,13 @@ export class Parser {
       this.getNextToken();
     }
     const statements: Statement[] = [];
-    do {
-      statements.push(this.parseStatement());
-    } while (this.getCurrentToken().content !== "end" && this.getCurrentToken().content !== "endfunction");
+    while (this.getCurrentToken().content !== "end" && this.getCurrentToken().content !== "endfunction") {
+      const statement = this.parseStatement();
+      if (!statement) {
+        break;
+      }
+      statements.push(statement);
+    }
     this.getNextToken();
     return {
       type: "FUNCTION_DEFINITION",
@@ -224,10 +236,10 @@ export class Parser {
   }
 
   /**
-   * Helper that returns weather the next token it's or not a certain type
+   * Helper that returns weather the current token it's or not a certain type
    */
-  private isNextToken(type: TokenType[]): boolean {
-    const result = type.includes(this.getNextToken().type);
+  private isToken(type: TokenType[]): boolean {
+    const result = type.includes(this.getCurrentToken().type);
     this.getPrevToken();
     return result;
   }

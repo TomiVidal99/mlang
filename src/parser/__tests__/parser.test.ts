@@ -885,3 +885,80 @@ test("Octave/Matlab Parser, should parse an anonymous function definition ignori
 
   expect(parsedResult).toStrictEqual(expectedAST);
 });
+
+test("Octave/Matlab Parser, should parse a simple function definition", function() {
+  const inputCode = `
+    function test()
+      % test
+    end
+`;
+
+  const tokenizer = new Tokenizer(inputCode);
+  const tokens = tokenizer.getAllTokens();
+  const parser = new Parser(tokens);
+  const parsedResult = parser.makeAST();
+
+  // Define your expected AST structure here based on the input
+  const expectedAST: Program = {
+    type: "Program",
+    body: [
+      {
+        type: "FUNCTION_DEFINITION",
+        supressOutput: true,
+        LHE: {
+          type: "IDENTIFIER",
+          value: "test",
+          functionData: {
+            args: [],
+            description: "% test",
+          },
+        },
+        RHE: [],
+      }
+    ]
+  };
+
+  expect(parsedResult).toStrictEqual(expectedAST);
+});
+
+test("Octave/Matlab Parser, should parse a simple function definition with output", function() {
+  const inputCode = `
+    function a = test()
+      % test
+    end
+`;
+
+  const tokenizer = new Tokenizer(inputCode);
+  const tokens = tokenizer.getAllTokens();
+  const parser = new Parser(tokens);
+  const parsedResult = parser.makeAST();
+
+  // Define your expected AST structure here based on the input
+  const expectedAST: Program = {
+    type: "Program",
+    body: [
+    {
+      type: "ASSIGNMENT",
+      supressOutput: true,
+      LHE: {
+        type: "IDENTIFIER",
+        value: "a",
+      },
+      RHE: {
+        type: "FUNCTION_DEFINITION",
+        value: "function",
+        LHO: {
+          type: "IDENTIFIER",
+          value: "test",
+          functionData: {
+            args: [],
+            description: "% test",
+          }
+        },
+        RHO: [],
+      },
+    }]
+  };
+
+  expect(parsedResult).toStrictEqual(expectedAST);
+});
