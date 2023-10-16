@@ -6,6 +6,7 @@ export class Tokenizer {
   private nextPos = 0;
   private currChar: string;
   private nextChar: string;
+  private tokens: Token[] = [];
 
   constructor(private text: string) {
     this.readChar();
@@ -13,12 +14,13 @@ export class Tokenizer {
 
   /**
    * Returns all tokens in the text
+   * TODO: maybe update this to use this.tokens??
    */
   public getAllTokens(): Token[] {
     const tokens: Token[] = [];
     do {
       tokens.push(this.getNextToken());
-    } while (tokens[tokens.length-1].type !== "EOF");
+    } while (tokens[tokens.length - 1].type !== "EOF");
 
     return tokens;
   }
@@ -34,12 +36,18 @@ export class Tokenizer {
     }
 
     const token = getTokenFromSymbols(this.currChar);
-    if (token) {
+    if (token && this.isValidStartingToken(token)) {
       this.readChar();
       return this.addToken(token);
     }
 
-    if (isLetter(this.currChar)) {
+    if (this.currChar === "#" || this.currChar === "%") {
+      const comment = this.readComment();
+      return this.addToken({
+        type: "COMMENT",
+        content: comment,
+      });
+    } else if (isLetter(this.currChar)) {
       const literal = this.readLiteral();
       return this.addToken(this.tokenFromLiteral(literal));
     } else if (isNumber(this.currChar)) {
@@ -64,7 +72,31 @@ export class Tokenizer {
 
   }
 
+  /**
+   * Helper that checks that the current character can be a single token
+   * i.e: 1 % 2, '%' it's a valid token.
+   * but: % this is a comment, '%' it's NOT a valid token.
+   */
+  private isValidStartingToken(token: Token): boolean {
+    if (token.type !== "MODULUS") return true;
+    const lastToken = this.tokens[this.tokens.length - 1];
+    return (lastToken && (lastToken.type === "IDENTIFIER" || lastToken.type === "NUMBER"));
+  }
+
+  /**
+   * Helper that reads a comment and returns the content
+   */
+  private readComment(): string {
+    let comment = "";
+    do {
+      comment += this.currChar;
+      this.readChar();
+    } while (this.currChar !== "\n" && this.currPos < this.text.length);
+    return comment;
+  }
+
   private addToken(token: Token): Token {
+    this.tokens.push(token);
     return token;
   }
 

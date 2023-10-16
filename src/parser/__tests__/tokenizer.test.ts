@@ -2,12 +2,12 @@ import { expect, test } from "bun:test";
 import { TokenType } from "../../types";
 import { Tokenizer } from "../tokenizer";
 
-test("Test tokenizer, testing Symbols", () => {
-  const text = `@:=-+*/%^.;[]{}(),`;
+test("Octave/Matlab Tokenizer, testing Symbols", () => {
+  const text = `@:=-+*/1%^.;[]{}(),`;
 
   const symbols: TokenType[] = [
     "AT", "COLON", "EQUALS", "SUBTRACTION", "ADDITION", "MULTIPLICATION",
-    "DIVISION", "MODULUS", "EXPONENTIATION", "PERIOD",
+    "DIVISION", "NUMBER", "MODULUS", "EXPONENTIATION", "PERIOD",
     "SEMICOLON", "LBRACKET", "RBRACKET", "LSQUIRLY", "RSQUIRLY",
     "LPARENT", "RPARENT", "COMMA", "EOF"
   ];
@@ -20,7 +20,7 @@ test("Test tokenizer, testing Symbols", () => {
   }
 });
 
-test("Test tokenizer, testing literals", function() {
+test("Octave/Matlab Tokenizer, testing literals", function() {
   const text = "abcde_10 adbdc 1000 1e-3";
 
   const symbols: TokenType[] = [
@@ -35,7 +35,7 @@ test("Test tokenizer, testing literals", function() {
   }
 });
 
-test("Test tokenizer, complete test", function() {
+test("Octave/Matlab Tokenizer, complete test", function() {
   const text = `
     function [a,b] = my_Function(c,d, e)
       a = c + d + " test string ";
@@ -49,6 +49,25 @@ test("Test tokenizer, complete test", function() {
     "IDENTIFIER", "EQUALS", "IDENTIFIER", "ADDITION", "IDENTIFIER", "ADDITION", "STRING",
     "SEMICOLON", "IDENTIFIER", "EQUALS", "IDENTIFIER",
     "MULTIPLICATION", "NUMBER", "SEMICOLON", "KEYWORD",
+  ];
+
+  const tokenizer = new Tokenizer(text);
+
+  for (const symbol of symbols) {
+    const token = tokenizer.getNextToken();
+    expect(token.type).toBe(symbol);
+  }
+});
+
+test("Octave/Matlab Tokenizer, detect line comments", function() {
+  const text = `
+    # this is a comment
+    % an this one is another comment
+    a = "a text";
+  `;
+
+  const symbols: TokenType[] = [
+    "COMMENT", "COMMENT", "IDENTIFIER", "EQUALS", "STRING", "SEMICOLON"
   ];
 
   const tokenizer = new Tokenizer(text);

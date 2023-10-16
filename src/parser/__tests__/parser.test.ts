@@ -485,7 +485,5 @@ test("Octave/Matlab Parser, should parse an anonymous function definition", func
     ]
   };
 
-  console.log(JSON.stringify(parsedResult));
-
   expect(parsedResult).toStrictEqual(expectedAST);
 });

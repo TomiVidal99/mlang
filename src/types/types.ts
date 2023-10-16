@@ -1,7 +1,7 @@
 import { Range } from "vscode-languageserver";
 import { Symbols } from ".";
 
-export type TokenType = keyof typeof Symbols | "NUMBER" | "ILLEGAL" | "IDENTIFIER" | "STRING" | "KEYWORD" | "VECTOR";
+export type TokenType = keyof typeof Symbols | "NUMBER" | "ILLEGAL" | "IDENTIFIER" | "STRING" | "KEYWORD" | "VECTOR" | "COMMENT";
 
 export type Token = {
   content: string,
