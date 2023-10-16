@@ -109,6 +109,8 @@ export class Parser {
       };
     } else if (currToken.type === "KEYWORD" && currToken.content === "function") {
       // FUNCTION DEFINITION STATEMENT
+      // TODO: consider output with a single variable and a variable vector
+      let description = this.getFunctionDefinitionDescription(true);
       const functionName = this.getNextToken();
       if (functionName.type !== "IDENTIFIER") {
         // TODO send linting message
@@ -117,6 +119,9 @@ export class Parser {
       this.getPrevToken();
       const args = this.getFunctionArguments();
       this.getNextToken();
+      if (description === "") {
+        description = this.getFunctionDefinitionDescription(false);
+      }
       const statements: Statement[] = [];
       do {
         statements.push(this.parseStatement());
@@ -130,21 +135,49 @@ export class Parser {
           value: "function",
           functionData: {
             args,
+            description,
           }
         },
         RHE: statements,
       };
-    } else if (currToken.type !== "EOF") {
+    } else {
       console.log("prev token: ", this.tokens[this.currentTokenIndex - 1]);
       console.log("currToken: ", this.getCurrentToken());
       console.log("currToken: ", currToken);
       throw new Error("Expected a valid token for a statement");
     }
 
-    this.getNextToken();
+  }
 
-    console.log("Finished parsing");
-
+  /**
+   * Helper that extracts the comments before and after a function definition
+   * @param beforeFunction - If should search for a description before the definition.
+   */
+  private getFunctionDefinitionDescription(beforeFunction: boolean): string {
+    const comments: Token[] = [];
+    const currentIndex = this.currentTokenIndex;
+    this.getPrevToken();
+    if (beforeFunction) {
+      do {
+        if (this.currentTokenIndex === 0) {
+          break;
+        }
+        const prevToken = this.getPrevToken();
+        if (prevToken.type === "COMMENT") {
+          comments.push(prevToken);
+        }
+      } while (this.getCurrentToken().type === "COMMENT");
+      comments.reverse();
+    } else {
+      do {
+        const nextToken = this.getNextToken();
+        if (nextToken.type === "COMMENT") {
+          comments.push(nextToken);
+        }
+      } while (this.getCurrentToken().type === "COMMENT");
+    }
+    this.currentTokenIndex = currentIndex;
+    return comments.map(t => t.content).join("\n");
   }
 
   /**
@@ -310,7 +343,7 @@ export class Parser {
 
   /**
   * Makes the Abstract Syntax Tree with the given tokens.
-  * @returns {Program} AST.
+  * @returns Program - AST.
   */
   public makeAST(): Program {
     do {

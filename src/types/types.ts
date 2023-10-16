@@ -12,6 +12,7 @@ export type ExpressionType = "IDENTIFIER" | "NUMBER" | "STRING";
 
 export interface FunctionData {
   args?: Token[];
+  description?: string;
 }
 
 export interface Expression {

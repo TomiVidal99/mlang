@@ -24,7 +24,7 @@ documents.onDidOpen((change) => {
 
   const tokenizer = new Tokenizer(text);
   const tokens = tokenizer.getAllTokens();
-  // log(JSON.stringify(tokens));
+  log(JSON.stringify(tokens));
   const parser = new Parser(tokens);
   const ast = parser.makeAST();
   log("Opened text document");
