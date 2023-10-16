@@ -7,7 +7,7 @@ import {
 import { TextDocument } from "vscode-languageserver-textdocument";
 import { handleOnInitialized, handleOnInitialize } from "./handlers";
 import { ISettings } from "./data";
-import { Parser } from "./parser";
+import { Parser, Tokenizer } from "./parser";
 
 const connection = createConnection(ProposedFeatures.all);
 const documentSettings = new Map<string, Thenable<ISettings>>();
@@ -22,9 +22,14 @@ documents.onDidOpen((change) => {
 
   log(`opened '${uri}'`);
 
-  const parser = new Parser(text);
+  const tokenizer = new Tokenizer(text);
+  const tokens = tokenizer.getAllTokens();
+  // log(JSON.stringify(tokens));
+  const parser = new Parser(tokens);
+  const ast = parser.makeAST();
   log("Opened text document");
-  log(JSON.stringify(parser.getTextTokens()));
+  log(JSON.stringify(ast));
+  log("HELLO!");
 
 });
 // documents.onDidSave((change) => handleOnDidSave({change}));

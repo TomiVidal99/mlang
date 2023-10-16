@@ -94,6 +94,54 @@ test("Octave/Matlab Parser, should parse multiple assignment statements", functi
   expect(parsedResult).toStrictEqual(expectedAST);
 });
 
+test("Octave/Matlab Parser, should parse a single function call with output", function() {
+  const inputCode = `
+    a = myFunction(a, b, c);
+  `;
+
+  const tokenizer = new Tokenizer(inputCode);
+  const tokens = tokenizer.getAllTokens();
+  const parser = new Parser(tokens);
+  const parsedResult = parser.makeAST();
+
+  // Define your expected AST structure here based on the input
+  const expectedAST: Program = {
+    type: "Program",
+    body: [{
+      type: "ASSIGNMENT",
+      operator: "=",
+      supressOutput: true,
+      LHE: {
+        type: "IDENTIFIER",
+        value: "a"
+      },
+      RHE: {
+        type: "FUNCTION_CALL",
+        value: "myFunction",
+        functionData: {
+          args: [
+            {
+              type: "IDENTIFIER",
+              content: "a",
+            },
+            {
+              type: "IDENTIFIER",
+              content: "b",
+            },
+            {
+              type: "IDENTIFIER",
+              content: "c",
+            }
+          ]
+        }
+      }
+    },
+    ]
+  };
+
+  expect(parsedResult).toStrictEqual(expectedAST);
+});
+
 test("Octave/Matlab Parser, should parse a multiple output assignment statement", function() {
   const inputCode = "[a,b] = myFunction(c,d);";
 
@@ -371,6 +419,73 @@ test("Octave/Matlab Parser, should parse a function definition with multiple sta
       },
     ]
   };
+
+  expect(parsedResult).toStrictEqual(expectedAST);
+});
+
+test("Octave/Matlab Parser, should parse an anonymous function definition", function() {
+  const inputCode = `
+    a = @(b,c) b + c + 100;
+`;
+
+  const tokenizer = new Tokenizer(inputCode);
+  const tokens = tokenizer.getAllTokens();
+  const parser = new Parser(tokens);
+  const parsedResult = parser.makeAST();
+
+  // Define your expected AST structure here based on the input
+  const expectedAST: Program = {
+    type: "Program",
+    body: [
+      {
+        type: "ASSIGNMENT",
+        supressOutput: true,
+        operator: "=",
+        LHE: {
+          type: "IDENTIFIER",
+          value: "a",
+        },
+        RHE: {
+          type: "ANONYMOUS_FUNCTION_DEFINITION",
+          value: "@",
+          functionData: {
+            args: [
+              {
+                type: "IDENTIFIER",
+                content: "b",
+              },
+              {
+                type: "IDENTIFIER",
+                content: "c",
+              },
+            ]
+          },
+          RHO: {
+            type: "BINARY_OPERATION",
+            value: "+",
+            RHO: {
+              type: "BINARY_OPERATION",
+              value: "+",
+              RHO: {
+                type: "NUMBER",
+                value: "100"
+              },
+              LHO: {
+                type: "IDENTIFIER",
+                value: "c"
+              }
+            },
+            LHO: {
+              type: "IDENTIFIER",
+              value: `b`,
+            },
+          },
+        }
+      },
+    ]
+  };
+
+  console.log(JSON.stringify(parsedResult));
 
   expect(parsedResult).toStrictEqual(expectedAST);
 });

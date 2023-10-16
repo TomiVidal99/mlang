@@ -201,6 +201,21 @@ export class Parser {
         lho = this.parseFunctionCall();
         this.getPrevToken();
         break;
+      case "AT":
+        {
+          this.getNextToken();
+          const args = this.getFunctionArguments();
+          this.getNextToken();
+          const expr = this.parseExpression();
+          return {
+            type: "ANONYMOUS_FUNCTION_DEFINITION",
+            value: "@",
+            functionData: {
+              args,
+            },
+            RHO: expr,
+          };
+        }
       case "LPARENT":
         this.getNextToken();
         lho = this.parseExpression();
@@ -229,10 +244,8 @@ export class Parser {
   private parseFunctionCall(): Expression {
     const currToken = this.getCurrentToken();
     if (this.getNextToken().type === "LPARENT") {
-      this.getPrevToken();
       const args = this.getFunctionArguments();
-      console.log("args: ", args);
-      console.log("current token: ", this.getCurrentToken());
+      this.getNextToken();
       return {
         type: "FUNCTION_CALL",
         value: currToken.content,

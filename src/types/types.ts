@@ -15,7 +15,7 @@ export interface FunctionData {
 }
 
 export interface Expression {
-  type: TokenType | "BINARY_OPERATION" | "FUNCTION_CALL" | "VARIABLE_VECTOR";
+  type: TokenType | "BINARY_OPERATION" | "FUNCTION_CALL" | "VARIABLE_VECTOR" | "ANONYMOUS_FUNCTION_DEFINITION";
   value: string | string[];
   LHO?: Expression;
   RHO?: Expression;
