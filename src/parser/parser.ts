@@ -21,7 +21,7 @@ export class Parser {
   * Helper function to advance to the next token
   */
   private getNextToken(): Token | undefined {
-    if (this.currentTokenIndex >= this.tokens.length) {
+    if (this.currentTokenIndex >= this.tokens.length - 1) {
       return undefined;
     } else {
       this.currentTokenIndex++;
@@ -51,8 +51,16 @@ export class Parser {
       this.getNextToken();
     }
 
+    // if (this.getCurrentToken().type === "EOF") {
+    //   return;
+    // }
+
     const currToken = this.getCurrentToken();
     const nextToken = this.getNextToken();
+
+    console.log("currToken: ", currToken);
+    console.log("nextToken: ", nextToken);
+    console.log("this: ", this.getCurrentToken());
 
     if (!nextToken) {
       console.warn("Required at least two tokens");
