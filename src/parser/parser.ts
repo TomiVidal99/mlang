@@ -51,19 +51,10 @@ export class Parser {
       this.getNextToken();
     }
 
-    // if (this.getCurrentToken().type === "EOF") {
-    //   return;
-    // }
-
     const currToken = this.getCurrentToken();
     const nextToken = this.getNextToken();
 
-    console.log("currToken: ", currToken);
-    console.log("nextToken: ", nextToken);
-    console.log("this: ", this.getCurrentToken());
-
-    if (!nextToken) {
-      console.warn("Required at least two tokens");
+    if (currToken.type === "EOF" || !nextToken) {
       return;
     }
 
@@ -319,7 +310,10 @@ export class Parser {
 
   public makeAST(): Program {
     do {
-      this.statements.push(this.parseStatement());
+      const statement = this.parseStatement();
+      if (statement) {
+        this.statements.push(statement);
+      }
     } while (this.getCurrentToken().type !== "EOF");
 
     return {

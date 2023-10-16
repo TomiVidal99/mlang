@@ -491,7 +491,7 @@ test("Octave/Matlab Parser, should parse an anonymous function definition", func
 test("Octave/Matlab Parser, should parse an anonymous function definition ignoring a comment", function() {
   const inputCode = `
     # this a comment before the function
-    a = @(b,c) b + c + 100;
+    a = @(b,c) b + c + 100; # this a comment in the same line
 `;
 
   const tokenizer = new Tokenizer(inputCode);
