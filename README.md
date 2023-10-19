@@ -49,7 +49,7 @@ end
 
 ## TODO
 
-- [ ] consider special cases like e-20.
+- [ ] Maybe consider documentation with comments on variable as well.
 
 ## How to contribute?
 

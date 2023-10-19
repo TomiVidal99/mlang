@@ -1,5 +1,6 @@
 import { Token, getTokenFromSymbols } from "../types";
-import { getKeywordsFromCompletion, isLetter, isNumber } from "../utils";
+import { getKeywordsFromCompletion, getRowsAndColsInCursor, isLetter, isNumber } from "../utils";
+import {Range} from "vscode-languageserver";
 
 export class Tokenizer {
   private currPos = 0;
@@ -38,7 +39,10 @@ export class Tokenizer {
     const token = getTokenFromSymbols(this.currChar);
     if (token && this.isValidStartingToken(token)) {
       this.readChar();
-      return this.addToken(token);
+      return this.addToken({
+        ...token,
+        position: this.getPosition(token.type !== "EOF" ? token.content : ""),
+      });
     }
 
     if (this.currChar === "#" || this.currChar === "%") {
@@ -46,27 +50,39 @@ export class Tokenizer {
       return this.addToken({
         type: "COMMENT",
         content: comment,
+        position: this.getPosition(comment),
       });
     } else if (isLetter(this.currChar)) {
+      const intialPos = this.currPos;
       const literal = this.readLiteral();
-      return this.addToken(this.tokenFromLiteral(literal));
+      const postPos = this.currPos;
+      this.currPos = intialPos-1;
+      const position = this.getPosition(literal);
+      this.currPos = postPos;
+      return this.addToken({
+        ...this.tokenFromLiteral(literal),
+        position,
+      });
     } else if (isNumber(this.currChar)) {
       const number = this.readNumber();
       return this.addToken({
         type: "NUMBER",
         content: number,
+        position: this.getPosition(number),
       });
     } else if (this.currChar === '"' || this.currChar === "'") {
       const str = this.readLiteralString();
       return this.addToken({
         type: "STRING",
         content: str,
+        position: this.getPosition(str),
       });
     } else {
       this.readChar();
       return this.addToken({
         type: "ILLEGAL",
         content: "illegal",
+        position: null,
       });
     }
 
@@ -110,26 +126,47 @@ export class Tokenizer {
         return {
           type: "KEYWORD",
           content: literal,
+          position: null,
         };
       }
     }
     return {
       type: "IDENTIFIER",
       content: literal,
+      position: null,
+    };
+  }
+
+
+  /**
+   * Helper that returns the Range position
+   * if endPoint it's provided it will make a range from the current character position
+   * to the endPoint. Else it considers that the range it's from the current position
+   * to the current position.
+   */
+  private getPosition(content: string): Range {
+    const [line, character] = this.getRowsColsCursor();
+    const [lineEndPoint, characterEndPoint] = this.getRowsColsCursor(content);
+    return {
+      start: {
+        line,
+        character,
+      },
+      end: {
+        line: lineEndPoint,
+        character: characterEndPoint,
+      }
     };
   }
 
   /**
  * Returns the rows and columns corresponding to the current position in the text.
+ * TODO: fix possible problems
  * @returns {[number, number]} An array containing the row and column.
  */
-  private getRowsColsCursor(): [number, number] {
-    const textUntilCurrentPosition = this.text.slice(0, this.currPos);
-    const rows = textUntilCurrentPosition.split('\n');
-    const currentRow = rows.length;
-    const currentColumn = rows[currentRow - 1].length + 1;
-
-    return [currentRow, currentColumn];
+  private getRowsColsCursor(content?: string): [number, number] {
+    const characterPosition = content ? this.currPos + content.length : this.currPos;
+    return getRowsAndColsInCursor({text: this.text, characterPosition});
   }
 
   /**

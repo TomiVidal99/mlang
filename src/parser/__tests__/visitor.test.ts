@@ -1,5 +1,5 @@
 import { expect, test } from "bun:test";
-import { TokenType, Reference } from "../../types";
+import { Reference } from "../../types";
 import { Tokenizer } from "../tokenizer";
 import { Parser } from "../parser";
 import { Visitor } from "../visitor";
@@ -12,6 +12,7 @@ test("Octave/Matlab Visitor, test references extraction", () => {
     function test = myVar(m,d)
       w = a + 1;
     end
+    w = @(a,b) b + 1 + a;
   `;
   // TODO: add other types of function definitions
 
@@ -60,6 +61,26 @@ test("Octave/Matlab Visitor, test references extraction", () => {
       name: "a",
       position: undefined,
     },
+    {
+      name: "w",
+      position: undefined,
+    },
+    {
+      name: "a",
+      position: undefined,
+    },
+    {
+      name: "b",
+      position: undefined,
+    },
+    {
+      name: "b",
+      position: undefined,
+    },
+    {
+      name: "a",
+      position: undefined,
+    },
   ];
 
   const tokenizer = new Tokenizer(text);
@@ -72,4 +93,3 @@ test("Octave/Matlab Visitor, test references extraction", () => {
 
   expect(calculatedReferences).toStrictEqual(references);
 });
-

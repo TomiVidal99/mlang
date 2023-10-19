@@ -3,6 +3,7 @@ import { Parser } from "../parser";
 import { Tokenizer } from "../tokenizer";
 import { randomInt } from "crypto";
 import { Program } from "../../types";
+import { getRowsAndColsInCursor } from "../../utils";
 
 test("Octave/Matlab Parser, should parse a simple assignment statement", function() {
   const number1 = randomInt(1000);
@@ -123,14 +124,44 @@ test("Octave/Matlab Parser, should parse a single function call with output", fu
             {
               type: "IDENTIFIER",
               content: "a",
+              position: {
+                start: {
+                  line: 2,
+                  character: 20,
+                },
+                end: {
+                  line: 2,
+                  character: 21,
+                }
+              }
             },
             {
               type: "IDENTIFIER",
               content: "b",
+              position: {
+                start: {
+                  line: 2,
+                  character: 23,
+                },
+                end: {
+                  line: 2,
+                  character: 24,
+                }
+              }
             },
             {
               type: "IDENTIFIER",
               content: "c",
+              position: {
+                start: {
+                  line: 2,
+                  character: 26,
+                },
+                end: {
+                  line: 2,
+                  character: 27,
+                }
+              }
             }
           ]
         }
@@ -169,10 +200,30 @@ test("Octave/Matlab Parser, should parse a multiple output assignment statement"
             {
               type: "IDENTIFIER",
               content: "c",
+              position: {
+                start: {
+                  line: 1,
+                  character: 20,
+                },
+                end: {
+                  line: 1,
+                  character: 21,
+                }
+              }
             },
             {
               type: "IDENTIFIER",
               content: "d",
+              position: {
+                start: {
+                  line: 1,
+                  character: 22
+                },
+                end: {
+                  line: 1,
+                  character: 23,
+                }
+              }
             }
           ]
         }
@@ -216,10 +267,30 @@ test("Octave/Matlab Parser, should parse  MO_ASSIGNMENT and two ASSIGNMENTs", fu
               {
                 type: "IDENTIFIER",
                 content: "c",
+                position: {
+                  start: {
+                    line: 2,
+                    character: 24,
+                  },
+                  end: {
+                    line: 2,
+                    character: 25,
+                  }
+                }
               },
               {
                 type: "IDENTIFIER",
                 content: "d",
+                position: {
+                  start: {
+                    line: 2,
+                    character: 26,
+                  },
+                  end: {
+                    line: 2,
+                    character: 27,
+                  }
+                }
               }
             ]
           }
@@ -293,10 +364,30 @@ test("Octave/Matlab Parser, should parse a function definition", function() {
               {
                 type: "IDENTIFIER",
                 content: "c",
+                position: {
+                  start: {
+                    line: 2,
+                    character: 25,
+                  },
+                  end: {
+                    line: 2,
+                    character: 26,
+                  }
+                }
               },
               {
                 type: "IDENTIFIER",
                 content: "d",
+                position: {
+                  start: {
+                    line: 2,
+                    character: 27,
+                  },
+                  end: {
+                    line: 2,
+                    character: 28,
+                  }
+                }
               },
             ]
           }
@@ -320,10 +411,11 @@ test("Octave/Matlab Parser, should parse a function definition", function() {
     ]
   };
 
+
   expect(parsedResult).toStrictEqual(expectedAST);
 });
 
-test("Octave/Matlab Parser, should parse a function definition with multiple statements inside and comment before", function() {
+test("Octave/Matlab Parser, should parse a function definition with multiple statements nside and comment before", function() {
   const inputCode = `
     % this is a comment 1
     % this is a comment 2
@@ -355,10 +447,30 @@ test("Octave/Matlab Parser, should parse a function definition with multiple sta
               {
                 type: "IDENTIFIER",
                 content: "c",
+                position: {
+                  start: {
+                    line: 4,
+                    character: 25,
+                  },
+                  end: {
+                    line: 4,
+                    character: 26,
+                  }
+                }
               },
               {
                 type: "IDENTIFIER",
                 content: "d",
+                position: {
+                  start: {
+                    line: 4,
+                    character: 27,
+                  },
+                  end: {
+                    line: 4,
+                    character: 28,
+                  }
+                }
               },
             ]
           }
@@ -426,7 +538,6 @@ test("Octave/Matlab Parser, should parse a function definition with multiple sta
 
   expect(parsedResult).toStrictEqual(expectedAST);
 });
-
 test("Octave/Matlab Parser, should parse a function definition with multiple statements inside and comment after", function() {
   const inputCode = `
     function myFunction(c,d)
@@ -459,10 +570,30 @@ test("Octave/Matlab Parser, should parse a function definition with multiple sta
               {
                 type: "IDENTIFIER",
                 content: "c",
+                position: {
+                  start: {
+                    line: 2,
+                    character: 25,
+                  },
+                  end: {
+                    line: 2,
+                    character: 26,
+                  }
+                },
               },
               {
                 type: "IDENTIFIER",
                 content: "d",
+                position: {
+                  start: {
+                    line: 2,
+                    character: 27,
+                  },
+                  end: {
+                    line: 2,
+                    character: 28,
+                  }
+                }
               },
             ]
           }
@@ -568,11 +699,32 @@ test("Octave/Matlab Parser, should parse a function definition with a single out
               args: [
                 {
                   type: "IDENTIFIER",
-                  content: "c"
+                  content: "c",
+                  position: {
+                    start: {
+                      line: 2,
+                      character: 34,
+                    },
+                    end: {
+                      line: 2,
+                      character: 35,
+                    },
+                  }
                 },
                 {
                   type: "IDENTIFIER",
-                  content: "d"
+                  content: "d",
+                  position: {
+                    start: {
+                      line: 2,
+                      character: 36,
+                    },
+                    end: {
+                      line: 2,
+                      character: 37,
+                    },
+                  }
+
                 }
               ],
               description: "% this is a comment 1\n% this is a comment 2"
@@ -680,11 +832,31 @@ test("Octave/Matlab Parser, should parse a function definition with multiple out
               args: [
                 {
                   type: "IDENTIFIER",
-                  content: "c"
+                  content: "c",
+                  position: {
+                    start: {
+                      line: 2,
+                      character: 35,
+                    },
+                    end: {
+                      line: 2,
+                      character: 36,
+                    }
+                  }
                 },
                 {
                   type: "IDENTIFIER",
-                  content: "d"
+                  content: "d",
+                  position: {
+                    start: {
+                      line: 2,
+                      character: 37,
+                    },
+                    end: {
+                      line: 2,
+                      character: 38,
+                    }
+                  }
                 }
               ],
               description: "% this is a comment 1\n% this is a comment 2"
@@ -756,9 +928,8 @@ test("Octave/Matlab Parser, should parse a function definition with multiple out
 });
 
 test("Octave/Matlab Parser, should parse an anonymous function definition", function() {
-  const inputCode = `
-    a = @(b,c) b + c + 100;
-`;
+
+  const inputCode = "a = @(b,c) b + c + 100;";
 
   const tokenizer = new Tokenizer(inputCode);
   const tokens = tokenizer.getAllTokens();
@@ -785,10 +956,30 @@ test("Octave/Matlab Parser, should parse an anonymous function definition", func
               {
                 type: "IDENTIFIER",
                 content: "b",
+                position: {
+                  start: {
+                    line: 1,
+                    character: 7,
+                  },
+                  end: {
+                    line: 1,
+                    character: 8,
+                  }
+                }
               },
               {
                 type: "IDENTIFIER",
                 content: "c",
+                position: {
+                  start: {
+                    line: 1,
+                    character: 9,
+                  },
+                  end: {
+                    line: 1,
+                    character: 10,
+                  }
+                }
               },
             ]
           },
@@ -800,7 +991,7 @@ test("Octave/Matlab Parser, should parse an anonymous function definition", func
               value: "+",
               RHO: {
                 type: "NUMBER",
-                value: "100"
+                value: "100",
               },
               LHO: {
                 type: "IDENTIFIER",
@@ -851,10 +1042,30 @@ test("Octave/Matlab Parser, should parse an anonymous function definition ignori
               {
                 type: "IDENTIFIER",
                 content: "b",
+                position: {
+                  start: {
+                    line: 3,
+                    character: 11,
+                  },
+                  end: {
+                    line: 3,
+                    character: 12,
+                  }
+                }
               },
               {
                 type: "IDENTIFIER",
                 content: "c",
+                position: {
+                  start: {
+                    line: 3,
+                    character: 13,
+                  },
+                  end: {
+                    line: 3,
+                    character: 14,
+                  }
+                }
               },
             ]
           },
@@ -937,27 +1148,27 @@ test("Octave/Matlab Parser, should parse a simple function definition with outpu
   const expectedAST: Program = {
     type: "Program",
     body: [
-    {
-      type: "ASSIGNMENT",
-      supressOutput: true,
-      LHE: {
-        type: "IDENTIFIER",
-        value: "a",
-      },
-      RHE: {
-        type: "FUNCTION_DEFINITION",
-        value: "function",
-        LHO: {
+      {
+        type: "ASSIGNMENT",
+        supressOutput: true,
+        LHE: {
           type: "IDENTIFIER",
-          value: "test",
-          functionData: {
-            args: [],
-            description: "% test",
-          }
+          value: "a",
         },
-        RHO: [],
-      },
-    }]
+        RHE: {
+          type: "FUNCTION_DEFINITION",
+          value: "function",
+          LHO: {
+            type: "IDENTIFIER",
+            value: "test",
+            functionData: {
+              args: [],
+              description: "% test",
+            }
+          },
+          RHO: [],
+        },
+      }]
   };
 
   expect(parsedResult).toStrictEqual(expectedAST);
