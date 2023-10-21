@@ -1,3 +1,4 @@
+import { log } from "../server";
 import { Expression, Program, Statement, Reference } from "../types";
 
 export class Visitor {
@@ -37,7 +38,7 @@ export class Visitor {
             (arg) => {
               return {
                 name: arg.content,
-                position: node.position,
+                position: arg.position,
               };
             }
           ));
@@ -54,6 +55,10 @@ export class Visitor {
             this.visitStatement(s);
           });
         }
+        break;
+      case "KEYWORD": 
+        this.visitExpression(node.LHO);
+        this.visitExpression(node.RHO as Expression);
         break;
       case "ANONYMOUS_FUNCTION_DEFINITION":
         // TODO: add a user setting to configure if should consider

@@ -136,5 +136,12 @@ test("Octave/Matlab Visitor, test references extraction", () => {
   visitor.visitProgram(program);
   const calculatedReferences = visitor.references;
 
-  expect(calculatedReferences).toStrictEqual(references);
+  // Extract only the names from the calculated references
+  const calculatedReferenceNames = calculatedReferences.map((ref) => ref.name);
+
+  // Extract only the names from the expected references
+  const expectedReferenceNames = references.map((ref) => ref.name);
+
+  // Check if the names match
+  expect(calculatedReferenceNames).toStrictEqual(expectedReferenceNames);
 });

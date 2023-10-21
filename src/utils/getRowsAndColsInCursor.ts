@@ -10,5 +10,5 @@ export function getRowsAndColsInCursor({ text, characterPosition }: { text: stri
   const currentRow = rows.length;
   const currentColumn = position - textUntilCurrentPosition.lastIndexOf('\n');
   
-  return [currentRow, currentColumn];
+  return [currentRow-1, currentColumn-1];
 }

@@ -126,14 +126,14 @@ export class Tokenizer {
         return {
           type: "KEYWORD",
           content: literal,
-          position: null,
+          position: this.getPosition(literal),
         };
       }
     }
     return {
       type: "IDENTIFIER",
       content: literal,
-      position: null,
+      position: this.getPosition(literal),
     };
   }
 

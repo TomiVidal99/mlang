@@ -77,6 +77,7 @@ export class Parser {
         LHE: {
           type: "IDENTIFIER",
           value: currToken.content,
+          position: currToken.position,
         },
         RHE,
       };
@@ -175,6 +176,7 @@ export class Parser {
       LHE: {
         type: isSingleOutput ? "IDENTIFIER" : "VARIABLE_VECTOR",
         value: isSingleOutput ? output.content : outputs.map(t => t.content),
+        position: output.position,
       },
       RHE: {
         type: "FUNCTION_DEFINITION",
@@ -182,6 +184,7 @@ export class Parser {
         LHO: {
           type: "IDENTIFIER",
           value: functionName.content,
+          position: functionName.position,
           functionData: {
             args,
             description,
@@ -225,6 +228,7 @@ export class Parser {
       LHE: {
         type: "IDENTIFIER",
         value: functionName.content,
+        position: functionName.position,
         functionData: {
           args,
           description,
