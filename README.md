@@ -14,10 +14,10 @@ This is an implementation of the [Language Server Protocol](https://code.visuals
 
 ## Working features
 
-- Completion _(some keywords, some native functions, user defined functions and files)_
-- goToDefinition _(for user defined functions and files)_
-- goToReference _(for user defined functions)_
-- diagnostics _(closing tags, redefined functions, missing imports, typing errors)_
+<!-- - Completion _(some keywords, some native functions, user defined functions and files)_ -->
+<!-- - goToDefinition _(for user defined functions and files)_ -->
+- goToReference _(still some that are not getting recognized)_
+<!-- - diagnostics _(closing tags, redefined functions, missing imports, typing errors)_ -->
 
 ## How to setup in the client
 
@@ -52,10 +52,10 @@ end
 - [ ] Maybe consider documentation with comments on variable as well.
 
 
-## How to contribute?
+<!-- ## How to contribute? -->
 
-Clone the repository and install the node dependencies with `$ yarn`. Then modify the files in the _"src"_ folder. After you should be able to compile the server with `$ yarn compile`
-Also consider running `$ yarn watch` to compile after every change you make.
+<!-- Clone the repository and install the node dependencies with `$ yarn`. Then modify the files in the _"src"_ folder. After you should be able to compile the server with `$ yarn compile` -->
+<!-- Also consider running `$ yarn watch` to compile after every change you make. -->
 
 ### _Reference_ or _Keyword_ not found
 
