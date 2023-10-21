@@ -79,7 +79,6 @@ export class Parser {
           value: currToken.content,
         },
         RHE,
-        // position: , TODO
       };
     } else if (currToken.type === "LBRACKET" && nextToken.type === "IDENTIFIER") {
       // MULTIPLE OUTPUT ASSIGNMENT STATEMENT
@@ -383,12 +382,14 @@ export class Parser {
         value: currToken.content,
         functionData: {
           args,
-        }
+        },
+        position: currToken.position,
       };
     } else {
       return {
         type: currToken.type,
         value: currToken.content,
+        position: currToken.position,
       };
     }
   }

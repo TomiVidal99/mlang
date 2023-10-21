@@ -4,3 +4,4 @@ export * from "./isNumber";
 export * from "./getAllMFiles";
 export * from "./getFilesInWorkspace";
 export * from "./getRowsAndColsInCursor";
+export * from "./getWordRangeAtPosition";

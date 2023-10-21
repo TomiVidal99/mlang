@@ -31,11 +31,29 @@ test("Octave/Matlab Visitor, test references extraction", () => {
     },
     {
       name: "a",
-      position: undefined,
+      position: {
+        start: {
+          line: 4,
+          character: 9,
+        },
+        end: {
+          line: 4,
+          character: 10,
+        }
+      },
     },
     {
       name: "b",
-      position: undefined,
+      position: {
+        start: {
+          line: 4,
+          character: 13,
+        },
+        end: {
+          line: 4,
+          character: 14,
+        }
+      },
     },
     {
       name: "test",
@@ -59,7 +77,16 @@ test("Octave/Matlab Visitor, test references extraction", () => {
     },
     {
       name: "a",
-      position: undefined,
+      position: {
+        start: {
+          line: 6,
+          character: 11,
+        },
+        end: {
+          line: 6,
+          character: 12,
+        }
+      },
     },
     {
       name: "w",
@@ -75,11 +102,29 @@ test("Octave/Matlab Visitor, test references extraction", () => {
     },
     {
       name: "b",
-      position: undefined,
+      position: {
+        start: {
+          line: 8,
+          character: 16,
+        },
+        end: {
+          line: 8,
+          character: 17,
+        }
+      },
     },
     {
       name: "a",
-      position: undefined,
+      position: {
+        start: {
+          line: 8,
+          character: 24,
+        },
+        end: {
+          line: 8,
+          character: 25,
+        }
+      },
     },
   ];
 

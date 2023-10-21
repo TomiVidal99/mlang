@@ -119,6 +119,16 @@ test("Octave/Matlab Parser, should parse a single function call with output", fu
       RHE: {
         type: "FUNCTION_CALL",
         value: "myFunction",
+        position: {
+          start: {
+            line: 2,
+            character: 9,
+          },
+          end: {
+            line: 2,
+            character: 19,
+          }
+        },
         functionData: {
           args: [
             {
@@ -323,6 +333,16 @@ test("Octave/Matlab Parser, should parse  MO_ASSIGNMENT and two ASSIGNMENTs", fu
           LHO: {
             type: "IDENTIFIER",
             value: "a",
+            position: {
+              start: {
+                line: 4,
+                character: 15,
+              },
+              end: {
+                line: 4,
+                character: 16,
+              }
+            }
           },
           RHO: {
             type: "NUMBER",
@@ -995,12 +1015,32 @@ test("Octave/Matlab Parser, should parse an anonymous function definition", func
               },
               LHO: {
                 type: "IDENTIFIER",
-                value: "c"
+                value: "c",
+                position: {
+                  start: {
+                    line: 1,
+                    character: 16,
+                  },
+                  end: {
+                    line: 1,
+                    character: 17,
+                  }
+                }
               }
             },
             LHO: {
               type: "IDENTIFIER",
               value: `b`,
+              position: {
+                start: {
+                  line: 1,
+                  character: 12,
+                },
+                end: {
+                  line: 1,
+                  character: 13,
+                }
+              }
             },
           },
         }
@@ -1081,12 +1121,32 @@ test("Octave/Matlab Parser, should parse an anonymous function definition ignori
               },
               LHO: {
                 type: "IDENTIFIER",
-                value: "c"
+                value: "c",
+                position: {
+                  start: {
+                    line: 3,
+                    character: 20,
+                  },
+                  end: {
+                    line: 3,
+                    character: 21,
+                  },
+                }
               }
             },
             LHO: {
               type: "IDENTIFIER",
               value: `b`,
+              position: {
+                start: {
+                  line: 3,
+                  character: 16,
+                },
+                end: {
+                  line: 3,
+                  character: 17,
+                },
+              }
             },
           },
         }

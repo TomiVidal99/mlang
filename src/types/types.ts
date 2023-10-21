@@ -9,8 +9,6 @@ export type Token = {
   position: Range | null;
 }
 
-export type ExpressionType = "IDENTIFIER" | "NUMBER" | "STRING";
-
 export interface FunctionData {
   args?: Token[];
   description?: string;
