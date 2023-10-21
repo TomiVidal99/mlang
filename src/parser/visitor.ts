@@ -1,5 +1,5 @@
 import { log } from "../server";
-import { Expression, Program, Statement, Reference } from "../types";
+import { Expression, Program, Statement, Reference, Token } from "../types";
 
 export class Visitor {
   public references: Reference[] = [];
@@ -70,6 +70,16 @@ export class Visitor {
           };
         }));
         this.visitExpression(node.RHO as Expression);
+        break;
+      case "VARIABLE_VECTOR":
+        (node.value as Token[]).forEach((token) => {
+          if (token.type === "IDENTIFIER") {
+            this.references.push({
+              name: token.content,
+              position: token.position,
+            });
+          }
+        });
         break;
     }
   }

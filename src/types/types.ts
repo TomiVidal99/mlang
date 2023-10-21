@@ -1,6 +1,19 @@
 import { Range } from "vscode-languageserver";
 import { Symbols } from ".";
 
+export interface LintingMessage {
+  message: string;
+  range: Range;
+}
+
+export interface LintingError extends LintingMessage {
+  opt?: any;
+}
+
+export interface LintingWarning extends LintingMessage {
+  opt?: any;
+}
+
 export type TokenType = keyof typeof Symbols | "NUMBER" | "ILLEGAL" | "IDENTIFIER" | "STRING" | "KEYWORD" | "VECTOR" | "COMMENT";
 
 export type Token = {
@@ -16,7 +29,7 @@ export interface FunctionData {
 
 export interface Expression {
   type: TokenType | "BINARY_OPERATION" | "FUNCTION_CALL" | "VARIABLE_VECTOR" | "ANONYMOUS_FUNCTION_DEFINITION" | "FUNCTION_DEFINITION";
-  value: string | string[];
+  value: string | string[] | Token[];
   LHO?: Expression;
   RHO?: Expression | Statement[];
   operator?: string;

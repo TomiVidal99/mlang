@@ -1,4 +1,4 @@
-import { Expression, Program, Statement, Token, TokenType } from "../types";
+import { Expression, LintingError, LintingMessage, Program, Statement, Token, TokenType } from "../types";
 
 /**
  * Takes in a list of Tokens and makes an AST
@@ -6,6 +6,8 @@ import { Expression, Program, Statement, Token, TokenType } from "../types";
 export class Parser {
   private currentTokenIndex = 0;
   private statements: Statement[] = [];
+  private errors: LintingError[] = [];
+  private warnings: LintingMessage[] = [];
 
   constructor(private tokens: Token[]) {
   }
@@ -124,12 +126,12 @@ export class Parser {
       } else {
         return this.getFunctionDefintionWithoutOutput();
       }
-
     } else {
       console.log("prev token: ", this.tokens[this.currentTokenIndex - 1]);
       console.log("currToken: ", this.getCurrentToken());
       console.log("currToken: ", currToken);
       throw new Error("Expected a valid token for a statement");
+    }
   }
 
   /**
@@ -356,6 +358,12 @@ export class Parser {
           throw new Error("Expected closing parenthesis ')'");
         }
         break;
+      case "LBRACKET":
+        // VECTOR
+        return {
+          type: "VARIABLE_VECTOR",
+          value: this.getVariableVectorValue(),
+        };
       default:
         throw new Error(`Unexpected token. ${JSON.stringify(currToken)}`);
     }
@@ -372,6 +380,89 @@ export class Parser {
     }
 
     return lho;
+  }
+
+  /**
+   * Helper that retrieves the list of values that defines a vector
+   * When executed should leave in the next token after the last ]
+   */
+  private getVariableVectorValue(): Token[] {
+    const currentToken = this.getCurrentToken();
+    const nextToken = this.getNextToken();
+    const values: Token[] = [];
+
+    // ERRORS
+    if (nextToken.type !== "IDENTIFIER" && nextToken.type !== "NUMBER") {
+      this.errors.push({
+        message: "Wrong vector definition. Expected a 'number' or a 'variable'",
+        range: currentToken.position,
+      });
+      return values;
+    }
+
+    values.push(nextToken);
+    const secondToken = this.getNextToken();
+
+    // We've got a vector like: [1]
+    if (secondToken.type === "RBRACKET") {
+      this.getNextToken();
+      return values;
+    }
+
+    // We've got a vector like: [1, 2, a, b, etc]
+    if (secondToken.type === "COMMA") {
+      values.push(...this.getVariableVector());
+      this.getNextToken();
+      return values;
+    }
+
+    if (secondToken.type === "COLON") {
+      const thirdToken = this.getNextToken();
+      if (thirdToken.type !== "IDENTIFIER" && thirdToken.type !== "NUMBER") {
+        this.errors.push({
+          message: "Wrong vector definition. Expected a 'number' or a 'variable'",
+          range: thirdToken.position,
+        });
+        this.getNextToken();
+        return values;
+      }
+      values.push(thirdToken);
+    }
+
+    // We've got a vector like: [1:b]
+    const fourthToken = this.getNextToken();
+    if (fourthToken.type === "RBRACKET") {
+      this.getNextToken();
+      return values;
+    }
+
+    // We've got a vector like: [1:b:c]
+    if (fourthToken.type === "COLON") {
+      const fifthToken = this.getNextToken();
+      if (fifthToken.type !== "IDENTIFIER" && fifthToken.type !== "NUMBER") {
+        this.errors.push({
+          message: "Wrong vector definition. Expected a 'number' or a 'variable'",
+          range: fifthToken.position,
+        });
+        this.getNextToken();
+        return values;
+      }
+      values.push(fifthToken);
+    }
+
+    const sixthToken = this.getNextToken();
+    if (sixthToken.type !== "RBRACKET") {
+      this.errors.push({
+        message: "Wrong vector definition. Expected a closing bracket ']'",
+        range: sixthToken.position,
+      });
+      this.getNextToken();
+      return values;
+    }
+
+    this.getNextToken();
+
+    return values;
   }
 
   private parseFunctionCall(): Expression {

@@ -49,7 +49,11 @@ end
 
 ## TODO
 
-- [ ] Maybe consider documentation with comments on variable as well.
+- [ ] FIX: '\n' inside strings breaks the getRowsAndCols function.
+- [ ] ADD: replace error throws with linting messages.
+- [ ] ADD: linting errors and warnings.
+- [ ] ADD: make parser tests.
+- [ ] ADD: Maybe consider documentation with comments on variable as well.
 
 
 <!-- ## How to contribute? -->
