@@ -20,7 +20,7 @@ documents.onDidOpen((change) => {
   const text = change.document.getText();
   const uri = change.document.uri;
 
-  log(`opened '${uri}'`);
+  // log(`opened '${uri}'`);
 
   const tokenizer = new Tokenizer(text);
   const tokens = tokenizer.getAllTokens();
@@ -29,7 +29,7 @@ documents.onDidOpen((change) => {
   const visitor = new Visitor();
   visitor.visitProgram(ast);
   const references = visitor.references;
-  log("REFERENCES!: " + JSON.stringify(references));
+  // log("REFERENCES!: " + JSON.stringify(references));
 
 });
 // documents.onDidSave((change) => handleOnDidSave({change}));

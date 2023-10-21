@@ -1,8 +1,7 @@
-import { HandlerResult, Location, Position, Range } from "vscode-languageserver";
+import { HandlerResult, Location, Position } from "vscode-languageserver";
 import { Parser, Tokenizer, Visitor } from "../parser";
 import { TextDocument } from "vscode-languageserver-textdocument";
 import { getWordRangeAtPosition } from "../utils";
-import { log } from "../server";
 
 export function handleReferences(document: TextDocument, position: Position): HandlerResult<Location[], void> {
   return new Promise((resolve, _reject) => {
@@ -31,16 +30,11 @@ export function handleReferences(document: TextDocument, position: Position): Ha
       ...references
       .filter(ref => ref.name === word)
       .map((ref) => {
-        if (!(ref?.position)) {
-          log(`this will fail: ${JSON.stringify(ref)}`);
-        }
       return {
         range: ref.position,
         uri,
       };
     }));
-
-    log(`LOCATIONS: ${JSON.stringify(locations)}`);
 
     resolve(locations);
   });
