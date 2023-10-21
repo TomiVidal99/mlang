@@ -1,14 +1,12 @@
 import { expect, test } from "bun:test";
 import { Parser, Tokenizer, Visitor } from "..";
-import { Reference } from "../../types";
 
 test("Octave/Matlab Parser, should parse a simple assignment statement", function() {
-  const inputCode = "vectorReference = [100:a];";
-  // const inputCode = `
-  //   %stringReference = "STRING";
-  //   %numberReference1 = 1000 + 1e3;
-  //   vectorReference = [100:1000];
-  // `;
+  const inputCode = `
+    stringReference = "STRING";
+    numberReference1 = 1000 + 1e3;
+    vectorReference = [100:1000];
+  `;
 
   const tokenizer = new Tokenizer(inputCode);
   const tokens = tokenizer.getAllTokens();
@@ -18,51 +16,8 @@ test("Octave/Matlab Parser, should parse a simple assignment statement", functio
   visitor.visitProgram(ast);
   const documentReferences = visitor.references;
 
-  console.log("GOT: " + JSON.stringify(documentReferences));
+  const expectedReferences: string[] = ["stringReference", "numberReference1", "vectorReference"];
 
-  return;
+  expect(documentReferences.map((ref) => ref.name)).toStrictEqual(expectedReferences);
 
-  const expectedReferences: Reference[] = [
-    {
-      name: "stringReference",
-      position: {
-        start: {
-          line: 2,
-          character: 1,
-        },
-        end: {
-          line: 2,
-          character: 16,
-        }
-      }
-    },
-    {
-      name: "numberReference1",
-      position: {
-        start: {
-          line: 3,
-          character: 1,
-        },
-        end: {
-          line: 3,
-          character: 24,
-        }
-      }
-    },
-    {
-      name: "vectorReference",
-      position: {
-        start: {
-          line: 4,
-          character: 1,
-        },
-        end: {
-          line: 4,
-          character: 15,
-        }
-      }
-    }
-  ];
-
-  expect(documentReferences).toStrictEqual(expectedReferences);
 });
