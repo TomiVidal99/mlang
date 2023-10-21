@@ -5,9 +5,9 @@ import {
   MessageType,
 } from "vscode-languageserver/node";
 import { TextDocument } from "vscode-languageserver-textdocument";
-import { handleOnInitialized, handleOnInitialize } from "./handlers";
+import { handleOnInitialized, handleOnInitialize, handleReferences } from "./handlers";
 import { ISettings } from "./data";
-import { Parser, Tokenizer } from "./parser";
+import { Parser, Tokenizer, Visitor } from "./parser";
 
 const connection = createConnection(ProposedFeatures.all);
 const documentSettings = new Map<string, Thenable<ISettings>>();
@@ -20,16 +20,16 @@ documents.onDidOpen((change) => {
   const text = change.document.getText();
   const uri = change.document.uri;
 
-  log(`opened '${uri}'`);
+  // log(`opened '${uri}'`);
 
   const tokenizer = new Tokenizer(text);
   const tokens = tokenizer.getAllTokens();
-  log(JSON.stringify(tokens));
   const parser = new Parser(tokens);
   const ast = parser.makeAST();
-  log("Opened text document");
-  log(JSON.stringify(ast));
-  log("HELLO!");
+  const visitor = new Visitor();
+  visitor.visitProgram(ast);
+  const references = visitor.references;
+  // log("REFERENCES!: " + JSON.stringify(references));
 
 });
 // documents.onDidSave((change) => handleOnDidSave({change}));
@@ -37,7 +37,11 @@ connection.onInitialize((params) => handleOnInitialize({ params, connection }));
 connection.onInitialized((params) => handleOnInitialized({ params, connection }));
 // connection.onDidOpenTextDocument((params) => { });
 // connection.onDefinition((params) => handleOnDefinition({params, documents}));
-// connection.onReferences((params) => handleOnReference({params, documents}));
+connection.onReferences((params) => {
+  const uri = params.textDocument.uri;
+  const document = documents.get(uri);
+  return handleReferences(document, params.position);
+});
 // connection.onDidChangeConfiguration((change) =>);
 // connection.workspace.onDidDeleteFiles((event) => {});
 documents.onDidClose((e) => { documentSettings.delete(e.document.uri); });

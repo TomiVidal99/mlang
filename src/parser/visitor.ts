@@ -1,3 +1,4 @@
+import { log } from "../server";
 import { Expression, Program, Statement, Reference } from "../types";
 
 export class Visitor {
@@ -21,7 +22,7 @@ export class Visitor {
           this.visitExpression(node.LHE);
           this.visitExpression(node.RHE as Expression);
         }
-      break;
+        break;
     }
   }
 
@@ -37,7 +38,7 @@ export class Visitor {
             (arg) => {
               return {
                 name: arg.content,
-                position: node.position,
+                position: arg.position,
               };
             }
           ));
@@ -54,7 +55,22 @@ export class Visitor {
             this.visitStatement(s);
           });
         }
-      break;
+        break;
+      case "KEYWORD": 
+        this.visitExpression(node.LHO);
+        this.visitExpression(node.RHO as Expression);
+        break;
+      case "ANONYMOUS_FUNCTION_DEFINITION":
+        // TODO: add a user setting to configure if should consider
+        // the arguments of the ANONYMOUS_FUNCTION_DEFINITION as references
+        this.references.push(...node.functionData.args.map((arg) => {
+          return {
+            name: arg.content,
+            position: node.position,
+          };
+        }));
+        this.visitExpression(node.RHO as Expression);
+        break;
     }
   }
 }

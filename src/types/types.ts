@@ -6,9 +6,8 @@ export type TokenType = keyof typeof Symbols | "NUMBER" | "ILLEGAL" | "IDENTIFIE
 export type Token = {
   content: string,
   type: TokenType,
+  position: Range | null;
 }
-
-export type ExpressionType = "IDENTIFIER" | "NUMBER" | "STRING";
 
 export interface FunctionData {
   args?: Token[];

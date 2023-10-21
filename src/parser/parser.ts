@@ -77,9 +77,9 @@ export class Parser {
         LHE: {
           type: "IDENTIFIER",
           value: currToken.content,
+          position: currToken.position,
         },
         RHE,
-        // position: , TODO
       };
     } else if (currToken.type === "LBRACKET" && nextToken.type === "IDENTIFIER") {
       // MULTIPLE OUTPUT ASSIGNMENT STATEMENT
@@ -130,8 +130,6 @@ export class Parser {
       console.log("currToken: ", this.getCurrentToken());
       console.log("currToken: ", currToken);
       throw new Error("Expected a valid token for a statement");
-    }
-
   }
 
   /**
@@ -176,6 +174,7 @@ export class Parser {
       LHE: {
         type: isSingleOutput ? "IDENTIFIER" : "VARIABLE_VECTOR",
         value: isSingleOutput ? output.content : outputs.map(t => t.content),
+        position: output.position,
       },
       RHE: {
         type: "FUNCTION_DEFINITION",
@@ -183,6 +182,7 @@ export class Parser {
         LHO: {
           type: "IDENTIFIER",
           value: functionName.content,
+          position: functionName.position,
           functionData: {
             args,
             description,
@@ -226,6 +226,7 @@ export class Parser {
       LHE: {
         type: "IDENTIFIER",
         value: functionName.content,
+        position: functionName.position,
         functionData: {
           args,
           description,
@@ -383,12 +384,14 @@ export class Parser {
         value: currToken.content,
         functionData: {
           args,
-        }
+        },
+        position: currToken.position,
       };
     } else {
       return {
         type: currToken.type,
         value: currToken.content,
+        position: currToken.position,
       };
     }
   }

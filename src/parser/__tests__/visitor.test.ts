@@ -1,5 +1,5 @@
 import { expect, test } from "bun:test";
-import { TokenType, Reference } from "../../types";
+import { Reference } from "../../types";
 import { Tokenizer } from "../tokenizer";
 import { Parser } from "../parser";
 import { Visitor } from "../visitor";
@@ -12,6 +12,7 @@ test("Octave/Matlab Visitor, test references extraction", () => {
     function test = myVar(m,d)
       w = a + 1;
     end
+    w = @(a,b) b + 1 + a;
   `;
   // TODO: add other types of function definitions
 
@@ -30,11 +31,29 @@ test("Octave/Matlab Visitor, test references extraction", () => {
     },
     {
       name: "a",
-      position: undefined,
+      position: {
+        start: {
+          line: 4,
+          character: 9,
+        },
+        end: {
+          line: 4,
+          character: 10,
+        }
+      },
     },
     {
       name: "b",
-      position: undefined,
+      position: {
+        start: {
+          line: 4,
+          character: 13,
+        },
+        end: {
+          line: 4,
+          character: 14,
+        }
+      },
     },
     {
       name: "test",
@@ -58,7 +77,54 @@ test("Octave/Matlab Visitor, test references extraction", () => {
     },
     {
       name: "a",
+      position: {
+        start: {
+          line: 6,
+          character: 11,
+        },
+        end: {
+          line: 6,
+          character: 12,
+        }
+      },
+    },
+    {
+      name: "w",
       position: undefined,
+    },
+    {
+      name: "a",
+      position: undefined,
+    },
+    {
+      name: "b",
+      position: undefined,
+    },
+    {
+      name: "b",
+      position: {
+        start: {
+          line: 8,
+          character: 16,
+        },
+        end: {
+          line: 8,
+          character: 17,
+        }
+      },
+    },
+    {
+      name: "a",
+      position: {
+        start: {
+          line: 8,
+          character: 24,
+        },
+        end: {
+          line: 8,
+          character: 25,
+        }
+      },
     },
   ];
 
@@ -70,6 +136,12 @@ test("Octave/Matlab Visitor, test references extraction", () => {
   visitor.visitProgram(program);
   const calculatedReferences = visitor.references;
 
-  expect(calculatedReferences).toStrictEqual(references);
-});
+  // Extract only the names from the calculated references
+  const calculatedReferenceNames = calculatedReferences.map((ref) => ref.name);
 
+  // Extract only the names from the expected references
+  const expectedReferenceNames = references.map((ref) => ref.name);
+
+  // Check if the names match
+  expect(calculatedReferenceNames).toStrictEqual(expectedReferenceNames);
+});

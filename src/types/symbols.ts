@@ -38,6 +38,7 @@ export function getTokenFromSymbols(char: string): Token | undefined {
       return {
         content: key === "EOF" ? "eof" : char,
         type: key as TokenType,
+        position: null,
       };
     }
   }
