@@ -130,8 +130,6 @@ export class Parser {
       console.log("currToken: ", this.getCurrentToken());
       console.log("currToken: ", currToken);
       throw new Error("Expected a valid token for a statement");
-    }
-
   }
 
   /**

@@ -51,6 +51,7 @@ end
 
 - [ ] Maybe consider documentation with comments on variable as well.
 
+
 ## How to contribute?
 
 Clone the repository and install the node dependencies with `$ yarn`. Then modify the files in the _"src"_ folder. After you should be able to compile the server with `$ yarn compile`
