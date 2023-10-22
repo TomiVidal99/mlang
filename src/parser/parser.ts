@@ -12,6 +12,11 @@ export class Parser {
   constructor(private tokens: Token[]) {
   }
 
+  public clearLintingMessages(): void {
+    this.errors = [];
+    this.warnings = [];
+  }
+
   /*
   *Helper function to get the current token
   */
@@ -322,7 +327,7 @@ export class Parser {
       const nextTokenType = this.getNextToken().type;
       if (nextTokenType !== "COMMA" && nextTokenType !== "RBRACKET") {
         this.errors.push({
-          message: `Expected COMMA. Got: ${this.getCurrentToken()}`,
+          message: `Expected COMMA. Got: '${this.getCurrentToken().content}'`,
           range: this.getCurrentToken().position,
         });
         return;
@@ -557,7 +562,7 @@ export class Parser {
       const commaOrRParen = this.getCurrentToken();
       if (commaOrRParen.type !== "COMMA" && commaOrRParen.type !== "RPARENT") {
         this.errors.push({
-          message: `Expected COMMA or RPARENT. Got ${commaOrRParen}`,
+          message: `Expected COMMA or RPARENT. Got '${commaOrRParen.content}'`,
           range: this.getCurrentToken().position,
         });
         return;

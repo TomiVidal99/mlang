@@ -1,8 +1,9 @@
 import { DidChangeConfigurationNotification, InitializeParams, InitializeResult, InitializedParams, TextDocumentSyncKind, _Connection } from "vscode-languageserver";
 import { URI } from "vscode-uri";
-import { documents, log } from "../server";
+import { documents, log, parsers } from "../server";
 import { globalSettings } from "../data";
 import { getFilesInWorkspace } from "../utils";
+import { Parser, Tokenizer, Visitor } from "../parser";
 
 export let hasConfigurationCapability = false;
 export let hasWorkspaceFolderCapability = false;
@@ -100,5 +101,18 @@ export function handleOnInitialized({ params, connection }: IOnInitializedProps)
     //
     // debounced();
   }
+
+  // documents.all().forEach((doc) => {
+  //   const text = doc.getText();
+  //   const uri = doc.uri;
+  //
+  //   const tokenizer = new Tokenizer(text);
+  //   const tokens = tokenizer.getAllTokens();
+  //   const parser = new Parser(tokens);
+  //   parsers.set(uri, parser);
+  //   // const ast = parser.makeAST();
+  //   // const visitor = new Visitor();
+  //   // visitor.visitProgram(ast);
+  // });
 
 }

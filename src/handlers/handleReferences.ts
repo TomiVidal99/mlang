@@ -28,13 +28,13 @@ export function handleReferences(document: TextDocument, position: Position): Ha
     // push references
     locations.push(
       ...references
-      .filter(ref => ref.name === word)
-      .map((ref) => {
-      return {
-        range: ref.position,
-        uri,
-      };
-    }));
+        .filter(ref => ref.name === word)
+        .map((ref) => {
+          return {
+            range: ref.position,
+            uri,
+          };
+        }));
 
     resolve(locations);
   });
