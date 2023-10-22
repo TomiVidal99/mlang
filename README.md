@@ -70,7 +70,7 @@ end
 
 ### _Reference_ or _Keyword_ not found
 
-If a reference or a keyword it's not found and it should because it's defined by default by the language you simply add it in _'./src/data/completionData.ts'_ if it's a **function**, if it's a **keyword** _'./src/parser/grammar.ts'_ in `COMMON_GRAMMAR`
+If a reference or a keyword it's not found and it should because it's defined by default by the language you simply add it in _'./src/data/completionKeywords.ts'_.
 
 ## Contributors
 
