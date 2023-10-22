@@ -601,10 +601,10 @@ export class Parser {
       return {
         type: "FUNCTION_CALL",
         value: currToken.content,
+        position: currToken.position,
         functionData: {
           args,
         },
-        position: currToken.position,
       };
     } else {
       return {

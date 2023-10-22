@@ -44,6 +44,7 @@ export class Visitor {
             name: node.value as string,
             position: node.position,
             type: parentType === "ASSIGNMENT" ? "VARIABLE" : "FUNCTION",
+            documentation: this.getDocumentationOrLineDefinition(node),
           });
         }
         this.references.push({
@@ -92,6 +93,7 @@ export class Visitor {
             name: node.LHO.value as string,
             position: node.LHO.position,
             type: "ANONYMOUS_FUNCTION",
+            documentation: this.getDocumentationOrLineDefinition(node),
           });
         }
         this.references.push(...node.functionData.args.map((arg) => {
@@ -112,6 +114,7 @@ export class Visitor {
               name: val.content,
               type: "VARIABLE",
               position: val.position,
+              documentation: this.getDocumentationOrLineDefinition(node),
             });
           });
         }
@@ -126,6 +129,14 @@ export class Visitor {
           }
         });
         break;
+      case "FUNCTION_CALL":
+        this.references.push({
+          name: node.value as string,
+          position: node.position,
+          documentation: this.getDocumentationOrLineDefinition(node),
+          type: "FUNCTION",
+        });
+      break;
     }
   }
 

@@ -9,14 +9,13 @@ export function handleCompletion({
 }): CompletionItem[] {
   return [
     ...completionKeywords(params.position),
-    ...visitors.get(params.textDocument.uri).references
-    .map((ref) => {
+    ...visitors.get(params.textDocument.uri).definitions
+    .map((def) => {
       // TODO: think how to consider the completion based on the current cursor position
-      // ACTUALLY this should not be the references but the definitions
       const item: CompletionItem = {
-        label: ref.name,
-        kind: ref.type === "FUNCTION" ? CompletionItemKind.Function : CompletionItemKind.Variable,
-        documentation: ref.documentation,
+        label: def.name,
+        kind: def.type === "FUNCTION" ? CompletionItemKind.Function : CompletionItemKind.Variable,
+        documentation: def.documentation,
       };
       return item;
     })

@@ -22,7 +22,7 @@ test("Handle references: string, number and vector references", function() {
 
 });
 
-test("Handle references: function refereces", function() {
+test("Handle references: function definitions refereces", function() {
   const inputCode = `
     % TODO: FIX THIS
     %function noParenFunction
@@ -48,6 +48,25 @@ test("Handle references: function refereces", function() {
 
   //const expectedReferences: string[] = ["noParenFunction"];
   const expectedReferences: string[] = ["parenFunction", "singleOutput", "functionSingleOutput", "output1", "output2", "functionMO"];
+
+  expect(documentReferences.map((ref) => ref.name)).toStrictEqual(expectedReferences);
+});
+
+test("Handle references: function call refereces", function() {
+  const inputCode = `
+    a = functionCall()
+  `;
+
+  const tokenizer = new Tokenizer(inputCode);
+  const tokens = tokenizer.getAllTokens();
+  const parser = new Parser(tokens);
+  const ast = parser.makeAST();
+  const visitor = new Visitor();
+  visitor.visitProgram(ast);
+  const documentReferences = visitor.references;
+
+  //const expectedReferences: string[] = ["noParenFunction"];
+  const expectedReferences: string[] = ["a", "functionCall"];
 
   expect(documentReferences.map((ref) => ref.name)).toStrictEqual(expectedReferences);
 });

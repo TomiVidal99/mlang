@@ -6,7 +6,7 @@ import {
   Diagnostic,
 } from "vscode-languageserver/node";
 import { TextDocument } from "vscode-languageserver-textdocument";
-import { handleOnInitialized, handleOnInitialize, handleReferences, handleCompletion } from "./handlers";
+import { handleOnInitialized, handleOnInitialize, handleReferences, handleCompletion, handleDefinitions } from "./handlers";
 import { ISettings } from "./data";
 import { Parser, Tokenizer, Visitor } from "./parser";
 import { getDiagnosticFromLitingMessage } from "./utils";
@@ -21,7 +21,7 @@ export const visitors = new Map<string, Visitor>();
 const documentChanges: Map<string, NodeJS.Timer> = new Map();
 
 documents.onDidChangeContent((change) => {
-  updateDiagnostics(change.document.uri, change.document.getText());
+  updateDocumentData(change.document.uri, change.document.getText());
 });
 // documents.onDidOpen((change) => {
 // const text = change.document.getText();
@@ -33,7 +33,7 @@ documents.onDidChangeContent((change) => {
 connection.onInitialize((params) => handleOnInitialize({ params, connection }));
 connection.onInitialized((params) => handleOnInitialized({ params, connection }));
 // connection.onDidOpenTextDocument((params) => { });
-// connection.onDefinition((params) => handleOnDefinition({params, documents}));
+connection.onDefinition((params) => handleDefinitions({ params, documents }));
 connection.onReferences((params) => {
   const uri = params.textDocument.uri;
   const document = documents.get(uri);
@@ -68,7 +68,11 @@ export function log(message: string | object): void {
   });
 }
 
-function updateDiagnostics(uri: string, text: string) {
+/**
+  * Updates the references, definitions and diagnostics
+  * And updates that new data on the visitors map
+  */
+function updateDocumentData(uri: string, text: string) {
   // Clear any previously scheduled diagnostic updates for this document
   if (documentChanges.has(uri)) {
     clearTimeout(documentChanges.get(uri));

@@ -64,6 +64,7 @@ export type DefinitionType = "FUNCTION" | "VARIABLE" | "ARGUMENT" | "ANONYMOUS_F
 
 export interface Definition extends IDefinition {
   type: DefinitionType;
+  documentation: string;
   arguments?: Definition[];
   content?: string;
 }
