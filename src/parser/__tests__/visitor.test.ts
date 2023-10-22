@@ -3,6 +3,7 @@ import { Reference } from "../../types";
 import { Tokenizer } from "../tokenizer";
 import { Parser } from "../parser";
 import { Visitor } from "../visitor";
+import { json } from "stream/consumers";
 
 test("Octave/Matlab Visitor, test references extraction", () => {
   const text = `
@@ -13,6 +14,8 @@ test("Octave/Matlab Visitor, test references extraction", () => {
       w = a + 1;
     end
     w = @(a,b) b + 1 + a;
+    function [va1, va2] = MO_FUNC(arg1, arg2)
+    end
   `;
   // TODO: add other types of function definitions
 
@@ -20,17 +23,25 @@ test("Octave/Matlab Visitor, test references extraction", () => {
     {
       name: "a",
       position: undefined,
+      type: "VARIABLE",
+      documentation: "",
     },
     {
       name: "b",
       position: undefined,
+      type: "VARIABLE",
+      documentation: "",
     },
     {
       name: "c",
       position: undefined,
+      type: "VARIABLE",
+      documentation: "",
     },
     {
       name: "a",
+      type: "VARIABLE",
+      documentation: "",
       position: {
         start: {
           line: 4,
@@ -44,6 +55,8 @@ test("Octave/Matlab Visitor, test references extraction", () => {
     },
     {
       name: "b",
+      type: "VARIABLE",
+      documentation: "",
       position: {
         start: {
           line: 4,
@@ -58,25 +71,37 @@ test("Octave/Matlab Visitor, test references extraction", () => {
     {
       name: "test",
       position: undefined,
+      type: "VARIABLE",
+      documentation: "",
     },
     {
       name: "myVar",
       position: undefined,
+      type: "VARIABLE",
+      documentation: "",
     },
     {
       name: "m",
       position: undefined,
+      type: "VARIABLE",
+      documentation: "",
     },
     {
       name: "d",
       position: undefined,
+      type: "VARIABLE",
+      documentation: "",
     },
     {
       name: "w",
       position: undefined,
+      type: "VARIABLE",
+      documentation: "",
     },
     {
       name: "a",
+      type: "VARIABLE",
+      documentation: "",
       position: {
         start: {
           line: 6,
@@ -91,17 +116,25 @@ test("Octave/Matlab Visitor, test references extraction", () => {
     {
       name: "w",
       position: undefined,
+      type: "VARIABLE",
+      documentation: "",
     },
     {
       name: "a",
       position: undefined,
+      type: "VARIABLE",
+      documentation: "",
     },
     {
       name: "b",
       position: undefined,
+      type: "VARIABLE",
+      documentation: "",
     },
     {
       name: "b",
+      type: "VARIABLE",
+      documentation: "",
       position: {
         start: {
           line: 8,
@@ -115,16 +148,39 @@ test("Octave/Matlab Visitor, test references extraction", () => {
     },
     {
       name: "a",
-      position: {
-        start: {
-          line: 8,
-          character: 24,
-        },
-        end: {
-          line: 8,
-          character: 25,
-        }
-      },
+      type: "VARIABLE",
+      documentation: "",
+      position: undefined,
+    },
+    {
+      name: "va1",
+      type: "VARIABLE",
+      documentation: "",
+      position: undefined,
+    },
+    {
+      name: "va2",
+      type: "VARIABLE",
+      documentation: "",
+      position: undefined,
+    },
+    {
+      name: "MO_FUNC",
+      type: "VARIABLE",
+      documentation: "",
+      position: undefined,
+    },
+    {
+      name: "arg1",
+      type: "VARIABLE",
+      documentation: "",
+      position: undefined,
+    },
+    {
+      name: "arg2",
+      type: "VARIABLE",
+      documentation: "",
+      position: undefined,
     },
   ];
 
