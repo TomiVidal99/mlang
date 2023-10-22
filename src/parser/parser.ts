@@ -1,4 +1,5 @@
 import { Expression, LintingError, LintingWarning, Program, Statement, Token, TokenType } from "../types";
+import { getRandomStringID } from "../utils";
 
 /**
  * Takes in a list of Tokens and makes an AST
@@ -8,6 +9,7 @@ export class Parser {
   private statements: Statement[] = [];
   private errors: LintingError[] = [];
   private warnings: LintingWarning[] = [];
+  private contextDepth: string[] = ["0"];
 
   constructor(private tokens: Token[]) {
   }
@@ -15,6 +17,34 @@ export class Parser {
   public clearLintingMessages(): void {
     this.errors = [];
     this.warnings = [];
+  }
+
+  /**
+   * Returns the last element of the context array
+   */
+  private getCurrentContext(): string {
+    return this.contextDepth[this.contextDepth.length - 1];
+  }
+
+  /**
+  * Helper function to go deeper into a context
+  * @returns [previousContext, newContext]
+  */
+  private getIntoNewContext(): [string, string] {
+    const prevContext = this.getCurrentContext();
+    const newContext = getRandomStringID();
+    this.contextDepth.push(newContext);
+    return [prevContext, newContext];
+  }
+
+  /**
+   * Helper that goes back into the previous depth context and it returns it
+   * @returns [previousContext, newContext]
+   */
+  private getBackOfContext(): [string, string] {
+    const prevContext = this.getCurrentContext();
+    const newContext = this.contextDepth.pop();
+    return [prevContext, newContext];
   }
 
   /*
@@ -81,6 +111,7 @@ export class Parser {
         type: "ASSIGNMENT",
         operator: nextToken.content,
         supressOutput,
+        context: this.getCurrentContext(),
         LHE: {
           type: "IDENTIFIER",
           value: currToken.content,
@@ -110,6 +141,7 @@ export class Parser {
         type: "MO_ASSIGNMENT",
         operator: "=",
         supressOutput,
+        context: this.getCurrentContext(),
         LHE: {
           type: "VARIABLE_VECTOR",
           value: outputs,
@@ -157,6 +189,7 @@ export class Parser {
    * @args isSingleOutput - Weather the statement returns one or more outputs.
    */
   private getFunctionDefintionWithOutput(isSingleOutput: boolean): Statement {
+    const [prevContext, newContext] = this.getIntoNewContext();
     let description = this.getFunctionDefinitionDescription(true);
     let output: Token;
     let outputs: Token[];
@@ -183,24 +216,30 @@ export class Parser {
     }
     this.getNextToken();
     const statements: Statement[] = [];
-    while (this.getCurrentToken().content !== "end" && this.getCurrentToken().content !== "endfunction" && this.getCurrentToken().type !== "EOF") {
+    while (!this.isEndFunctionToken() && !this.isEOF()) {
       const statement = this.parseStatement();
       if (!statement) {
         break;
       }
       statements.push(statement);
     }
-    if (this.getCurrentToken().type === "EOF") {
+    const endToken = this.getCurrentToken();
+    if (endToken.type === "EOF") {
       this.errors.push({
         message: "Expected closing function 'end' or 'endfunction'",
-        range: this.getCurrentToken().position,
+        range: {
+          start: functionName.position.start,
+          end: endToken.position.end,
+        },
       });
       return;
     }
     this.getNextToken();
+    this.getBackOfContext();
     return {
       type: "ASSIGNMENT",
       supressOutput: true,
+      context: prevContext,
       LHE: {
         type: isSingleOutput ? "IDENTIFIER" : "VARIABLE_VECTOR",
         value: isSingleOutput ? output.content : outputs,
@@ -216,6 +255,8 @@ export class Parser {
           functionData: {
             args,
             description,
+            closingToken: endToken,
+            contextCreated: newContext,
           }
         },
         RHO: statements,
@@ -227,6 +268,7 @@ export class Parser {
    * Helper that extracts the statement of a function definition without output
    */
   private getFunctionDefintionWithoutOutput(): Statement {
+    const [prevContext, newContext] = this.getIntoNewContext();
     let description = this.getFunctionDefinitionDescription(true);
     const functionName = this.getNextToken();
     if (functionName.type !== "IDENTIFIER") {
@@ -245,17 +287,30 @@ export class Parser {
       this.getNextToken();
     }
     const statements: Statement[] = [];
-    while (this.getCurrentToken().content !== "end" && this.getCurrentToken().content !== "endfunction") {
+    while (!this.isEndFunctionToken() && !this.isEOF()) {
       const statement = this.parseStatement();
       if (!statement) {
         break;
       }
       statements.push(statement);
     }
+    const endToken = this.getCurrentToken();
+    if (endToken.type === "EOF") {
+      this.errors.push({
+        message: "Expected closing function 'end' or 'endfunction'",
+        range: {
+          start: functionName.position.start,
+          end: endToken.position.end,
+        },
+      });
+      return;
+    }
     this.getNextToken();
+    this.getBackOfContext();
     return {
       type: "FUNCTION_DEFINITION",
       supressOutput: true,
+      context: prevContext,
       LHE: {
         type: "IDENTIFIER",
         value: functionName.content,
@@ -263,19 +318,12 @@ export class Parser {
         functionData: {
           args,
           description,
+          closingToken: endToken,
+          contextCreated: newContext,
         }
       },
       RHE: statements,
     };
-  }
-
-  /**
-   * Helper that returns weather the current token it's or not a certain type
-   */
-  private isToken(type: TokenType[]): boolean {
-    const result = type.includes(this.getCurrentToken().type);
-    this.getPrevToken();
-    return result;
   }
 
   /**
@@ -622,6 +670,16 @@ export class Parser {
   */
   private isBinaryOperator(type: TokenType): boolean {
     return type === "SUBTRACTION" || type === "DIVISION" || type === "ADDITION" || type === "MULTIPLICATION";
+  }
+
+  /**
+   * Helper that returns weather the current Token it's an EOF or not
+   */
+  private isEOF(token?: Token): boolean {
+    if (token) {
+      return token.type === "EOF";
+    }
+    return this.getCurrentToken().type === "EOF";
   }
 
   /**

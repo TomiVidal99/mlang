@@ -113,6 +113,7 @@ export class Visitor {
 
     if (!(node?.RHO) || Array.isArray(node.RHO)) return "";
 
+    // TODO: complete this
     return "";
     const expr = (node?.RHO as Expression);
     switch (expr.type) {
@@ -123,7 +124,7 @@ export class Visitor {
       case "ANONYMOUS_FUNCTION_DEFINITION":
         return expr.value as string;
       case "BINARY_OPERATION":
-        return ((node.LHO.value as string) + this.getDocumentationOrLineDefinition(node.RHO));
+        return ((node.LHO.value as string) + this.getDocumentationOrLineDefinition(node.RHO as Expression));
       default:
         return "";
     }

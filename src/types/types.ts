@@ -25,6 +25,8 @@ export type Token = {
 export interface FunctionData {
   args?: Token[];
   description?: string;
+  closingToken?: Token;
+  contextCreated?: string;
 }
 
 export interface Expression {
@@ -42,6 +44,7 @@ export type StatementType = "ASSIGNMENT" | "FUNCTION_CALL" | "MO_ASSIGNMENT" | "
 export interface Statement {
   type: StatementType
   supressOutput: boolean;
+  context: string;
   operator?: string;
   LHE?: Expression;
   RHE?: Expression | Statement[];
