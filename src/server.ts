@@ -20,8 +20,9 @@ export const documents = new TextDocuments<TextDocument>(TextDocument);
 // export const parsers = new Map<string, Parser>();
 const documentChanges: Map<string, NodeJS.Timer> = new Map();
 
-// documents.onDidChangeContent((change) => {
-// });
+documents.onDidChangeContent((change) => {
+  updateDiagnostics(change.document.uri, change.document.getText());
+});
 // documents.onDidOpen((change) => {
 // const text = change.document.getText();
 // const uri = change.document.uri;
@@ -41,37 +42,9 @@ connection.onReferences((params) => {
 // connection.onDidChangeConfiguration((change) =>);
 // connection.workspace.onDidDeleteFiles((event) => {});
 documents.onDidClose((e) => { documentSettings.delete(e.document.uri); });
-documents.onDidChangeContent((change) => {
-  const text = change.document.getText();
-  const uri = change.document.uri;
-
-  const tokenizer = new Tokenizer(text);
-  const tokens = tokenizer.getAllTokens();
-  const parser = new Parser(tokens);
-  const ast = parser.makeAST();
-  const visitor = new Visitor();
-  visitor.visitProgram(ast);
-
-  // parsers.set(uri, parser);
-
-  const errors: Diagnostic[] = [
-    ...parser.getErrors().map(err => getDiagnosticFromLitingMessage(err, 'error'))
-  ];
-
-  const warnings: Diagnostic[] = [
-    ...parser.getWarnings().map(warn => getDiagnosticFromLitingMessage(warn, 'warn'))
-  ];
-
-
-  connection.sendDiagnostics({
-    uri,
-    diagnostics: [
-      ...errors,
-      ...warnings,
-    ]
-  });
-
-});
+// documents.onDidChangeContent((change) => {
+//   updateDiagnostics(change.document.uri, change.document.getText());
+// });
 connection.onCompletion((params) => handleCompletion({ params: params }));
 // Make the text document manager listen on the connection
 // for open, change and close text document events
@@ -95,7 +68,7 @@ export function log(message: string | object): void {
   });
 }
 
-function updateDiagnostics(uri: string) {
+function updateDiagnostics(uri: string, text: string) {
   // Clear any previously scheduled diagnostic updates for this document
   if (documentChanges.has(uri)) {
     clearTimeout(documentChanges.get(uri));
@@ -105,7 +78,6 @@ function updateDiagnostics(uri: string) {
   documentChanges.set(uri, setTimeout(() => {
     const document = documents.get(uri);
     if (document) {
-      const text = document.getText();
       const tokenizer = new Tokenizer(text);
       const tokens = tokenizer.getAllTokens();
       const parser = new Parser(tokens);
