@@ -198,8 +198,6 @@ test("Octave/Matlab Visitor, test references extraction", () => {
   // Extract only the names from the expected references
   const expectedReferenceNames = references.map((ref) => ref.name);
 
-  console.log("calculated: " + JSON.stringify(calculatedReferenceNames));
-
   // Check if the names match
   expect(calculatedReferenceNames).toStrictEqual(expectedReferenceNames);
 });

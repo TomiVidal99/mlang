@@ -39,11 +39,11 @@ export class Visitor {
     if (node === undefined || node === null) return;
     switch (node.type) {
       case "IDENTIFIER":
-        if (parentType === "ASSIGNMENT" && isLHE) {
+        if ((parentType === "ASSIGNMENT" || parentType === "FUNCTION_DEFINITION") && isLHE) {
           this.definitions.push({
             name: node.value as string,
             position: node.position,
-            type: "VARIABLE",
+            type: parentType === "ASSIGNMENT" ? "VARIABLE" : "FUNCTION",
           });
         }
         this.references.push({
@@ -73,7 +73,7 @@ export class Visitor {
         this.visitExpression(node.RHO as Expression, null, false);
         break;
       case "FUNCTION_DEFINITION":
-        this.visitExpression(node.LHO, null);
+        this.visitExpression(node.LHO, "FUNCTION_DEFINITION");
         if (Array.isArray(node.RHO)) {
           node.RHO.forEach(s => {
             this.visitStatement(s);
@@ -87,6 +87,13 @@ export class Visitor {
       case "ANONYMOUS_FUNCTION_DEFINITION":
         // TODO: add a user setting to configure if should consider
         // the arguments of the ANONYMOUS_FUNCTION_DEFINITION as references
+        if (node?.LHO?.value && node?.LHO?.position) {
+          this.definitions.push({
+            name: node.LHO.value as string,
+            position: node.LHO.position,
+            type: "ANONYMOUS_FUNCTION",
+          });
+        }
         this.references.push(...node.functionData.args.map((arg) => {
           return {
             name: arg.content,

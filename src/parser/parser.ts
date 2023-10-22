@@ -444,6 +444,7 @@ export class Parser {
           return {
             type: "ANONYMOUS_FUNCTION_DEFINITION",
             value: "@",
+            position: currToken.position,
             functionData: {
               args,
             },

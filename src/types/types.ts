@@ -60,7 +60,7 @@ interface IDefinition {
   position: Range;
 }
 
-export type DefinitionType = "FUNCTION" | "VARIABLE" | "ARGUMENT";
+export type DefinitionType = "FUNCTION" | "VARIABLE" | "ARGUMENT" | "ANONYMOUS_FUNCTION";
 
 export interface Definition extends IDefinition {
   type: DefinitionType;
