@@ -1,7 +1,8 @@
-import { Expression, Program, Statement, Reference, Token, ReferenceType } from "../types";
+import { Expression, Program, Statement, Reference, Token, ReferenceType, Definition, StatementType } from "../types";
 
 export class Visitor {
   public references: Reference[] = [];
+  public definitions: Definition[] = [];
 
   /**
   * Entry point: it extracts all the references and definitions from a Program
@@ -17,27 +18,34 @@ export class Visitor {
     switch (node.type) {
       case "ASSIGNMENT":
         if (node.LHE.type === "FUNCTION_DEFINITION") {
-          this.visitExpression(node.LHE);
+          this.visitExpression(node.LHE, "ASSIGNMENT");
         } else {
-          this.visitExpression(node.LHE);
-          this.visitExpression(node.RHE as Expression);
+          this.visitExpression(node.LHE, "ASSIGNMENT");
+          this.visitExpression(node.RHE as Expression, "ASSIGNMENT", false);
         }
         break;
       case "FUNCTION_DEFINITION":
-        this.visitExpression(node.LHE);
+        this.visitExpression(node.LHE, "FUNCTION_DEFINITION");
         (node?.RHE as Statement[]).forEach(statement => this.visitStatement(statement));
         break;
       case "MO_ASSIGNMENT":
-        this.visitExpression(node.LHE);
-        this.visitExpression(node.RHE as Expression);
+        this.visitExpression(node.LHE, "MO_ASSIGNMENT");
+        this.visitExpression(node.RHE as Expression, "MO_ASSIGNMENT", false);
         break;
     }
   }
 
-  private visitExpression(node: Expression): void {
+  private visitExpression(node: Expression, parentType: StatementType | null, isLHE = true): void {
     if (node === undefined || node === null) return;
     switch (node.type) {
       case "IDENTIFIER":
+        if (parentType === "ASSIGNMENT" && isLHE) {
+          this.definitions.push({
+            name: node.value as string,
+            position: node.position,
+            type: "VARIABLE",
+          });
+        }
         this.references.push({
           name: node.value as string,
           position: node.position,
@@ -56,13 +64,16 @@ export class Visitor {
             }
           ));
         }
+        if (node?.RHO && Array.isArray(node.RHO)) {
+          node.RHO.forEach(stmnt => this.visitStatement(stmnt));
+        }
         break;
       case "BINARY_OPERATION":
-        this.visitExpression(node.LHO);
-        this.visitExpression(node.RHO as Expression);
+        this.visitExpression(node.LHO, null);
+        this.visitExpression(node.RHO as Expression, null, false);
         break;
       case "FUNCTION_DEFINITION":
-        this.visitExpression(node.LHO);
+        this.visitExpression(node.LHO, null);
         if (Array.isArray(node.RHO)) {
           node.RHO.forEach(s => {
             this.visitStatement(s);
@@ -70,8 +81,8 @@ export class Visitor {
         }
         break;
       case "KEYWORD":
-        this.visitExpression(node.LHO);
-        this.visitExpression(node.RHO as Expression);
+        this.visitExpression(node.LHO, null);
+        this.visitExpression(node.RHO as Expression, null, false);
         break;
       case "ANONYMOUS_FUNCTION_DEFINITION":
         // TODO: add a user setting to configure if should consider
@@ -84,10 +95,19 @@ export class Visitor {
             documentation: node?.functionData?.description ? node?.functionData?.description : "",
           };
         }));
-        this.visitExpression(node.RHO as Expression);
+        this.visitExpression(node.RHO as Expression, null, false);
         break;
       case "VARIABLE_VECTOR":
         if (!Array.isArray(node.value) || !(node?.value?.length > 1)) return;
+        if (node?.value && Array.isArray(node.value)) {
+          (node.value as Token[]).forEach((val) => {
+            this.definitions.push({
+              name: val.content,
+              type: "VARIABLE",
+              position: val.position,
+            });
+          });
+        }
         (node.value as Token[]).forEach((token) => {
           if (token.type === "IDENTIFIER") {
             this.references.push({
@@ -100,6 +120,13 @@ export class Visitor {
         });
         break;
     }
+  }
+
+  /**
+   * Helper that returns weather a node it's of assignment or not
+   */
+  private isAssignment(node: Statement | null | undefined): boolean {
+    return node && node.type === "ASSIGNMENT";
   }
 
   /**

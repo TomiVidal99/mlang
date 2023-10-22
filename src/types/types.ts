@@ -60,12 +60,12 @@ interface IDefinition {
   position: Range;
 }
 
-export interface FunctionDefinition extends IDefinition {
-  arguments: void;
-}
+export type DefinitionType = "FUNCTION" | "VARIABLE" | "ARGUMENT";
 
-export interface VariableDefinition extends IDefinition {
-  content: string;
+export interface Definition extends IDefinition {
+  type: DefinitionType;
+  arguments?: Definition[];
+  content?: string;
 }
 
 export type ReferenceType = "FUNCTION" | "VARIABLE";
