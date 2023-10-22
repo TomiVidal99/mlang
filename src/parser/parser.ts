@@ -304,9 +304,21 @@ export class Parser {
 
   /**
    * Helper that checks if the last token of the current statement it's a SEMICOLON
+   * TODO: maybe the warning messages should go in each statement//expression instead
+   * so the range it's better calculated
    */
   private isOutputSupressed(): boolean {
-    return this.getCurrentToken().type === "SEMICOLON";
+    const isSupressed = this.getCurrentToken().type === "SEMICOLON";
+    if (!isSupressed) {
+      this.getPrevToken();
+      this.warnings.push({
+        message: "Will output to the console",
+        range: this.getPrevToken().position,
+      });
+      this.getNextToken();
+      this.getNextToken();
+    }
+    return isSupressed;
   }
 
   /**
