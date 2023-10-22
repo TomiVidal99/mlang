@@ -23,6 +23,14 @@ export class Visitor {
           this.visitExpression(node.RHE as Expression);
         }
         break;
+      case "FUNCTION_DEFINITION":
+        this.visitExpression(node.LHE);
+        (node?.RHE as Statement[]).forEach(statement => this.visitStatement(statement));
+      break;
+      case "MO_ASSIGNMENT":
+        this.visitExpression(node.LHE);
+        this.visitExpression(node.RHE as Expression);
+      break;
     }
   }
 

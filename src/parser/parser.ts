@@ -1,4 +1,4 @@
-import { Expression, LintingError, LintingMessage, Program, Statement, Token, TokenType } from "../types";
+import { Expression, LintingError, LintingWarning, Program, Statement, Token, TokenType } from "../types";
 
 /**
  * Takes in a list of Tokens and makes an AST
@@ -7,7 +7,7 @@ export class Parser {
   private currentTokenIndex = 0;
   private statements: Statement[] = [];
   private errors: LintingError[] = [];
-  private warnings: LintingMessage[] = [];
+  private warnings: LintingWarning[] = [];
 
   constructor(private tokens: Token[]) {
   }
@@ -130,6 +130,12 @@ export class Parser {
       } else {
         return this.getFunctionDefintionWithoutOutput();
       }
+    } else if (currToken.type === "IDENTIFIER" && (nextToken.type === "EOF" || nextToken.type === "IDENTIFIER" || nextToken.type === "NUMBER")) {
+      // Printing outputs or single operations
+      this.warnings.push({
+        message: "Recommended to use a disp function to display the information",
+        range: currToken.position,
+      });
     } else {
       // console.log("prev token: ", this.tokens[this.currentTokenIndex - 1]);
       // console.log("currToken: ", this.getCurrentToken());
@@ -590,6 +596,20 @@ export class Parser {
       type: "Program",
       body: this.statements,
     };
+  }
+
+  /**
+   * Returns the list of errors found during parsing.
+   */
+  public getErrors(): LintingError[] {
+    return this.errors;
+  }
+
+  /**
+   * Returns the list of warnings found during parsing.
+   */
+  public getWarnings(): LintingWarning[] {
+    return this.warnings;
   }
 
 }

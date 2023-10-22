@@ -49,6 +49,8 @@ end
 
 ## TODO
 
+- [ ] FIX: consider string vectors: ["a", "b"]
+- [ ] FIX: functions with no parenthesis are not getting recognized.
 - [ ] FIX: '\n' inside strings breaks the getRowsAndCols function.
 - [ ] ADD: replace error throws with linting messages.
 - [ ] ADD: linting errors and warnings.

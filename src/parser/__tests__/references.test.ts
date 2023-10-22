@@ -22,11 +22,17 @@ test("Handle references: string, number and vector references", function() {
 
 });
 
-test("Octave/Matlab Parser, should parse a simple assignment statement", function() {
+test("Handle references: function refereces", function() {
   const inputCode = `
-    stringReference = "STRING";
-    numberReference1 = 1000 + 1e3;
-    vectorReference = [100:1000];
+    % TODO: FIX THIS
+    %function noParenFunction
+    %end
+    function parenFunction()
+    end
+    function singleOutput = functionSingleOutput()
+    end
+    function [output1, output2] = functionMO()
+    end
   `;
 
   const tokenizer = new Tokenizer(inputCode);
@@ -37,8 +43,11 @@ test("Octave/Matlab Parser, should parse a simple assignment statement", functio
   visitor.visitProgram(ast);
   const documentReferences = visitor.references;
 
-  const expectedReferences: string[] = ["stringReference", "numberReference1", "vectorReference"];
+  // console.log("AST: " + JSON.stringify(ast));
+  // console.log("REFERENCES: " + JSON.stringify(documentReferences.map(ref => ref.name)));
+
+  //const expectedReferences: string[] = ["noParenFunction"];
+  const expectedReferences: string[] = ["parenFunction", "singleOutput", "functionSingleOutput", "output1", "output2", "functionMO"];
 
   expect(documentReferences.map((ref) => ref.name)).toStrictEqual(expectedReferences);
-
 });
