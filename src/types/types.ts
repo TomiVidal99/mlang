@@ -65,6 +65,9 @@ export interface VariableDefinition extends IDefinition {
   content: string;
 }
 
+export type ReferenceType = "FUNCTION" | "VARIABLE";
+
 export interface Reference extends IDefinition {
-  opt?: any;
+  type: ReferenceType;
+  documentation: string;
 }

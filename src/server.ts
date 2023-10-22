@@ -17,7 +17,7 @@ const connection = createConnection(ProposedFeatures.all);
 const documentSettings = new Map<string, Thenable<ISettings>>();
 
 export const documents = new TextDocuments<TextDocument>(TextDocument);
-// export const parsers = new Map<string, Parser>();
+export const visitors = new Map<string, Visitor>();
 const documentChanges: Map<string, NodeJS.Timer> = new Map();
 
 documents.onDidChangeContent((change) => {
@@ -84,6 +84,8 @@ function updateDiagnostics(uri: string, text: string) {
       const ast = parser.makeAST();
       const visitor = new Visitor();
       visitor.visitProgram(ast);
+
+      visitors.set(uri, visitor);
 
       const errors: Diagnostic[] = parser.getErrors().map(err => getDiagnosticFromLitingMessage(err, 'error'));
       const warnings: Diagnostic[] = parser.getWarnings().map(warn => getDiagnosticFromLitingMessage(warn, 'warn'));

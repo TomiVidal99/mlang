@@ -1,5 +1,6 @@
+import { isArray } from "util";
 import { log } from "../server";
-import { Expression, Program, Statement, Reference, Token } from "../types";
+import { Expression, Program, Statement, Reference, Token, ReferenceType } from "../types";
 
 export class Visitor {
   public references: Reference[] = [];
@@ -40,6 +41,8 @@ export class Visitor {
         this.references.push({
           name: node.value as string,
           position: node.position,
+          type: this.getReferenceTypeFromNode(node),
+          documentation: node?.functionData?.description ? node?.functionData?.description : "",
         });
         if (node?.functionData?.args) {
           this.references.push(...node.functionData.args.map(
@@ -47,6 +50,8 @@ export class Visitor {
               return {
                 name: arg.content,
                 position: arg.position,
+                type: this.getReferenceTypeFromNode(node),
+                documentation: node?.functionData?.description ? node?.functionData?.description : "",
               };
             }
           ));
@@ -75,20 +80,35 @@ export class Visitor {
           return {
             name: arg.content,
             position: node.position,
+            type: this.getReferenceTypeFromNode(node),
+            documentation: node?.functionData?.description ? node?.functionData?.description : "",
           };
         }));
         this.visitExpression(node.RHO as Expression);
         break;
       case "VARIABLE_VECTOR":
+        if (!Array.isArray(node.value) || !(node?.value?.length > 1)) return;
         (node.value as Token[]).forEach((token) => {
           if (token.type === "IDENTIFIER") {
             this.references.push({
               name: token.content,
               position: token.position,
+              type: this.getReferenceTypeFromNode(node),
+              documentation: node?.functionData?.description ? node?.functionData?.description : "",
             });
           }
         });
         break;
     }
+  }
+
+  /**
+  * Helper that returns the type of a reference "CONSTANT" or "FUNCTION"
+  */
+  private getReferenceTypeFromNode(node: Expression): ReferenceType {
+    if (node.type === "FUNCTION_CALL" || node.type === "FUNCTION_DEFINITION" || node.type === "ANONYMOUS_FUNCTION_DEFINITION") {
+      return "FUNCTION";
+    }
+    return "VARIABLE";
   }
 }

@@ -62,7 +62,12 @@ export class Parser {
     const nextToken = this.getNextToken();
 
     if (currToken.type === "KEYWORD" && currToken.content === "end" || currToken.content === "endfunction") {
-      return undefined;
+      // TODO: check this
+      this.errors.push({
+        message: `Unexpected keyword '${currToken.content}'`,
+        range: currToken.position,
+      });
+      return;
     }
 
     if (currToken.type === "EOF" || !nextToken) {
@@ -93,7 +98,7 @@ export class Parser {
       const outputs = this.getVariableVector().map(t => t.content);
       if (this.getCurrentToken().type !== "EQUALS") {
         this.errors.push({
-          message: `Expected ASSIGNMENT STATEMENT SYMBOL '='. ${JSON.stringify(this.getCurrentToken())}`,
+          message: `Expected ASSIGNMENT STATEMENT SYMBOL '='. ${this.getCurrentToken().content}`,
           range: this.getCurrentToken().position,
         });
         return;
@@ -171,7 +176,7 @@ export class Parser {
     const functionName = this.getNextToken();
     if (functionName.type !== "IDENTIFIER") {
       this.errors.push({
-        message: `Expected IDENTIFIER. Got: ${functionName}`,
+        message: `Expected IDENTIFIER. Got: ${functionName.content}`,
         range: this.getCurrentToken().position,
       });
       return;
@@ -189,6 +194,13 @@ export class Parser {
         break;
       }
       statements.push(statement);
+    }
+    // TODO check this
+    if (this.getCurrentToken().content !== "end" && this.getCurrentToken().content !== "endfunction") {
+      this.errors.push({
+        message: `Unexpected keyword '${this.getCurrentToken().content}'`,
+        range: this.getCurrentToken().position,
+      });
     }
     this.getNextToken();
     return {
@@ -224,7 +236,7 @@ export class Parser {
     const functionName = this.getNextToken();
     if (functionName.type !== "IDENTIFIER") {
       this.errors.push({
-        message: `Expected IDENTIFIER. Got: ${functionName}`,
+        message: `Expected IDENTIFIER. Got: ${functionName.content}`,
         range: this.getCurrentToken().position,
       });
       return;
@@ -318,7 +330,7 @@ export class Parser {
     do {
       if (this.getCurrentToken().type !== "IDENTIFIER") {
         this.errors.push({
-          message: `Expected IDENTIFIER. Got: ${this.getCurrentToken()}`,
+          message: `Expected IDENTIFIER. Got: ${this.getCurrentToken().content}`,
           range: this.getCurrentToken().position,
         });
         return;
@@ -432,11 +444,12 @@ export class Parser {
     const values: Token[] = [];
 
     // ERRORS
-    if (nextToken.type !== "IDENTIFIER" && nextToken.type !== "NUMBER") {
+    if (!this.isTokenValidBasicDataType(nextToken)) {
       this.errors.push({
         message: "Wrong vector definition. Expected a 'number' or a 'variable'",
         range: currentToken.position,
       });
+      this.getNextToken();
       return values;
     }
 
@@ -447,6 +460,15 @@ export class Parser {
     if (secondToken.type === "RBRACKET") {
       this.getNextToken();
       return values;
+    }
+
+    if (!this.isTokenValidBasicDataType(secondToken)) {
+      this.errors.push({
+        message: `Expected a valid vector definition. Got ${secondToken.content}`,
+        range: secondToken.position,
+      });
+      this.getNextToken();
+      return;
     }
 
     // We've got a vector like: [1, 2, a, b, etc]
@@ -505,6 +527,16 @@ export class Parser {
     return values;
   }
 
+  /**
+   * Helper that returns weather a Token it's of type NUMBER, STRING or IDENTIFIER
+   * which are commonly used
+   * @args token
+   * @returns boolean
+   */
+  private isTokenValidBasicDataType(token: Token): boolean {
+    return token.type !== "IDENTIFIER" && token.type !== "NUMBER" && token.type !== "STRING";
+  }
+
   private parseFunctionCall(): Expression {
     const currToken = this.getCurrentToken();
     if (this.getNextToken().type === "LPARENT") {
@@ -536,7 +568,7 @@ export class Parser {
     const tokens: Token[] = [];
     if (this.getCurrentToken().type !== "LPARENT") {
       this.errors.push({
-        message: `Expected '(' for function call. Got: ${JSON.stringify(this.getCurrentToken())}`,
+        message: `Expected '(' for function call. Got: ${this.getCurrentToken().content}`,
         range: this.getCurrentToken().position,
       });
       return;
