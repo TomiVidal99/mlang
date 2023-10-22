@@ -183,12 +183,19 @@ export class Parser {
     }
     this.getNextToken();
     const statements: Statement[] = [];
-    while (this.getCurrentToken().content !== "end" && this.getCurrentToken().content !== "endfunction") {
+    while (this.getCurrentToken().content !== "end" && this.getCurrentToken().content !== "endfunction" && this.getCurrentToken().type !== "EOF") {
       const statement = this.parseStatement();
       if (!statement) {
         break;
       }
       statements.push(statement);
+    }
+    if (this.getCurrentToken().type === "EOF") {
+      this.errors.push({
+        message: "Expected closing function 'end' or 'endfunction'",
+        range: this.getCurrentToken().position,
+      });
+      return;
     }
     this.getNextToken();
     return {
@@ -615,6 +622,17 @@ export class Parser {
   */
   private isBinaryOperator(type: TokenType): boolean {
     return type === "SUBTRACTION" || type === "DIVISION" || type === "ADDITION" || type === "MULTIPLICATION";
+  }
+
+  /**
+   * Helper that returns weather the current Token it's an 
+   * end or endfunction keyword
+   */
+  private isEndFunctionToken(token?: Token): boolean {
+    if (token) {
+      return token.type === "KEYWORD" && (token.content === "end" || token.content === "endfunction");
+    }
+    return this.getCurrentToken().type === "KEYWORD" && (this.getCurrentToken().content === "end" || this.getCurrentToken().content === "endfunction");
   }
 
   /**
