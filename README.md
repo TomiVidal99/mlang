@@ -1,4 +1,4 @@
-# mlang (LSP for Octave)
+# mlang (LSP for Octave) - version 2.0.0
 
 This is an implementation of the [Language Server Protocol](https://code.visualstudio.com/api/language-extensions/language-server-extension-guide) for the [Octave](https://octave.org/) programming language.
 
@@ -14,10 +14,10 @@ This is an implementation of the [Language Server Protocol](https://code.visuals
 
 ## Working features
 
-<!-- - Completion _(some keywords, some native functions, user defined functions and files)_ -->
-<!-- - goToDefinition _(for user defined functions and files)_ -->
-- goToReference _(still some that are not getting recognized)_
-<!-- - diagnostics _(closing tags, redefined functions, missing imports, typing errors)_ -->
+- Completion _(some keywords, some native functions, user defined functions and files)_
+- goToDefinition _(for user defined functions)_
+- goToReference
+- diagnostics _(closing tags, typing errors)_
 
 ## How to setup in the client
 
@@ -52,6 +52,8 @@ end
 - [ ] FIX: consider string vectors: ["a", "b"]
 - [ ] FIX: functions with no parenthesis are not getting recognized.
 - [ ] FIX: '\n' inside strings breaks the getRowsAndCols function.
+- [ ] ADD: diagnostics for: redefined functions, missing imports.
+- [ ] ADD: references to files.
 - [ ] ADD: consider default values of functions definitions.
 - [ ] ADD: block comments.
 - [ ] ADD: replace error throws with linting messages.
