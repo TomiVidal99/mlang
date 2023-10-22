@@ -1,5 +1,3 @@
-import { isArray } from "util";
-import { log } from "../server";
 import { Expression, Program, Statement, Reference, Token, ReferenceType } from "../types";
 
 export class Visitor {
@@ -15,6 +13,7 @@ export class Visitor {
   }
 
   private visitStatement(node: Statement): void {
+    if (node === undefined || node === null) return;
     switch (node.type) {
       case "ASSIGNMENT":
         if (node.LHE.type === "FUNCTION_DEFINITION") {
@@ -27,15 +26,16 @@ export class Visitor {
       case "FUNCTION_DEFINITION":
         this.visitExpression(node.LHE);
         (node?.RHE as Statement[]).forEach(statement => this.visitStatement(statement));
-      break;
+        break;
       case "MO_ASSIGNMENT":
         this.visitExpression(node.LHE);
         this.visitExpression(node.RHE as Expression);
-      break;
+        break;
     }
   }
 
   private visitExpression(node: Expression): void {
+    if (node === undefined || node === null) return;
     switch (node.type) {
       case "IDENTIFIER":
         this.references.push({
@@ -51,7 +51,7 @@ export class Visitor {
                 name: arg.content,
                 position: arg.position,
                 type: this.getReferenceTypeFromNode(node),
-                documentation: node?.functionData?.description ? node?.functionData?.description : "",
+                documentation: this.getDocumentationOrLineDefinition(node),
               };
             }
           ));
@@ -69,7 +69,7 @@ export class Visitor {
           });
         }
         break;
-      case "KEYWORD": 
+      case "KEYWORD":
         this.visitExpression(node.LHO);
         this.visitExpression(node.RHO as Expression);
         break;
@@ -99,6 +99,33 @@ export class Visitor {
           }
         });
         break;
+    }
+  }
+
+  /**
+   * Helper that returns the documentation of the function 
+   * or the hole line content of the variable
+   */
+  private getDocumentationOrLineDefinition(node: Expression): string {
+    if (node?.functionData?.description) {
+      return node?.functionData?.description;
+    }
+
+    if (!(node?.RHO) || Array.isArray(node.RHO)) return "";
+
+    return "";
+    const expr = (node?.RHO as Expression);
+    switch (expr.type) {
+      case "STRING":
+      case "NUMBER":
+      case "IDENTIFIER":
+      case "FUNCTION_CALL":
+      case "ANONYMOUS_FUNCTION_DEFINITION":
+        return expr.value as string;
+      case "BINARY_OPERATION":
+        return ((node.LHO.value as string) + this.getDocumentationOrLineDefinition(node.RHO));
+      default:
+        return "";
     }
   }
 

@@ -62,11 +62,6 @@ export class Parser {
     const nextToken = this.getNextToken();
 
     if (currToken.type === "KEYWORD" && currToken.content === "end" || currToken.content === "endfunction") {
-      // TODO: check this
-      this.errors.push({
-        message: `Unexpected keyword '${currToken.content}'`,
-        range: currToken.position,
-      });
       return;
     }
 
@@ -194,13 +189,6 @@ export class Parser {
         break;
       }
       statements.push(statement);
-    }
-    // TODO check this
-    if (this.getCurrentToken().content !== "end" && this.getCurrentToken().content !== "endfunction") {
-      this.errors.push({
-        message: `Unexpected keyword '${this.getCurrentToken().content}'`,
-        range: this.getCurrentToken().position,
-      });
     }
     this.getNextToken();
     return {
@@ -414,7 +402,7 @@ export class Parser {
         };
       default:
         this.errors.push({
-          message: `Unexpected token. ${JSON.stringify(currToken)}`,
+          message: `Unexpected token. ${currToken.content}`,
           range: this.getCurrentToken().position,
         });
         return;
