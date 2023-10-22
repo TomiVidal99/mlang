@@ -58,6 +58,7 @@ end
 - [ ] ADD: linting errors and warnings.
 - [ ] ADD: make parser tests.
 - [ ] ADD: Maybe consider documentation with comments on variable as well.
+- [ ] FEATURES?: Maybe have a user setting to be able to multiple variables and functions definitions, instead of grabbing the first one?
 
 
 <!-- ## How to contribute? -->
