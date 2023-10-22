@@ -87,7 +87,11 @@ export class Parser {
       // MULTIPLE OUTPUT ASSIGNMENT STATEMENT
       const outputs = this.getVariableVector().map(t => t.content);
       if (this.getCurrentToken().type !== "EQUALS") {
-        throw new Error(`Expected ASSIGNMENT STATEMENT SYMBOL '='. ${JSON.stringify(this.getCurrentToken())}`);
+        this.errors.push({
+          message: `Expected ASSIGNMENT STATEMENT SYMBOL '='. ${JSON.stringify(this.getCurrentToken())}`,
+          range: this.getCurrentToken().position,
+        });
+        return;
       }
       const functionIdentifier = this.getNextToken().content;
       this.getNextToken();
@@ -127,10 +131,13 @@ export class Parser {
         return this.getFunctionDefintionWithoutOutput();
       }
     } else {
-      console.log("prev token: ", this.tokens[this.currentTokenIndex - 1]);
-      console.log("currToken: ", this.getCurrentToken());
-      console.log("currToken: ", currToken);
-      throw new Error("Expected a valid token for a statement");
+      // console.log("prev token: ", this.tokens[this.currentTokenIndex - 1]);
+      // console.log("currToken: ", this.getCurrentToken());
+      // console.log("currToken: ", currToken);
+      this.errors.push({
+        message: "Expected a valid token for a statement",
+        range: this.getCurrentToken().position,
+      });
     }
   }
 
@@ -152,8 +159,11 @@ export class Parser {
     }
     const functionName = this.getNextToken();
     if (functionName.type !== "IDENTIFIER") {
-      // TODO send linting message
-      throw new Error(`Expected IDENTIFIER. Got: ${functionName}`);
+      this.errors.push({
+        message: `Expected IDENTIFIER. Got: ${functionName}`,
+        range: this.getCurrentToken().position,
+      });
+      return;
     }
     this.getNextToken();
     const args = this.getFunctionArguments();
@@ -175,8 +185,8 @@ export class Parser {
       supressOutput: true,
       LHE: {
         type: isSingleOutput ? "IDENTIFIER" : "VARIABLE_VECTOR",
-        value: isSingleOutput ? output.content : outputs.map(t => t.content),
-        position: output.position,
+        value: isSingleOutput ? output.content : outputs,
+        position: isSingleOutput ? output.position : null,
       },
       RHE: {
         type: "FUNCTION_DEFINITION",
@@ -202,8 +212,11 @@ export class Parser {
     let description = this.getFunctionDefinitionDescription(true);
     const functionName = this.getNextToken();
     if (functionName.type !== "IDENTIFIER") {
-      // TODO send linting message
-      throw new Error(`Expected IDENTIFIER. Got: ${functionName}`);
+      this.errors.push({
+        message: `Expected IDENTIFIER. Got: ${functionName}`,
+        range: this.getCurrentToken().position,
+      });
+      return;
     }
     this.getNextToken();
     const args = this.getFunctionArguments();
@@ -293,12 +306,20 @@ export class Parser {
     const tokens: Token[] = [];
     do {
       if (this.getCurrentToken().type !== "IDENTIFIER") {
-        throw new Error(`Expected IDENTIFIER. Got: ${this.getCurrentToken()}`);
+        this.errors.push({
+          message: `Expected IDENTIFIER. Got: ${this.getCurrentToken()}`,
+          range: this.getCurrentToken().position,
+        });
+        return;
       }
       tokens.push(this.getCurrentToken());
       const nextTokenType = this.getNextToken().type;
       if (nextTokenType !== "COMMA" && nextTokenType !== "RBRACKET") {
-        throw new Error(`Expected COMMA. Got: ${this.getCurrentToken()}`);
+        this.errors.push({
+          message: `Expected COMMA. Got: ${this.getCurrentToken()}`,
+          range: this.getCurrentToken().position,
+        });
+        return;
       }
       this.getNextToken();
       if (nextTokenType === "RBRACKET") {
@@ -355,7 +376,11 @@ export class Parser {
         this.getNextToken();
         lho = this.parseExpression();
         if (this.getCurrentToken().type !== "RPARENT") {
-          throw new Error("Expected closing parenthesis ')'");
+          this.errors.push({
+            message: "Expected closing parenthesis ')'",
+            range: this.getCurrentToken().position,
+          });
+          return;
         }
         break;
       case "LBRACKET":
@@ -365,7 +390,11 @@ export class Parser {
           value: this.getVariableVectorValue(),
         };
       default:
-        throw new Error(`Unexpected token. ${JSON.stringify(currToken)}`);
+        this.errors.push({
+          message: `Unexpected token. ${JSON.stringify(currToken)}`,
+          range: this.getCurrentToken().position,
+        });
+        return;
     }
 
     const nextToken = this.getNextToken();
@@ -495,7 +524,11 @@ export class Parser {
   private getFunctionArguments(): Token[] {
     const tokens: Token[] = [];
     if (this.getCurrentToken().type !== "LPARENT") {
-      throw new Error(`Expected '(' for function call. Got: ${JSON.stringify(this.getCurrentToken())}`);
+      this.errors.push({
+        message: `Expected '(' for function call. Got: ${JSON.stringify(this.getCurrentToken())}`,
+        range: this.getCurrentToken().position,
+      });
+      return;
     }
     do {
       const identifier = this.getNextToken();
@@ -508,17 +541,28 @@ export class Parser {
         // When it's a call withot any arguments
         return [];
       } else {
-        throw new Error(`Expected IDENTIFIER. Got ${identifier}`);
+        this.errors.push({
+          message: `Expected IDENTIFIER. Got ${identifier}`,
+          range: this.getCurrentToken().position,
+        });
+        return;
       }
       tokens.push(identifier);
       const commaOrRParen = this.getCurrentToken();
       if (commaOrRParen.type !== "COMMA" && commaOrRParen.type !== "RPARENT") {
-        throw new Error(`Expected COMMA or RPARENT. Got ${commaOrRParen}`);
+        this.errors.push({
+          message: `Expected COMMA or RPARENT. Got ${commaOrRParen}`,
+          range: this.getCurrentToken().position,
+        });
+        return;
       }
     } while (this.getCurrentToken().type !== "RPARENT" && this.getCurrentToken().type !== "EOF");
     if (this.getCurrentToken().type === "EOF") {
-      throw new Error("Expected closing parenthesis ')' for function call");
-      // TODO here should send diagnostics
+      this.errors.push({
+        message: "Expected closing parenthesis ')' for function call",
+        range: this.getCurrentToken().position,
+      });
+      return;
     }
     return tokens;
   }
