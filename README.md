@@ -49,6 +49,8 @@ end
 
 ## TODO
 
+- [ ] FIX: multiple calls freezes the server.
+- [ ] FIX: KEYWORDS are not native functions.
 - [ ] FIX: consider string vectors: ["a", "b"]
 - [ ] FIX: functions with no parenthesis are not getting recognized.
 - [ ] FIX: '\n' inside strings breaks the getRowsAndCols function.

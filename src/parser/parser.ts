@@ -167,12 +167,40 @@ export class Parser {
       } else {
         return this.getFunctionDefintionWithoutOutput();
       }
-    } else if (currToken.type === "IDENTIFIER" && (nextToken.type === "EOF" || nextToken.type === "IDENTIFIER" || nextToken.type === "NUMBER")) {
-      // Printing outputs or single operations
+    } else if (currToken.type === "IDENTIFIER" && (nextToken.type === "IDENTIFIER" || nextToken.type === "EOF" || nextToken.type === "NUMBER" || nextToken.type === "STRING")) {
+      // Printing outputs, single operations or function calls with arguments
+      // TODO: make this a function call
       this.warnings.push({
-        message: "Recommended to use a disp function to display the information",
-        range: currToken.position,
+        message: "This is considered as a function call",
+        range: nextToken.position,
       });
+    } else if ((currToken.type === "IDENTIFIER" || currToken.type === "KEYWORD") && (nextToken.type === "LPARENT")) { // TODO: KEYWORD it's not a native function
+      const rparent = this.getNextToken();
+      const isValidBasicDataType = this.isTokenValidBasicDataType(rparent);
+      const args: Token[] = [];
+      if (rparent.type !== "RPARENT" && !isValidBasicDataType) {
+        this.errors.push({
+          message: `Expected function call. Got '${rparent.content}'`,
+          range: nextToken.position,
+        });
+      } else if (isValidBasicDataType) {
+        this.getPrevToken();
+        args.push(...this.getFunctionArguments());
+      }
+      this.getNextToken();
+      const supressOutput = this.isOutputSupressed();
+      return {
+        type: "FUNCTION_CALL",
+        supressOutput,
+        context: this.getCurrentContext(),
+        LHE: {
+          type: "IDENTIFIER",
+          value: currToken.content,
+          functionData: {
+            args,
+          }
+        },
+      };
     } else {
       // console.log("prev token: ", this.tokens[this.currentTokenIndex - 1]);
       // console.log("currToken: ", this.getCurrentToken());
@@ -590,7 +618,7 @@ export class Parser {
    * @returns boolean
    */
   private isTokenValidBasicDataType(token: Token): boolean {
-    return token.type !== "IDENTIFIER" && token.type !== "NUMBER" && token.type !== "STRING";
+    return token.type === "IDENTIFIER" || token.type === "NUMBER" || token.type === "STRING";
   }
 
   private parseFunctionCall(): Expression {
@@ -627,33 +655,35 @@ export class Parser {
         message: `Expected '(' for function call. Got: ${this.getCurrentToken().content}`,
         range: this.getCurrentToken().position,
       });
-      return;
+      return tokens;
     }
     do {
-      const identifier = this.getNextToken();
-      if (identifier.type === "IDENTIFIER") {
+      const arg = this.getNextToken();
+      if (arg.type === "IDENTIFIER") {
         if (this.getNextToken().type === "LPARENT") {
           // TODO handle function composition
           this.getFunctionArguments(); // just for now so it gets rid of the function call (advances the tokens)
         }
-      } else if (identifier.type === "RPARENT") {
-        // When it's a call withot any arguments
-        return [];
+      } else if (arg.type === "RPARENT") {
+        // When it's a call without any arguments
+        return tokens;
+      } else if (this.isTokenValidBasicDataType) {
+        this.getNextToken();
       } else {
         this.errors.push({
-          message: `Expected IDENTIFIER. Got ${identifier}`,
+          message: `Expected valid argument. Got ${arg}`,
           range: this.getCurrentToken().position,
         });
-        return;
+        return tokens;
       }
-      tokens.push(identifier);
+      tokens.push(arg);
       const commaOrRParen = this.getCurrentToken();
       if (commaOrRParen.type !== "COMMA" && commaOrRParen.type !== "RPARENT") {
         this.errors.push({
-          message: `Expected COMMA or RPARENT. Got '${commaOrRParen.content}'`,
+          message: `Expected ',' or ')'. Got '${commaOrRParen.content}'`,
           range: this.getCurrentToken().position,
         });
-        return;
+        return tokens;
       }
     } while (this.getCurrentToken().type !== "RPARENT" && this.getCurrentToken().type !== "EOF");
     if (this.getCurrentToken().type === "EOF") {
@@ -661,7 +691,7 @@ export class Parser {
         message: "Expected closing parenthesis ')' for function call",
         range: this.getCurrentToken().position,
       });
-      return;
+      return tokens;
     }
     return tokens;
   }

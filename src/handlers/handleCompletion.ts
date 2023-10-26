@@ -21,6 +21,7 @@ export function handleCompletion({
         label: def.name,
         kind: def.type === "FUNCTION" ? CompletionItemKind.Function : CompletionItemKind.Variable,
         documentation: def.documentation,
+        data: def.documentation,
       };
       return item;
     })

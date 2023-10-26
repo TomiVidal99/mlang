@@ -1,0 +1,27 @@
+{
+  "type": "FUNCTION_CALL",
+  "supressOutput": false,
+  "context": "0",
+  "LHE": {
+    "type": "IDENTIFIER",
+    "value": "myFunction",
+    "functionData": {
+      "args": [
+        {
+          "type": "STRING",
+          "content": "\"string value\"",
+          "position": {
+            "start": {
+              "line": 0,
+              "character": 26
+            },
+            "end": {
+              "line": 0,
+              "character": 26
+            }
+          }
+        }
+      ]
+    }
+  }
+}
