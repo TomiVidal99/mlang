@@ -20,14 +20,15 @@
     "eslint": "8.0.1",
     "recursive-readdir": "^2.2.3",
     "typescript": "5.1.0-dev.20230326",
+    "vscode-languageclient": "^9.0.1",
     "vscode-languageserver": "8.1.0",
     "vscode-languageserver-textdocument": "1.0.8",
     "vscode-uri": "3.0.7"
   },
   "scripts": {
     "compile": "esbuild src/server.ts --platform=node --bundle --outfile=./out/server.js",
-    "build": "tsc -b",
-    "watch": "tsc -b -w",
+    "build": "tsc ./client/src/extension.ts --outDir ./client/out/",
+    "watch": "tsc ./client/src/extension.ts -w --outDir ./client/out/",
     "lint": "eslint ./src --ext .ts",
     "lint-fix": "eslint --fix ./src --ext .ts"
   },

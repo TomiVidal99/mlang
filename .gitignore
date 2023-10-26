@@ -3,3 +3,5 @@ node_modules
 *.m
 !.gitignore
 !.nvim_compile_config
+
+client/out
