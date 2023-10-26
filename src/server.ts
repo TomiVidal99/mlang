@@ -46,27 +46,15 @@ documents.onDidClose((e) => { documentSettings.delete(e.document.uri); });
 //   updateDiagnostics(change.document.uri, change.document.getText());
 // });
 connection.onCompletion((params) => handleCompletion({ params: params }));
+connection.onCompletionResolve((item) => {
+  return item;
+});
+
 // Make the text document manager listen on the connection
 // for open, change and close text document events
 documents.listen(connection);
 // Listen on the connection
 connection.listen();
-
-// Some functions that depends on the connection
-export function logError(message: string): void {
-  connection.sendRequest("window/showMessage", {
-    type: MessageType.Info,
-    message,
-  });
-}
-export function log(message: string | object): void {
-  // WARN: this is only for dev purposes
-  // if (!process.env.DEVLOPMENT) return;
-  connection.sendRequest("window/showMessage", {
-    type: MessageType.Info,
-    message: typeof message === "string" ? message : JSON.stringify(message),
-  });
-}
 
 /**
   * Updates the references, definitions and diagnostics

@@ -1,0 +1,54 @@
+{
+  "name": "mlang",
+  "displayName": "mlang",
+  "description": "Octave/Matlab Language Server",
+  "version": "0.0.1",
+  "engines": {
+    "vscode": "^1.83.0"
+  },
+  "categories": [
+    "LSP"
+  ],
+  "activationEvents": [
+    "onLanguage:octave",
+    "onLanguage:matlab",
+    "onLanguage:m"
+  ],
+  "main": "./out/extension.js",
+  "contributes": {
+    "commands": [
+      {
+        "command": "mlang.restart",
+        "title": "mlang: restart language server"
+      },
+      {
+        "command": "mlang.stop",
+        "title": "mlang: stop language server"
+      },
+      {
+        "command": "mlang.start",
+        "title": "mlang: start language server"
+      }
+    ]
+  },
+  "scripts": {
+    "vscode:prepublish": "yarn run compile",
+    "compile": "tsc -p ./",
+    "watch": "tsc -watch -p ./",
+    "pretest": "yarn run compile && yarn run lint",
+    "lint": "eslint src --ext ts",
+    "test": "node ./out/test/runTest.js"
+  },
+  "devDependencies": {
+    "@types/vscode": "^1.83.0",
+    "@types/mocha": "^10.0.2",
+    "@types/node": "18.x",
+    "@typescript-eslint/eslint-plugin": "^6.7.3",
+    "@typescript-eslint/parser": "^6.7.3",
+    "eslint": "^8.50.0",
+    "glob": "^10.3.3",
+    "mocha": "^10.2.0",
+    "typescript": "^5.2.2",
+    "@vscode/test-electron": "^2.3.4"
+  }
+}

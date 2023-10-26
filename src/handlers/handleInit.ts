@@ -1,9 +1,5 @@
 import { DidChangeConfigurationNotification, InitializeParams, InitializeResult, InitializedParams, TextDocumentSyncKind, _Connection } from "vscode-languageserver";
-import { URI } from "vscode-uri";
-import { documents, log, parsers } from "../server";
 import { globalSettings } from "../data";
-import { getFilesInWorkspace } from "../utils";
-import { Parser, Tokenizer, Visitor } from "../parser";
 
 export let hasConfigurationCapability = false;
 export let hasWorkspaceFolderCapability = false;
@@ -15,13 +11,6 @@ interface IOnInitializeProps {
 }
 export function handleOnInitialize({params, connection }: IOnInitializeProps) {
   const capabilities = params.capabilities;
-
-  // fills the list of function references, to goToReference and goToDefinition
-  // updateFunctionList({documents: documentsInWorkspace});
-  //
-  // functionsMap.forEach((func) => {
-  //   log(`fn name: ${func.name}, in ${func.uri}`);
-  // });
 
   // Does the client support the `workspace/configuration` request?
   // If not, we fall back using global settings.
@@ -41,14 +30,19 @@ export function handleOnInitialize({params, connection }: IOnInitializeProps) {
     capabilities: {
       textDocumentSync: TextDocumentSyncKind.Incremental,
       completionProvider: { // allows completion
+        workDoneProgress: true,
         resolveProvider: true,
+        completionItem: {
+          labelDetailsSupport: true,
+        },
+        triggerCharacters: ["qwertyuiopasdfghjklñzxcvbnm"], // TODO: check if keep this, or make the user have a config for it
       },
       definitionProvider: { // allows goToDefinition
         workDoneProgress: true,
       },
       referencesProvider: { // allows goToReference
         workDoneProgress: true,
-      }
+      },
     },
   };
   if (hasWorkspaceFolderCapability) {
@@ -67,14 +61,8 @@ interface IOnInitializedProps {
   params: InitializedParams;
 }
 export function handleOnInitialized({ params, connection }: IOnInitializedProps) {
-  // const rootUri = params.rootUri;
-  // const workspace = URI.parse(rootUri).fsPath;
-  // const documentsInWorkspace = getFilesInWorkspace({workspace});
-  // documentsInWorkspace.forEach((doc) => {
-  //   if (documents.get(doc.uri)) return;
-  // });
+  connection.console.log("Mlang Initialized correctly!");
 
-  log("initialized, default settings: " + JSON.stringify(globalSettings));
   if (hasConfigurationCapability) {
     // Register for all configuration changes.
     connection.client.register(
@@ -87,32 +75,5 @@ export function handleOnInitialized({ params, connection }: IOnInitializedProps)
       connection.console.log("Workspace folder change event received.");
     });
   }
-
-  // has in count the default init file if the configuration enables it
-  if (globalSettings.enableInitFile) {
-    log("Init file enabled");
-    // const debounced = debounce(function() {
-    // addDocumentsFromPath(globalSettings.defaultInitFile);
-      // log("InitFileEnabled: " + JSON.stringify(globalSettings.defaultInitFile) + "\n\nFILE:" + JSON.stringify(initFile));
-      // if (initFile) {
-      //   addNewDocument(initFile);
-      // }
-    // }, 400);
-    //
-    // debounced();
-  }
-
-  // documents.all().forEach((doc) => {
-  //   const text = doc.getText();
-  //   const uri = doc.uri;
-  //
-  //   const tokenizer = new Tokenizer(text);
-  //   const tokens = tokenizer.getAllTokens();
-  //   const parser = new Parser(tokens);
-  //   parsers.set(uri, parser);
-  //   // const ast = parser.makeAST();
-  //   // const visitor = new Visitor();
-  //   // visitor.visitProgram(ast);
-  // });
 
 }
