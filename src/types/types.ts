@@ -39,7 +39,7 @@ export interface Expression {
   position?: Range;
 }
 
-export type StatementType = "ASSIGNMENT" | "FUNCTION_CALL" | "MO_ASSIGNMENT" | "FUNCTION_DEFINITION";
+export type StatementType = "ASSIGNMENT" | "FUNCTION_CALL" | "MO_ASSIGNMENT" | "FUNCTION_DEFINITION" | "CONSOLE_OUTPUT";
 
 export interface Statement {
   type: StatementType

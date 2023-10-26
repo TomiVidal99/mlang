@@ -91,11 +91,11 @@ export class Parser {
     const currToken = this.getCurrentToken();
     const nextToken = this.getNextToken();
 
-    if (currToken.type === "KEYWORD" && currToken.content === "end" || currToken.content === "endfunction") {
-      return;
-    }
-
-    if (currToken.type === "EOF" || !nextToken) {
+    if (
+      currToken.content === "end" ||
+      currToken.content === "endfunction" ||
+      currToken.type === "EOF" ||
+      !nextToken) {
       return;
     }
 
@@ -119,41 +119,56 @@ export class Parser {
         },
         RHE,
       };
-    } else if (currToken.type === "LBRACKET" && nextToken.type === "IDENTIFIER") {
+    } else if (currToken.type === "LBRACKET") {
       // MULTIPLE OUTPUT ASSIGNMENT STATEMENT
-      const outputs = this.getVariableVector().map(t => t.content);
-      if (this.getCurrentToken().type !== "EQUALS") {
-        this.errors.push({
-          message: `Expected ASSIGNMENT STATEMENT SYMBOL '='. ${this.getCurrentToken().content}`,
-          range: this.getCurrentToken().position,
-        });
-        return;
-      }
-      const functionIdentifier = this.getNextToken().content;
-      this.getNextToken();
-      const args = this.getFunctionArguments();
-      this.getNextToken();
-      const supressOutput = this.isOutputSupressed();
-      if (supressOutput) {
-        this.getNextToken();
-      }
-      return {
-        type: "MO_ASSIGNMENT",
-        operator: "=",
-        supressOutput,
-        context: this.getCurrentContext(),
-        LHE: {
-          type: "VARIABLE_VECTOR",
-          value: outputs,
-        },
-        RHE: {
-          type: "FUNCTION_CALL",
-          value: functionIdentifier,
-          functionData: {
-            args,
-          }
+      // OR OUTPUTTING A VECTOR DATA TO THE CONSOLE (not recommended)
+      const [vectorArgs, vectorType] = this.getVectorArgs();
+      if (vectorType === "COMMA" && vectorArgs.every(a => a.type === "IDENTIFIER") && this.getCurrentToken().type === "EQUALS") {
+        // IT'S AN OUTPUT
+        if (this.getCurrentToken().type !== "EQUALS") {
+          // TODO: think how to do this better, because this it's not necessarly like this
+          this.errors.push({
+            message: `Unexpected token ${this.getCurrentToken().content}`,
+            range: this.getCurrentToken().position,
+          });
+          return;
         }
-      };
+        const functionIdentifier = this.getNextToken();
+        if (functionIdentifier.type !== "IDENTIFIER" && functionIdentifier.type !== "KEYWORD") { // TODO: keyword it's not correct now
+          this.errors.push({
+            message: `Expected a function call. Got ${this.getCurrentToken().content}`,
+            range: this.getCurrentToken().position,
+          });
+          return;
+        }
+        this.getNextToken();
+        const args = this.getFunctionArguments();
+        this.getNextToken();
+        const supressOutput = this.isOutputSupressed();
+        if (supressOutput) {
+          this.getNextToken();
+        }
+        return {
+          type: "MO_ASSIGNMENT",
+          operator: "=",
+          supressOutput,
+          context: this.getCurrentContext(),
+          LHE: {
+            type: "VARIABLE_VECTOR",
+            value: vectorArgs.map(t => t.content),
+          },
+          RHE: {
+            type: "FUNCTION_CALL",
+            value: functionIdentifier.content,
+            functionData: {
+              args,
+            }
+          }
+        };
+      }
+      // ELSE ITS A VALUE VECTOR
+      // TODO: should do something here??
+      return;
     } else if (currToken.type === "KEYWORD" && currToken.content === "function") {
       // FUNCTION DEFINITION STATEMENT
       const nextToken = this.getCurrentToken();
@@ -168,13 +183,16 @@ export class Parser {
         return this.getFunctionDefintionWithoutOutput();
       }
     } else if (currToken.type === "IDENTIFIER" && (nextToken.type === "IDENTIFIER" || nextToken.type === "EOF" || nextToken.type === "NUMBER" || nextToken.type === "STRING")) {
+      // FUNCTION CALL (NOT recommended way)
       // Printing outputs, single operations or function calls with arguments
       // TODO: make this a function call
       this.warnings.push({
         message: "This is considered as a function call",
         range: nextToken.position,
       });
+      return;
     } else if ((currToken.type === "IDENTIFIER" || currToken.type === "KEYWORD") && (nextToken.type === "LPARENT")) { // TODO: KEYWORD it's not a native function
+      // FUNCTION CALL
       const rparent = this.getNextToken();
       const isValidBasicDataType = this.isTokenValidBasicDataType(rparent);
       const args: Token[] = [];
@@ -189,6 +207,9 @@ export class Parser {
       }
       this.getNextToken();
       const supressOutput = this.isOutputSupressed();
+      if (supressOutput) {
+        this.getNextToken();
+      }
       return {
         type: "FUNCTION_CALL",
         supressOutput,
@@ -210,6 +231,84 @@ export class Parser {
         range: this.getCurrentToken().position,
       });
     }
+  }
+
+  /**
+   * Returns the list of tokens that are contained in an vector
+   * Also returns weather the vector it's declared with ':' or just ','
+   */
+  private getVectorArgs(): [Token[], "COMMA" | "COLON"] {
+    const tokens: Token[] = [];
+
+    if (this.getCurrentToken().type === "LBRACKET") this.getNextToken();
+    if (this.isTokenValidBasicDataType(this.getCurrentToken())) {
+      tokens.push(this.getCurrentToken());
+    }
+    const itsCommaSeparated = this.getNextToken().type === "COMMA";
+
+    if (itsCommaSeparated) {
+      tokens.push(...this.getVectorValuesCommaSeparated());
+    } else {
+      tokens.push(...this.getVectorValuesColonSeparated());
+    }
+
+    this.getNextToken();
+
+    return [
+      tokens,
+      itsCommaSeparated ? "COMMA" : "COLON"
+    ];
+  }
+
+  /**
+   * Helper that returns the value of a vector ':' separated
+   */
+  private getVectorValuesColonSeparated(): Token[] {
+    const tokens: Token[] = [];
+
+    while (this.getCurrentToken().type === "COLON" && tokens.length < 2) {
+      const nextValue = this.getNextToken();
+      if (this.isTokenValidBasicDataType(nextValue)) {
+        tokens.push(nextValue);
+      }
+      this.getNextToken();
+    }
+
+    if (this.getCurrentToken().type !== "RBRACKET") {
+      this.errors.push({
+        message: "Unexpected vector value",
+        range: this.getCurrentToken().position,
+      });
+    }
+
+    return tokens;
+  }
+
+  /**
+   * Helper that returns a list of tokens corresponding to
+   * a comma separated vector declaration
+   */
+  private getVectorValuesCommaSeparated(): Token[] {
+    const tokens: Token[] = [];
+
+    while (this.getCurrentToken().type === "COMMA") {
+      const nextValue = this.getNextToken();
+      if (!this.isTokenValidBasicDataType(nextValue)) {
+        break;
+      } else {
+        tokens.push(nextValue);
+      }
+      this.getNextToken();
+    }
+
+    if (this.getCurrentToken().type !== "RBRACKET") {
+      this.errors.push({
+        message: "Unexpected vector value",
+        range: this.getCurrentToken().position,
+      });
+    }
+
+    return tokens;
   }
 
   /**
@@ -412,10 +511,11 @@ export class Parser {
     const tokens: Token[] = [];
     do {
       if (this.getCurrentToken().type !== "IDENTIFIER") {
-        this.errors.push({
-          message: `Expected IDENTIFIER. Got: ${this.getCurrentToken().content}`,
-          range: this.getCurrentToken().position,
-        });
+        // TODO: this should be taken care
+        // this.errors.push({
+        //   message: `Expected IDENTIFIER. Got: ${this.getCurrentToken().content}`,
+        //   range: this.getCurrentToken().position,
+        // });
         return;
       }
       tokens.push(this.getCurrentToken());
@@ -425,7 +525,7 @@ export class Parser {
           message: `Expected COMMA. Got: '${this.getCurrentToken().content}'`,
           range: this.getCurrentToken().position,
         });
-        return;
+        return tokens;
       }
       this.getNextToken();
       if (nextTokenType === "RBRACKET") {
@@ -494,7 +594,7 @@ export class Parser {
         // VECTOR
         return {
           type: "VARIABLE_VECTOR",
-          value: this.getVariableVectorValue(),
+          value: this.getVectorArgs()[0],
         };
       default:
         this.errors.push({
@@ -519,106 +619,22 @@ export class Parser {
   }
 
   /**
-   * Helper that retrieves the list of values that defines a vector
-   * When executed should leave in the next token after the last ]
-   */
-  private getVariableVectorValue(): Token[] {
-    const currentToken = this.getCurrentToken();
-    const nextToken = this.getNextToken();
-    const values: Token[] = [];
-
-    // ERRORS
-    if (!this.isTokenValidBasicDataType(nextToken)) {
-      this.errors.push({
-        message: "Wrong vector definition. Expected a 'number' or a 'variable'",
-        range: currentToken.position,
-      });
-      this.getNextToken();
-      return values;
-    }
-
-    values.push(nextToken);
-    const secondToken = this.getNextToken();
-
-    // We've got a vector like: [1]
-    if (secondToken.type === "RBRACKET") {
-      this.getNextToken();
-      return values;
-    }
-
-    if (!this.isTokenValidBasicDataType(secondToken)) {
-      this.errors.push({
-        message: `Expected a valid vector definition. Got ${secondToken.content}`,
-        range: secondToken.position,
-      });
-      this.getNextToken();
-      return;
-    }
-
-    // We've got a vector like: [1, 2, a, b, etc]
-    if (secondToken.type === "COMMA") {
-      values.push(...this.getVariableVector());
-      this.getNextToken();
-      return values;
-    }
-
-    if (secondToken.type === "COLON") {
-      const thirdToken = this.getNextToken();
-      if (thirdToken.type !== "IDENTIFIER" && thirdToken.type !== "NUMBER") {
-        this.errors.push({
-          message: "Wrong vector definition. Expected a 'number' or a 'variable'",
-          range: thirdToken.position,
-        });
-        this.getNextToken();
-        return values;
-      }
-      values.push(thirdToken);
-    }
-
-    // We've got a vector like: [1:b]
-    const fourthToken = this.getNextToken();
-    if (fourthToken.type === "RBRACKET") {
-      this.getNextToken();
-      return values;
-    }
-
-    // We've got a vector like: [1:b:c]
-    if (fourthToken.type === "COLON") {
-      const fifthToken = this.getNextToken();
-      if (fifthToken.type !== "IDENTIFIER" && fifthToken.type !== "NUMBER") {
-        this.errors.push({
-          message: "Wrong vector definition. Expected a 'number' or a 'variable'",
-          range: fifthToken.position,
-        });
-        this.getNextToken();
-        return values;
-      }
-      values.push(fifthToken);
-    }
-
-    const sixthToken = this.getNextToken();
-    if (sixthToken.type !== "RBRACKET") {
-      this.errors.push({
-        message: "Wrong vector definition. Expected a closing bracket ']'",
-        range: sixthToken.position,
-      });
-      this.getNextToken();
-      return values;
-    }
-
-    this.getNextToken();
-
-    return values;
-  }
-
-  /**
    * Helper that returns weather a Token it's of type NUMBER, STRING or IDENTIFIER
    * which are commonly used
    * @args token
    * @returns boolean
    */
   private isTokenValidBasicDataType(token: Token): boolean {
-    return token.type === "IDENTIFIER" || token.type === "NUMBER" || token.type === "STRING";
+    const isValid = token.type === "IDENTIFIER" || token.type === "NUMBER" || token.type === "STRING";
+
+    if (!isValid) {
+      this.errors.push({
+        message: `Expected a valid data type. Got ${token.content}`,
+        range: this.getCurrentToken().position,
+      });
+    }
+
+    return isValid;
   }
 
   private parseFunctionCall(): Expression {
@@ -722,6 +738,17 @@ export class Parser {
       return token.type === "KEYWORD" && (token.content === "end" || token.content === "endfunction");
     }
     return this.getCurrentToken().type === "KEYWORD" && (this.getCurrentToken().content === "end" || this.getCurrentToken().content === "endfunction");
+  }
+
+  /**
+   * Helper that returns weather the current token or
+   * a provided one is a basic data type (IDENTIFIER, STRING, DATA_VECTOR or NUMBER)
+   */
+  private isTokenDataType(token?: Token): boolean {
+    if (token) {
+      return token.type === "IDENTIFIER" || token.type === "VECTOR" || token.type === "STRING" || token.type === "NUMBER";
+    }
+    return this.getCurrentToken().type === "IDENTIFIER" || this.getCurrentToken().type === "VECTOR" || this.getCurrentToken().type === "STRING" || this.getCurrentToken().type === "NUMBER";
   }
 
   /**

@@ -49,6 +49,8 @@ end
 
 ## TODO
 
+- [ ] REFACTOR/FIX: make a data type (NUMBERS, STRINGS, ARRAYS, STRUCTS) and consider arguments like data type.
+- [ ] FIX: consider keywords like global.
 - [ ] FIX: multiple calls freezes the server.
 - [ ] FIX: KEYWORDS are not native functions.
 - [ ] FIX: consider string vectors: ["a", "b"]
