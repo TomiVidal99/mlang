@@ -49,20 +49,15 @@ end
 
 ## TODO
 
-- [ ] REFACTOR/FIX: make a data type (NUMBERS, STRINGS, ARRAYS, STRUCTS) and consider arguments like data type.
+- [ ] ADD: consider default values of functions definitions.
 - [ ] FIX: consider keywords like global.
 - [ ] FIX: multiple calls freezes the server.
 - [ ] FIX: KEYWORDS are not native functions.
-- [ ] FIX: consider string vectors: ["a", "b"]
 - [ ] FIX: functions with no parenthesis are not getting recognized.
 - [ ] FIX: '\n' inside strings breaks the getRowsAndCols function.
 - [ ] ADD: diagnostics for: redefined functions, missing imports.
 - [ ] ADD: references to files.
-- [ ] ADD: consider default values of functions definitions.
 - [ ] ADD: block comments.
-- [ ] ADD: replace error throws with linting messages.
-- [ ] ADD: linting errors and warnings.
-- [ ] ADD: make parser tests.
 - [ ] ADD: Maybe consider documentation with comments on variable as well.
 - [ ] FEATURES?: Maybe have a user setting to be able to multiple variables and functions definitions, instead of grabbing the first one?
 
