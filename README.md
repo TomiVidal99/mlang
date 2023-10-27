@@ -50,6 +50,7 @@ end
 ## TODO
 
 - [ ] ADD: consider default values of functions definitions.
+- [ ] ADD: STRUCTS '{}'.
 - [ ] FIX: consider keywords like global.
 - [ ] FIX: multiple calls freezes the server.
 - [ ] FIX: KEYWORDS are not native functions.
