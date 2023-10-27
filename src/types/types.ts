@@ -17,7 +17,7 @@ export interface LintingWarning extends LintingMessage {
 export type TokenType = keyof typeof Symbols | "NUMBER" | "ILLEGAL" | "IDENTIFIER" | "STRING" | "KEYWORD" | "VECTOR" | "COMMENT";
 
 export type Token = {
-  content: string,
+  content: string | Token[],
   type: TokenType,
   position: Range | null;
 }

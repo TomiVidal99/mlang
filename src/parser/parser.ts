@@ -109,7 +109,7 @@ export class Parser {
       }
       return {
         type: "ASSIGNMENT",
-        operator: nextToken.content,
+        operator: nextToken.content as string,
         supressOutput,
         context: this.getCurrentContext(),
         LHE: {
@@ -155,7 +155,7 @@ export class Parser {
           context: this.getCurrentContext(),
           LHE: {
             type: "VARIABLE_VECTOR",
-            value: vectorArgs.map(t => t.content),
+            value: vectorArgs,
           },
           RHE: {
             type: "FUNCTION_CALL",
@@ -241,7 +241,15 @@ export class Parser {
     const tokens: Token[] = [];
 
     if (this.getCurrentToken().type === "LBRACKET") this.getNextToken();
-    if (this.isTokenValidBasicDataType(this.getCurrentToken())) {
+
+    if (this.getCurrentToken().type === "RBRACKET") {
+      this.getNextToken();
+      return [[], "COMMA"];
+    }
+    if (this.getCurrentToken().type === "LBRACKET") {
+      tokens.push(this.getVector());
+      this.getPrevToken();
+    } else if (this.isTokenValidBasicDataType(this.getCurrentToken())) {
       tokens.push(this.getCurrentToken());
     }
     const itsCommaSeparated = this.getNextToken().type === "COMMA";
@@ -268,9 +276,14 @@ export class Parser {
 
     while (this.getCurrentToken().type === "COLON" && tokens.length < 2) {
       const nextValue = this.getNextToken();
-      if (this.isTokenValidBasicDataType(nextValue)) {
+
+      if (nextValue.type === "LBRACKET") {
+        tokens.push(this.getVector(nextValue));
+        this.getPrevToken();
+      } else if (this.isTokenValidBasicDataType(nextValue)) {
         tokens.push(nextValue);
       }
+
       this.getNextToken();
     }
 
@@ -284,6 +297,24 @@ export class Parser {
     return tokens;
   }
 
+  public counter = 0;
+
+  /**
+   * Helper that returns a vector once a bracket it's found
+   */
+  private getVector(token?: Token): Token {
+    const [vectorArgs, _] = this.getVectorArgs();
+    const referenceToken = token ? token : this.getCurrentToken();
+    return {
+      type: "VECTOR",
+      content: vectorArgs,
+      position: {
+        start: referenceToken.position.start,
+        end: vectorArgs[vectorArgs.length - 1]?.position?.end ? vectorArgs[vectorArgs.length - 1]?.position?.end : referenceToken.position.end,
+      },
+    };
+  }
+
   /**
    * Helper that returns a list of tokens corresponding to
    * a comma separated vector declaration
@@ -293,7 +324,10 @@ export class Parser {
 
     while (this.getCurrentToken().type === "COMMA") {
       const nextValue = this.getNextToken();
-      if (!this.isTokenValidBasicDataType(nextValue)) {
+      if (nextValue.type === "LBRACKET") {
+        tokens.push(this.getVector(nextValue));
+        this.getPrevToken();
+      } else if (!this.isTokenValidBasicDataType(nextValue)) {
         break;
       } else {
         tokens.push(nextValue);
@@ -674,7 +708,7 @@ export class Parser {
       return tokens;
     }
     do {
-      const arg = this.getNextToken();
+      let arg = this.getNextToken();
       if (arg.type === "IDENTIFIER") {
         if (this.getNextToken().type === "LPARENT") {
           // TODO handle function composition
@@ -683,7 +717,10 @@ export class Parser {
       } else if (arg.type === "RPARENT") {
         // When it's a call without any arguments
         return tokens;
-      } else if (this.isTokenValidBasicDataType) {
+      } else if (arg.type === "LBRACKET") {
+        tokens.push(this.getVector(arg));
+        arg = null;
+      } else if (this.isTokenValidBasicDataType(arg)) {
         this.getNextToken();
       } else {
         this.errors.push({
@@ -692,7 +729,11 @@ export class Parser {
         });
         return tokens;
       }
-      tokens.push(arg);
+
+      if (arg) {
+        tokens.push(arg);
+      }
+
       const commaOrRParen = this.getCurrentToken();
       if (commaOrRParen.type !== "COMMA" && commaOrRParen.type !== "RPARENT") {
         this.errors.push({
