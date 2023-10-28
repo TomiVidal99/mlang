@@ -52,3 +52,29 @@ test("Octave/Matlab Parser, should parse default arguments", function() {
   expect(parsedStatement.LHE.functionData.args[0].content).toStrictEqual("a");
   expect(parsedStatement.LHE.functionData.args[0].defaultValue.content).toStrictEqual("'lasdkjasldk'");
 });
+
+test("Octave/Matlab Parser, should parse empty function definition with comments", function() {
+  const inputCode = `
+  function myCoolFunction()
+    % this is the first comment
+    % this is the second comment
+
+  end
+  `;
+
+  const tokenizer = new Tokenizer(inputCode);
+  const tokens = tokenizer.getAllTokens();
+  const parser = new Parser(tokens);
+  const parsedStatement = parser.parseStatement();
+
+  const errors = parser.getErrors();
+
+  expect(errors.length).toStrictEqual(0);
+  expect(parsedStatement.type).toStrictEqual("FUNCTION_DEFINITION");
+  expect(parsedStatement.supressOutput).toStrictEqual(true);
+  expect(parsedStatement.LHE.type).toStrictEqual("IDENTIFIER");
+  expect(parsedStatement.LHE.value).toStrictEqual("myCoolFunction");
+  expect(parsedStatement.LHE.functionData.closingToken.type).toStrictEqual("KEYWORD");
+  expect(parsedStatement.LHE.functionData.closingToken.content).toStrictEqual("end");
+  expect(parsedStatement.LHE.functionData.contextCreated.length > 0).toStrictEqual(true);
+});

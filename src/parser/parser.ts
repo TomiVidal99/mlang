@@ -96,6 +96,7 @@ export class Parser {
       currToken.content === "endfunction" ||
       currToken.type === "EOF" ||
       !nextToken) {
+      this.getPrevToken();
       return;
     }
 
@@ -419,10 +420,7 @@ export class Parser {
     const statements: Statement[] = [];
     while (!this.isEndFunctionToken() && !this.isEOF()) {
       const statement = this.parseStatement();
-      if (!statement) {
-        break;
-      }
-      statements.push(statement);
+      if (statement) statements.push(statement);
     }
     const endToken = this.getCurrentToken();
     if (endToken.type === "EOF") {
@@ -490,10 +488,7 @@ export class Parser {
     const statements: Statement[] = [];
     while (!this.isEndFunctionToken() && !this.isEOF()) {
       const statement = this.parseStatement();
-      if (!statement) {
-        break;
-      }
-      statements.push(statement);
+      if (statement) statements.push(statement);
     }
     const endToken = this.getCurrentToken();
     if (endToken.type === "EOF") {
