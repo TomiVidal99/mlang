@@ -4,6 +4,7 @@
   "version": "2.1.0",
   "author": "Tomás Vidal",
   "license": "MIT",
+  "publisher": "mlang",
   "engines": {
     "node": "*"
   },

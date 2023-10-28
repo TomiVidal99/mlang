@@ -3,12 +3,11 @@
   "displayName": "mlang",
   "description": "Octave/Matlab Language Server",
   "version": "0.0.1",
+  "repository": "https://github.com/TomiVidal99/mlang",
+  "publisher": "mlang",
   "engines": {
     "vscode": "^1.83.0"
   },
-  "categories": [
-    "LSP"
-  ],
   "activationEvents": [
     "onLanguage:octave",
     "onLanguage:matlab",
