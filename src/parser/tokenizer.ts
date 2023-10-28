@@ -242,7 +242,7 @@ export class Tokenizer {
     do {
       this.readChar();
       literal += this.currChar;
-    } while (this.currChar !== '"' && this.currPos < this.text.length);
+    } while (this.currChar !== '"' && this.currChar !== "'" && this.currPos < this.text.length);
     this.readChar();
 
     return literal;
