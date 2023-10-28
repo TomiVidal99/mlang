@@ -14,12 +14,13 @@ export interface LintingWarning extends LintingMessage {
   opt?: any;
 }
 
-export type TokenType = keyof typeof Symbols | "NUMBER" | "ILLEGAL" | "IDENTIFIER" | "STRING" | "KEYWORD" | "VECTOR" | "COMMENT";
+export type TokenType = keyof typeof Symbols | "NUMBER" | "ILLEGAL" | "IDENTIFIER" | "STRING" | "KEYWORD" | "VECTOR" | "COMMENT" | "DEFAULT_VALUE_ARGUMENT";
 
 export type Token = {
-  content: string,
+  content: string | Token[],
   type: TokenType,
   position: Range | null;
+  defaultValue?: Token;
 }
 
 export interface FunctionData {
@@ -39,7 +40,7 @@ export interface Expression {
   position?: Range;
 }
 
-export type StatementType = "ASSIGNMENT" | "FUNCTION_CALL" | "MO_ASSIGNMENT" | "FUNCTION_DEFINITION";
+export type StatementType = "ASSIGNMENT" | "FUNCTION_CALL" | "MO_ASSIGNMENT" | "FUNCTION_DEFINITION" | "CONSOLE_OUTPUT";
 
 export interface Statement {
   type: StatementType
@@ -60,7 +61,7 @@ interface IDefinition {
   position: Range;
 }
 
-export type DefinitionType = "FUNCTION" | "VARIABLE" | "ARGUMENT" | "ANONYMOUS_FUNCTION";
+export type DefinitionType = "FUNCTION" | "VARIABLE" | "ARGUMENT" | "ANONYMOUS_FUNCTION" | "DEFAULT_ARGUMENT";
 
 export interface Definition extends IDefinition {
   type: DefinitionType;

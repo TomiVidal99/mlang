@@ -1,6 +1,4 @@
 import { DidChangeConfigurationNotification, InitializeParams, InitializeResult, InitializedParams, TextDocumentSyncKind, _Connection } from "vscode-languageserver";
-import { globalSettings } from "../data";
-
 export let hasConfigurationCapability = false;
 export let hasWorkspaceFolderCapability = false;
 export let hasDiagnosticRelatedInformationCapability = false;

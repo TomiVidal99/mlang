@@ -45,6 +45,15 @@ export class Visitor {
             position: node.position,
             type: parentType === "ASSIGNMENT" ? "VARIABLE" : "FUNCTION",
             documentation: this.getDocumentationOrLineDefinition(node),
+            arguments: parentType === "FUNCTION_DEFINITION" ? node?.functionData?.args?.map((a) => {
+              return {
+                name: a.content as string,
+                type: a.type === "DEFAULT_VALUE_ARGUMENT" ? "DEFAULT_ARGUMENT" : "ARGUMENT",
+                content: a.type === "DEFAULT_VALUE_ARGUMENT" ? a.defaultValue.content as string : "",
+                position: a.position,
+                documentation: "", // TODO think if i should get the documentation
+              };
+            }) : null,
           });
         }
         this.references.push({
@@ -57,7 +66,7 @@ export class Visitor {
           this.references.push(...node.functionData.args.map(
             (arg) => {
               return {
-                name: arg.content,
+                name: arg.content as string,
                 position: arg.position,
                 type: this.getReferenceTypeFromNode(node),
                 documentation: this.getDocumentationOrLineDefinition(node),
@@ -94,11 +103,19 @@ export class Visitor {
             position: node.LHO.position,
             type: "ANONYMOUS_FUNCTION",
             documentation: this.getDocumentationOrLineDefinition(node),
+            arguments: node?.functionData?.args?.map((a) => {
+              return {
+                name: a.content as string,
+                type: "ARGUMENT",
+                position: a.position,
+                documentation: "", // TODO think if i should get the documentation
+              };
+            }),
           });
         }
         this.references.push(...node.functionData.args.map((arg) => {
           return {
-            name: arg.content,
+            name: arg.content as string,
             position: node.position,
             type: this.getReferenceTypeFromNode(node),
             documentation: node?.functionData?.description ? node?.functionData?.description : "",
@@ -111,7 +128,7 @@ export class Visitor {
         if (node?.value && Array.isArray(node.value)) {
           (node.value as Token[]).forEach((val) => {
             this.definitions.push({
-              name: val.content,
+              name: val.content as string,
               type: "VARIABLE",
               position: val.position,
               documentation: this.getDocumentationOrLineDefinition(node),
@@ -121,7 +138,7 @@ export class Visitor {
         (node.value as Token[]).forEach((token) => {
           if (token.type === "IDENTIFIER") {
             this.references.push({
-              name: token.content,
+              name: token.content as string,
               position: token.position,
               type: this.getReferenceTypeFromNode(node),
               documentation: node?.functionData?.description ? node?.functionData?.description : "",

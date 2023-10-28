@@ -1,0 +1,41 @@
+{
+  "type": "FUNCTION_CALL",
+  "supressOutput": false,
+  "context": "0",
+  "LHE": {
+    "type": "IDENTIFIER",
+    "value": "myFunction",
+    "functionData": {
+      "args": [
+        {
+          "type": "DEFA ULT_VALUE_ARGUMENT",
+          "content": "a",
+          "position": {
+            "start": {
+              "line": 0,
+              "character": 11
+            },
+            "end": {
+              "line": 0,
+              "character": 12
+            }
+          },
+          "defaultValue": {
+            "type": "STRING",
+            "content": "\"lasdkjasldk');",
+            "position": {
+              "start": {
+                "line": 0,
+                "character": 30
+              },
+              "end": {
+                "line": 0,
+                "character": 29
+              }
+            }
+          }
+        }
+      ]
+    }
+  }
+}
