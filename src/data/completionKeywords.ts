@@ -296,7 +296,7 @@ export function completionKeywords(position?: Position): CompletionItem[] {
     {
       label: "function",
       kind: CompletionItemKind.Keyword,
-      insertText: 'function ${1:functionName}()\n\nend',
+      insertText: 'function ${1}()\n\nend',
       insertTextFormat: InsertTextFormat.Snippet,
       documentation: {
         kind: MarkupKind.Markdown,

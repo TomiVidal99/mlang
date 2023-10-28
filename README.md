@@ -14,10 +14,10 @@ This is an implementation of the [Language Server Protocol](https://code.visuals
 
 ## Working features
 
-- Completion _(some keywords, some native functions, user defined functions and files)_
-- goToDefinition _(for user defined functions)_
+- Completion _(some keywords, some native functions, user defined functions with default arguments (atm))_
+- goToDefinition _(for user defined functions in the same file (atm))_
 - goToReference
-- diagnostics _(closing tags, typing errors)_
+- diagnostics _(closing tags, basic typing errors)_
 
 ## How to setup in the client
 
@@ -49,7 +49,6 @@ end
 
 ## TODO
 
-- [ ] ADD: consider default values of functions definitions.
 - [ ] ADD: STRUCTS '{}'.
 - [ ] FIX: consider keywords like global.
 - [ ] FIX: multiple calls freezes the server.

@@ -10,9 +10,11 @@ import { ISettings } from "./data";
 import { Parser, Tokenizer, Visitor } from "./parser";
 import { getDiagnosticFromLitingMessage } from "./utils";
 
-const DEBOUNCE_DELAY_MS = 500;
+// THIS IS THE TIME THAT IT WAITS BEFORE TRIGGERING A REFRESH
+// OF PARSING THE DOCUMENT WHEN THE USER IT'S TYPING
+const DEBOUNCE_DELAY_MS = 1000;
 
-const connection = createConnection(ProposedFeatures.all);
+export const connection = createConnection(ProposedFeatures.all);
 const documentSettings = new Map < string, Thenable<ISettings>>();
 
   export const documents = new TextDocuments<TextDocument>(TextDocument);
@@ -46,7 +48,15 @@ documents.onDidClose((e) => {documentSettings.delete(e.document.uri); });
       // });
       connection.onCompletion((params) => handleCompletion({ params: params }));
 connection.onCompletionResolve((item) => {
-    return item;
+  // if (item.kind.valueOf() === 3 && item.command) {
+  //   // IT'S A FUNCTION
+  //   return {
+  //     ...item,
+  //     insertText: `${item.label}()`,
+  //   };
+  // }
+
+  return item;
 });
 
     // Make the text document manager listen on the connection
