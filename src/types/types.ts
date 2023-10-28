@@ -14,12 +14,13 @@ export interface LintingWarning extends LintingMessage {
   opt?: any;
 }
 
-export type TokenType = keyof typeof Symbols | "NUMBER" | "ILLEGAL" | "IDENTIFIER" | "STRING" | "KEYWORD" | "VECTOR" | "COMMENT";
+export type TokenType = keyof typeof Symbols | "NUMBER" | "ILLEGAL" | "IDENTIFIER" | "STRING" | "KEYWORD" | "VECTOR" | "COMMENT" | "DEFAULT_VALUE_ARGUMENT";
 
 export type Token = {
   content: string | Token[],
   type: TokenType,
   position: Range | null;
+  defaultValue?: Token;
 }
 
 export interface FunctionData {

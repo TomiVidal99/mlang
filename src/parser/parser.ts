@@ -99,7 +99,29 @@ export class Parser {
       return;
     }
 
-    if (currToken.type === "IDENTIFIER" && nextToken.type === "EQUALS") {
+    // TODO: refactor this to use switch statement and make this logic much simpler
+    // Also i have to fix KEYWORDs and change them for another type
+    if ((currToken.type === "IDENTIFIER" || currToken.type === "KEYWORD") && nextToken.type === "LPARENT") { // TODO: KEYWORD IT's not valid in all cases
+      // JUST A FUNCTION CALL
+      const args = this.getFunctionArguments();
+      this.getNextToken();
+      const supressOutput = this.isOutputSupressed();
+      if (supressOutput) {
+        this.getNextToken();
+      }
+      return {
+        type: "FUNCTION_CALL",
+        supressOutput,
+        context: this.getCurrentContext(),
+        LHE: {
+          type: "IDENTIFIER",
+          value: currToken.content,
+          functionData: {
+            args,
+          }
+        },
+      };
+    } else if (currToken.type === "IDENTIFIER" && nextToken.type === "EQUALS") {
       // SINGLE OUTPUT ASSIGNMENT STATEMENT
       this.getNextToken();
       const RHE = this.parseExpression();
@@ -143,6 +165,7 @@ export class Parser {
         }
         this.getNextToken();
         const args = this.getFunctionArguments();
+        this.validateFnCallArgs(args);
         this.getNextToken();
         const supressOutput = this.isOutputSupressed();
         if (supressOutput) {
@@ -191,37 +214,39 @@ export class Parser {
         range: nextToken.position,
       });
       return;
-    } else if ((currToken.type === "IDENTIFIER" || currToken.type === "KEYWORD") && (nextToken.type === "LPARENT")) { // TODO: KEYWORD it's not a native function
-      // FUNCTION CALL
-      const rparent = this.getNextToken();
-      const isValidBasicDataType = this.isTokenValidBasicDataType(rparent);
-      const args: Token[] = [];
-      if (rparent.type !== "RPARENT" && !isValidBasicDataType) {
-        this.errors.push({
-          message: `Expected function call. Got '${rparent.content}'`,
-          range: nextToken.position,
-        });
-      } else if (isValidBasicDataType) {
-        this.getPrevToken();
-        args.push(...this.getFunctionArguments());
-      }
-      this.getNextToken();
-      const supressOutput = this.isOutputSupressed();
-      if (supressOutput) {
-        this.getNextToken();
-      }
-      return {
-        type: "FUNCTION_CALL",
-        supressOutput,
-        context: this.getCurrentContext(),
-        LHE: {
-          type: "IDENTIFIER",
-          value: currToken.content,
-          functionData: {
-            args,
-          }
-        },
-      };
+      // } else if ((currToken.type === "IDENTIFIER" || currToken.type === "KEYWORD") && (nextToken.type === "LPARENT")) { // TODO: KEYWORD it's not a native function
+      //   // FUNCTION CALL
+      //   const rparent = this.getNextToken();
+      //   const isValidBasicDataType = this.isTokenValidBasicDataType(rparent);
+      //   const args: Token[] = [];
+      //   if (rparent.type !== "RPARENT" && !isValidBasicDataType) {
+      //     this.errors.push({
+      //       message: `Expected function call. Got '${rparent.content}'`,
+      //       range: nextToken.position,
+      //     });
+      //   } else if (isValidBasicDataType) {
+      //     this.getPrevToken();
+      //     const fnCallArgs = this.getFunctionArguments();
+      //     this.validateFnCallArgs(fnCallArgs);
+      //     args.push(...fnCallArgs);
+      //   }
+      //   this.getNextToken();
+      //   const supressOutput = this.isOutputSupressed();
+      //   if (supressOutput) {
+      //     this.getNextToken();
+      //   }
+      //   return {
+      //     type: "FUNCTION_CALL",
+      //     supressOutput,
+      //     context: this.getCurrentContext(),
+      //     LHE: {
+      //       type: "IDENTIFIER",
+      //       value: currToken.content,
+      //       functionData: {
+      //         args,
+      //       }
+      //     },
+      //   };
     } else {
       // console.log("prev token: ", this.tokens[this.currentTokenIndex - 1]);
       // console.log("currToken: ", this.getCurrentToken());
@@ -230,6 +255,21 @@ export class Parser {
         message: "Expected a valid token for a statement",
         range: this.getCurrentToken().position,
       });
+    }
+  }
+
+
+  /**
+   * Helper that sends an error if the arguments of a funcion call are wrong
+   */
+  private validateFnCallArgs(args: Token[]): void {
+    for (const arg of args) {
+      if (arg.type === "DEFAULT_VALUE_ARGUMENT") {
+        this.errors.push({
+          message: "Unexpected default value argument in function call",
+          range: arg.position,
+        });
+      }
     }
   }
 
@@ -601,6 +641,7 @@ export class Parser {
         {
           this.getNextToken();
           const args = this.getFunctionArguments();
+          this.validateFnCallArgs(args);
           this.getNextToken();
           const expr = this.parseExpression();
           return {
@@ -675,6 +716,7 @@ export class Parser {
     const currToken = this.getCurrentToken();
     if (this.getNextToken().type === "LPARENT") {
       const args = this.getFunctionArguments();
+      this.validateFnCallArgs(args);
       this.getNextToken();
       return {
         type: "FUNCTION_CALL",
@@ -709,10 +751,32 @@ export class Parser {
     }
     do {
       let arg = this.getNextToken();
-      if (arg.type === "IDENTIFIER") {
+      const nextToken = this.getNextToken();
+      this.getPrevToken();
+
+      if (arg.type === "IDENTIFIER" && nextToken.type === "EQUALS") {
+        // DEFAULT ARGUMENT
+        this.getNextToken();
+        const defaultValue = this.getNextToken();
+        if (!this.isTokenDataType(defaultValue)) {
+          this.errors.push({
+            message: `Expected a valid default value. Got ${defaultValue.content}`,
+            range: defaultValue.position,
+          });
+        }
+        tokens.push({
+          type: "DEFAULT_VALUE_ARGUMENT",
+          content: arg.content,
+          position: arg.position,
+          defaultValue: defaultValue,
+        });
+        this.getNextToken();
+        arg = null;
+      } else if (arg.type === "IDENTIFIER") {
         if (this.getNextToken().type === "LPARENT") {
           // TODO handle function composition
-          this.getFunctionArguments(); // just for now so it gets rid of the function call (advances the tokens)
+          const fnCallArgs = this.getFunctionArguments(); // just for now so it gets rid of the function call (advances the tokens)
+          this.validateFnCallArgs(fnCallArgs);
         }
       } else if (arg.type === "RPARENT") {
         // When it's a call without any arguments
@@ -784,6 +848,7 @@ export class Parser {
   /**
    * Helper that returns weather the current token or
    * a provided one is a basic data type (IDENTIFIER, STRING, DATA_VECTOR or NUMBER)
+   * TODO consider structs {}
    */
   private isTokenDataType(token?: Token): boolean {
     if (token) {
