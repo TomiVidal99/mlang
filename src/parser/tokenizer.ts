@@ -237,7 +237,7 @@ export class Tokenizer {
    * Gets a literal string from the text.
    */
   private readLiteralString() {
-    let literal = '"';
+    let literal = this.currChar;
 
     do {
       this.readChar();
