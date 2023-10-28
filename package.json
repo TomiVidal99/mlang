@@ -31,7 +31,8 @@
     "build": "tsc ./client/src/extension.ts --outDir ./client/out/",
     "watch": "tsc ./client/src/extension.ts -w --outDir ./client/out/",
     "lint": "eslint ./src --ext .ts",
-    "lint-fix": "eslint --fix ./src --ext .ts"
+    "lint-fix": "eslint --fix ./src --ext .ts",
+    "publish-extension": "cd client && vsce publish"
   },
   "devDependencies": {
     "eslint-config-standard-with-typescript": "34.0.1",
