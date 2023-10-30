@@ -8,6 +8,8 @@ export class Tokenizer {
   private currChar: string;
   private nextChar: string;
   private tokens: Token[] = [];
+  private keywords = getKeywordsFromCompletion();
+  private nativeFunctions = getKeywordsFromCompletion();
 
   constructor(private text: string) {
     this.readChar();
@@ -41,7 +43,7 @@ export class Tokenizer {
       this.readChar();
       return this.addToken({
         ...token,
-        position: this.getPosition(token.type !== "EOF" ? token.content : ""),
+        position: this.getPosition(token.type !== "EOF" ? token.content as string : ""),
       });
     }
 
@@ -120,15 +122,18 @@ export class Tokenizer {
    * Returns the Token corresponding to keywords or literals.
    */
   private tokenFromLiteral(literal: string): Token {
-    const keywords = getKeywordsFromCompletion();
-    for (const keyword of keywords) {
-      if (keyword === literal) {
-        return {
-          type: "KEYWORD",
-          content: literal,
-          position: this.getPosition(literal),
-        };
-      }
+    if (this.keywords.includes(literal)) {
+      return {
+        type: "KEYWORD",
+        content: literal,
+        position: this.getPosition(literal),
+      };
+    } else if (this.nativeFunctions.includes(literal)) {
+      return {
+        type: "NATIVE_FUNCTION",
+        content: literal,
+        position: this.getPosition(literal),
+      };
     }
     return {
       type: "IDENTIFIER",
