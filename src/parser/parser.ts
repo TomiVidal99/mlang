@@ -104,161 +104,175 @@ export class Parser {
 
     // TODO: refactor this to use switch statement and make this logic much simpler
     // Also i have to fix KEYWORDs and change them for another type
-    if ((currToken.type === "IDENTIFIER" || currToken.type === "KEYWORD") && nextToken.type === "LPARENT") { // TODO: KEYWORD IT's not valid in all cases
-      // JUST A FUNCTION CALL
-      const args = this.getFunctionArguments();
-      this.getNextToken();
-      const supressOutput = this.isOutputSupressed();
-      if (supressOutput) {
-        this.getNextToken();
-      }
-      return {
-        type: "FUNCTION_CALL",
-        supressOutput,
-        context: this.getCurrentContext(),
-        LHE: {
-          type: "IDENTIFIER",
-          value: currToken.content,
-          functionData: {
-            args,
-          }
-        },
-      };
-    } else if (currToken.type === "IDENTIFIER" && nextToken.type === "EQUALS") {
-      // SINGLE OUTPUT ASSIGNMENT STATEMENT
-      this.getNextToken();
-      const RHE = this.parseExpression();
-      const supressOutput = this.isOutputSupressed();
-      if (supressOutput) {
-        this.getNextToken();
-      }
-      return {
-        type: "ASSIGNMENT",
-        operator: nextToken.content as string,
-        supressOutput,
-        context: this.getCurrentContext(),
-        LHE: {
-          type: "IDENTIFIER",
-          value: currToken.content,
-          position: currToken.position,
-        },
-        RHE,
-      };
-    } else if (currToken.type === "LBRACKET") {
-      // MULTIPLE OUTPUT ASSIGNMENT STATEMENT
-      // OR OUTPUTTING A VECTOR DATA TO THE CONSOLE (not recommended)
-      const [vectorArgs, vectorType] = this.getVectorArgs();
-      if (vectorType === "COMMA" && vectorArgs.every(a => a.type === "IDENTIFIER") && this.getCurrentToken().type === "EQUALS") {
-        // IT'S AN OUTPUT
-        if (this.getCurrentToken().type !== "EQUALS") {
-          // TODO: think how to do this better, because this it's not necessarly like this
-          this.errors.push({
-            message: `Unexpected token ${this.getCurrentToken().content}`,
-            range: this.getCurrentToken().position,
-          });
-          return;
-        }
-        const functionIdentifier = this.getNextToken();
-        if (functionIdentifier.type !== "IDENTIFIER" && functionIdentifier.type !== "KEYWORD") { // TODO: keyword it's not correct now
-          this.errors.push({
-            message: `Expected a function call. Got ${this.getCurrentToken().content}`,
-            range: this.getCurrentToken().position,
-          });
-          return;
-        }
-        this.getNextToken();
-        const args = this.getFunctionArguments();
-        this.validateFnCallArgs(args);
-        this.getNextToken();
-        const supressOutput = this.isOutputSupressed();
-        if (supressOutput) {
-          this.getNextToken();
-        }
-        return {
-          type: "MO_ASSIGNMENT",
-          operator: "=",
-          supressOutput,
-          context: this.getCurrentContext(),
-          LHE: {
-            type: "VARIABLE_VECTOR",
-            value: vectorArgs,
-          },
-          RHE: {
-            type: "FUNCTION_CALL",
-            value: functionIdentifier.content,
-            functionData: {
-              args,
+    switch (currToken.type) {
+      case "IDENTIFIER":
+        switch (nextToken.type) {
+          case "IDENTIFIER":
+          case "EOF":
+          case "NUMBER":
+          case "STRING":
+            {
+              // FUNCTION CALL (NOT recommended way)
+              // Printing outputs, single operations or function calls with arguments
+              // TODO: make this a function call
+              this.warnings.push({
+                message: "This is considered as a function call",
+                range: nextToken.position,
+              });
+              return;
             }
+          case "LPARENT":
+            // JUST A FUNCTION CALL
+            return this.getParsedFunctionCall(currToken);
+          case "EQUALS":
+            {
+              // SINGLE OUTPUT ASSIGNMENT STATEMENT
+              this.getNextToken();
+              const RHE = this.parseExpression();
+              const supressOutput = this.isOutputSupressed();
+              if (supressOutput) {
+                this.getNextToken();
+              }
+              return {
+                type: "ASSIGNMENT",
+                operator: nextToken.content as string,
+                supressOutput,
+                context: this.getCurrentContext(),
+                LHE: {
+                  type: "IDENTIFIER",
+                  value: currToken.content,
+                  position: currToken.position,
+                },
+                RHE,
+              };
+            }
+        }
+        break;
+      case "LBRACKET":
+        {
+          // MULTIPLE OUTPUT ASSIGNMENT STATEMENT
+          // OR OUTPUTTING A VECTOR DATA TO THE CONSOLE (not recommended)
+          const [vectorArgs, vectorType] = this.getVectorArgs();
+          if (vectorType === "COMMA" && vectorArgs.every(a => a.type === "IDENTIFIER") && this.getCurrentToken().type === "EQUALS") {
+            // IT'S AN OUTPUT
+            if (this.getCurrentToken().type !== "EQUALS") {
+              // TODO: think how to do this better, because this it's not necessarly like this
+              this.errors.push({
+                message: `Unexpected token ${this.getCurrentToken().content}`,
+                range: this.getCurrentToken().position,
+              });
+              return;
+            }
+            const functionIdentifier = this.getNextToken();
+            if (functionIdentifier.type !== "IDENTIFIER" && functionIdentifier.type !== "KEYWORD") { // TODO: keyword it's not correct now
+              this.errors.push({
+                message: `Expected a function call. Got ${this.getCurrentToken().content}`,
+                range: this.getCurrentToken().position,
+              });
+              return;
+            }
+            this.getNextToken();
+            const args = this.getFunctionArguments();
+            this.validateFnCallArgs(args);
+            this.getNextToken();
+            const supressOutput = this.isOutputSupressed();
+            if (supressOutput) {
+              this.getNextToken();
+            }
+            return {
+              type: "MO_ASSIGNMENT",
+              operator: "=",
+              supressOutput,
+              context: this.getCurrentContext(),
+              LHE: {
+                type: "VARIABLE_VECTOR",
+                value: vectorArgs,
+              },
+              RHE: {
+                type: "FUNCTION_CALL",
+                value: functionIdentifier.content,
+                functionData: {
+                  args,
+                }
+              }
+            };
           }
-        };
-      }
-      // ELSE ITS A VALUE VECTOR
-      // TODO: should do something here??
-      return;
-    } else if (currToken.type === "KEYWORD" && currToken.content === "function") {
-      // FUNCTION DEFINITION STATEMENT
-      const nextToken = this.getCurrentToken();
-      const next2Token = this.getNextToken();
-      this.getPrevToken();
-      this.getPrevToken();
-      if (nextToken.type === "IDENTIFIER" && next2Token.type === "EQUALS") {
-        return this.getFunctionDefintionWithOutput(true);
-      } else if (nextToken.type === "LBRACKET") {
-        return this.getFunctionDefintionWithOutput(false);
-      } else {
-        return this.getFunctionDefintionWithoutOutput();
-      }
-    } else if (currToken.type === "IDENTIFIER" && (nextToken.type === "IDENTIFIER" || nextToken.type === "EOF" || nextToken.type === "NUMBER" || nextToken.type === "STRING")) {
-      // FUNCTION CALL (NOT recommended way)
-      // Printing outputs, single operations or function calls with arguments
-      // TODO: make this a function call
-      this.warnings.push({
-        message: "This is considered as a function call",
-        range: nextToken.position,
-      });
-      return;
-      // } else if ((currToken.type === "IDENTIFIER" || currToken.type === "KEYWORD") && (nextToken.type === "LPARENT")) { // TODO: KEYWORD it's not a native function
-      //   // FUNCTION CALL
-      //   const rparent = this.getNextToken();
-      //   const isValidBasicDataType = this.isTokenValidBasicDataType(rparent);
-      //   const args: Token[] = [];
-      //   if (rparent.type !== "RPARENT" && !isValidBasicDataType) {
-      //     this.errors.push({
-      //       message: `Expected function call. Got '${rparent.content}'`,
-      //       range: nextToken.position,
-      //     });
-      //   } else if (isValidBasicDataType) {
-      //     this.getPrevToken();
-      //     const fnCallArgs = this.getFunctionArguments();
-      //     this.validateFnCallArgs(fnCallArgs);
-      //     args.push(...fnCallArgs);
-      //   }
-      //   this.getNextToken();
-      //   const supressOutput = this.isOutputSupressed();
-      //   if (supressOutput) {
-      //     this.getNextToken();
-      //   }
-      //   return {
-      //     type: "FUNCTION_CALL",
-      //     supressOutput,
-      //     context: this.getCurrentContext(),
-      //     LHE: {
-      //       type: "IDENTIFIER",
-      //       value: currToken.content,
-      //       functionData: {
-      //         args,
-      //       }
-      //     },
-      //   };
-    } else {
-      // console.log("prev token: ", this.tokens[this.currentTokenIndex - 1]);
-      // console.log("currToken: ", this.getCurrentToken());
-      // console.log("currToken: ", currToken);
-      this.errors.push({
-        message: "Expected a valid token for a statement",
-        range: this.getCurrentToken().position,
-      });
+          // ELSE ITS A VALUE VECTOR
+          // TODO: should do something here??
+          return;
+        }
+      case "KEYWORD":
+        {
+          switch (currToken.content) {
+            case "LPARENT": // FUNCTION CALL
+              return this.getParsedFunctionCall(currToken);
+            case "function":
+              {
+                // FUNCTION DEFINITION STATEMENT
+                const nextToken = this.getCurrentToken();
+                const next2Token = this.getNextToken();
+                this.getPrevToken();
+                this.getPrevToken();
+                if (nextToken.type === "IDENTIFIER" && next2Token.type === "EQUALS") {
+                  return this.getFunctionDefintionWithOutput(true);
+                } else if (nextToken.type === "LBRACKET") {
+                  return this.getFunctionDefintionWithOutput(false);
+                } else {
+                  return this.getFunctionDefintionWithoutOutput();
+                }
+              }
+            default:
+              break;
+          }
+          break;
+        }
+      default:
+        this.errors.push({
+          message: "Expected a valid token for a statement",
+          range: this.getCurrentToken().position,
+        });
+        break;
     }
+
+    //if ((currToken.type === "IDENTIFIER" || currToken.type === "KEYWORD") && nextToken.type === "LPARENT") { // TODO: KEYWORD IT's not valid in all cases
+    //} else if (currToken.type === "IDENTIFIER" && nextToken.type === "EQUALS") {
+    //} else if (currToken.type === "LBRACKET") {
+    //} else if (currToken.type === "KEYWORD" && currToken.content === "function") {
+    //} else if (currToken.type === "IDENTIFIER" && (nextToken.type === "IDENTIFIER" || nextToken.type === "EOF" || nextToken.type === "NUMBER" || nextToken.type === "STRING")) {
+    //} else {
+    //  // console.log("prev token: ", this.tokens[this.currentTokenIndex - 1]);
+    //  // console.log("currToken: ", this.getCurrentToken());
+    //  // console.log("currToken: ", currToken);
+    //  this.errors.push({
+    //    message: "Expected a valid token for a statement",
+    //    range: this.getCurrentToken().position,
+    //  });
+    //}
+  }
+
+
+  /**
+   * Helper that returns a function definition
+   */
+  private getParsedFunctionCall(currToken: Token): Statement {
+    const args = this.getFunctionArguments();
+    this.getNextToken();
+    const supressOutput = this.isOutputSupressed();
+    if (supressOutput) {
+      this.getNextToken();
+    }
+    return {
+      type: "FUNCTION_CALL",
+      supressOutput,
+      context: this.getCurrentContext(),
+      LHE: {
+        type: "IDENTIFIER",
+        value: currToken.content,
+        functionData: {
+          args,
+        }
+      },
+    };
   }
 
 
@@ -500,7 +514,7 @@ export class Parser {
     while (!this.isEndFunctionToken() && !this.isEOF() && maxCalls < MAX_STATEMENTS) {
       const statement = this.parseStatement();
       if (statement) statements.push(statement);
-      maxCalls ++;
+      maxCalls++;
     }
     if (maxCalls >= MAX_STATEMENTS) {
       this.errors.push({
