@@ -1,6 +1,8 @@
 import { Expression, LintingError, LintingWarning, Program, Statement, Token, TokenType } from "../types";
 import { getRandomStringID } from "../utils";
 
+const MAX_STATEMENTS = 5000 as const;
+
 /**
  * Takes in a list of Tokens and makes an AST
  */
@@ -418,9 +420,17 @@ export class Parser {
     }
     this.getNextToken();
     const statements: Statement[] = [];
-    while (!this.isEndFunctionToken() && !this.isEOF()) {
+    let maxCalls = 0;
+    while (!this.isEndFunctionToken() && !this.isEOF() && maxCalls < MAX_STATEMENTS) {
       const statement = this.parseStatement();
       if (statement) statements.push(statement);
+      maxCalls++;
+    }
+    if (maxCalls >= MAX_STATEMENTS) {
+      this.errors.push({
+        message: "Max calls for statements in a function definition",
+        range: this.getCurrentToken().position,
+      });
     }
     const endToken = this.getCurrentToken();
     if (endToken.type === "EOF") {
@@ -486,9 +496,17 @@ export class Parser {
       this.getNextToken();
     }
     const statements: Statement[] = [];
-    while (!this.isEndFunctionToken() && !this.isEOF()) {
+    let maxCalls = 0;
+    while (!this.isEndFunctionToken() && !this.isEOF() && maxCalls < MAX_STATEMENTS) {
       const statement = this.parseStatement();
       if (statement) statements.push(statement);
+      maxCalls ++;
+    }
+    if (maxCalls >= MAX_STATEMENTS) {
+      this.errors.push({
+        message: "Max calls for statements in a function definition",
+        range: this.getCurrentToken().position,
+      });
     }
     const endToken = this.getCurrentToken();
     if (endToken.type === "EOF") {
@@ -600,7 +618,7 @@ export class Parser {
       if (nextTokenType === "RBRACKET") {
         break;
       }
-    } while (tokens[tokens.length - 1].type !== "RBRACKET");
+    } while (tokens[tokens.length - 1].type !== "RBRACKET" && this.currentTokenIndex < this.tokens.length);
     return tokens;
   }
 
