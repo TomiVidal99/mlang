@@ -1,6 +1,6 @@
 import { CompletionItem, CompletionItemKind, TextDocumentPositionParams, InsertTextFormat } from "vscode-languageserver";
 import { completionKeywords } from "../data";
-import { documents, visitors } from "../server";
+import { visitors } from "../server";
 
 export function handleCompletion({
   params,
@@ -13,9 +13,6 @@ export function handleCompletion({
   if (!visitor || !(visitor?.definitions)) return items;
 
   const { definitions } = visitor;
-
-  const document = documents.get(params.textDocument.uri);
-  if (!document) return items;
 
   items.push(...definitions
     .map((def) => {
