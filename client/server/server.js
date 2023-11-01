@@ -2409,7 +2409,7 @@ ${JSON.stringify(message, null, 4)}`);
         }
         return result;
       }
-      const connection3 = {
+      const connection2 = {
         sendNotification: (type, ...args) => {
           throwIfClosedOrDisposed();
           let method;
@@ -2491,7 +2491,7 @@ ${JSON.stringify(message, null, 4)}`);
           };
         },
         sendProgress: (_type, token, value) => {
-          return connection3.sendNotification(ProgressNotification.type, { token, value });
+          return connection2.sendNotification(ProgressNotification.type, { token, value });
         },
         onUnhandledProgress: unhandledProgressEmitter.event,
         sendRequest: (type, ...args) => {
@@ -2541,7 +2541,7 @@ ${JSON.stringify(message, null, 4)}`);
           let disposable;
           if (token) {
             disposable = token.onCancellationRequested(() => {
-              const p = cancellationStrategy.sender.sendCancellation(connection3, id);
+              const p = cancellationStrategy.sender.sendCancellation(connection2, id);
               if (p === void 0) {
                 logger.log(`Received no promise from cancellation strategy when cancelling id ${id}`);
                 return Promise.resolve();
@@ -2637,7 +2637,7 @@ ${JSON.stringify(message, null, 4)}`);
             tracer = _tracer;
           }
           if (_sendNotification && !isClosed() && !isDisposed()) {
-            await connection3.sendNotification(SetTraceNotification.type, { value: Trace.toString(_value) });
+            await connection2.sendNotification(SetTraceNotification.type, { value: Trace.toString(_value) });
           }
         },
         onError: errorEmitter.event,
@@ -2678,14 +2678,14 @@ ${JSON.stringify(message, null, 4)}`);
           (0, ral_1.default)().console.log("inspect");
         }
       };
-      connection3.onNotification(LogTraceNotification.type, (params) => {
+      connection2.onNotification(LogTraceNotification.type, (params) => {
         if (trace === Trace.Off || !tracer) {
           return;
         }
         const verbose = trace === Trace.Verbose || trace === Trace.Compact;
         tracer.log(params.message, verbose ? params.verbose : void 0);
       });
-      connection3.onNotification(ProgressNotification.type, (params) => {
+      connection2.onNotification(ProgressNotification.type, (params) => {
         const handler = progressHandlers.get(params.token);
         if (handler) {
           handler(params.value);
@@ -2693,7 +2693,7 @@ ${JSON.stringify(message, null, 4)}`);
           unhandledProgressEmitter.fire(params);
         }
       });
-      return connection3;
+      return connection2;
     }
     exports.createMessageConnection = createMessageConnection;
   }
@@ -3376,8 +3376,8 @@ var require_main2 = __commonJS({
         }
         uinteger2.is = is;
       })(uinteger = exports2.uinteger || (exports2.uinteger = {}));
-      var Position3;
-      (function(Position4) {
+      var Position2;
+      (function(Position3) {
         function create(line, character) {
           if (line === Number.MAX_VALUE) {
             line = uinteger.MAX_VALUE;
@@ -3387,31 +3387,31 @@ var require_main2 = __commonJS({
           }
           return { line, character };
         }
-        Position4.create = create;
+        Position3.create = create;
         function is(value) {
           var candidate = value;
           return Is.objectLiteral(candidate) && Is.uinteger(candidate.line) && Is.uinteger(candidate.character);
         }
-        Position4.is = is;
-      })(Position3 = exports2.Position || (exports2.Position = {}));
-      var Range3;
-      (function(Range4) {
+        Position3.is = is;
+      })(Position2 = exports2.Position || (exports2.Position = {}));
+      var Range2;
+      (function(Range3) {
         function create(one, two, three, four) {
           if (Is.uinteger(one) && Is.uinteger(two) && Is.uinteger(three) && Is.uinteger(four)) {
-            return { start: Position3.create(one, two), end: Position3.create(three, four) };
-          } else if (Position3.is(one) && Position3.is(two)) {
+            return { start: Position2.create(one, two), end: Position2.create(three, four) };
+          } else if (Position2.is(one) && Position2.is(two)) {
             return { start: one, end: two };
           } else {
             throw new Error("Range#create called with invalid arguments[".concat(one, ", ").concat(two, ", ").concat(three, ", ").concat(four, "]"));
           }
         }
-        Range4.create = create;
+        Range3.create = create;
         function is(value) {
           var candidate = value;
-          return Is.objectLiteral(candidate) && Position3.is(candidate.start) && Position3.is(candidate.end);
+          return Is.objectLiteral(candidate) && Position2.is(candidate.start) && Position2.is(candidate.end);
         }
-        Range4.is = is;
-      })(Range3 = exports2.Range || (exports2.Range = {}));
+        Range3.is = is;
+      })(Range2 = exports2.Range || (exports2.Range = {}));
       var Location;
       (function(Location2) {
         function create(uri, range) {
@@ -3420,7 +3420,7 @@ var require_main2 = __commonJS({
         Location2.create = create;
         function is(value) {
           var candidate = value;
-          return Is.objectLiteral(candidate) && Range3.is(candidate.range) && (Is.string(candidate.uri) || Is.undefined(candidate.uri));
+          return Is.objectLiteral(candidate) && Range2.is(candidate.range) && (Is.string(candidate.uri) || Is.undefined(candidate.uri));
         }
         Location2.is = is;
       })(Location = exports2.Location || (exports2.Location = {}));
@@ -3432,7 +3432,7 @@ var require_main2 = __commonJS({
         LocationLink2.create = create;
         function is(value) {
           var candidate = value;
-          return Is.objectLiteral(candidate) && Range3.is(candidate.targetRange) && Is.string(candidate.targetUri) && Range3.is(candidate.targetSelectionRange) && (Range3.is(candidate.originSelectionRange) || Is.undefined(candidate.originSelectionRange));
+          return Is.objectLiteral(candidate) && Range2.is(candidate.targetRange) && Is.string(candidate.targetUri) && Range2.is(candidate.targetSelectionRange) && (Range2.is(candidate.originSelectionRange) || Is.undefined(candidate.originSelectionRange));
         }
         LocationLink2.is = is;
       })(LocationLink = exports2.LocationLink || (exports2.LocationLink = {}));
@@ -3464,7 +3464,7 @@ var require_main2 = __commonJS({
         ColorInformation2.create = create;
         function is(value) {
           var candidate = value;
-          return Is.objectLiteral(candidate) && Range3.is(candidate.range) && Color.is(candidate.color);
+          return Is.objectLiteral(candidate) && Range2.is(candidate.range) && Color.is(candidate.color);
         }
         ColorInformation2.is = is;
       })(ColorInformation = exports2.ColorInformation || (exports2.ColorInformation = {}));
@@ -3480,7 +3480,7 @@ var require_main2 = __commonJS({
         ColorPresentation2.create = create;
         function is(value) {
           var candidate = value;
-          return Is.objectLiteral(candidate) && Is.string(candidate.label) && (Is.undefined(candidate.textEdit) || TextEdit2.is(candidate)) && (Is.undefined(candidate.additionalTextEdits) || Is.typedArray(candidate.additionalTextEdits, TextEdit2.is));
+          return Is.objectLiteral(candidate) && Is.string(candidate.label) && (Is.undefined(candidate.textEdit) || TextEdit.is(candidate)) && (Is.undefined(candidate.additionalTextEdits) || Is.typedArray(candidate.additionalTextEdits, TextEdit.is));
         }
         ColorPresentation2.is = is;
       })(ColorPresentation = exports2.ColorPresentation || (exports2.ColorPresentation = {}));
@@ -3575,7 +3575,7 @@ var require_main2 = __commonJS({
         function is(value) {
           var _a;
           var candidate = value;
-          return Is.defined(candidate) && Range3.is(candidate.range) && Is.string(candidate.message) && (Is.number(candidate.severity) || Is.undefined(candidate.severity)) && (Is.integer(candidate.code) || Is.string(candidate.code) || Is.undefined(candidate.code)) && (Is.undefined(candidate.codeDescription) || Is.string((_a = candidate.codeDescription) === null || _a === void 0 ? void 0 : _a.href)) && (Is.string(candidate.source) || Is.undefined(candidate.source)) && (Is.undefined(candidate.relatedInformation) || Is.typedArray(candidate.relatedInformation, DiagnosticRelatedInformation.is));
+          return Is.defined(candidate) && Range2.is(candidate.range) && Is.string(candidate.message) && (Is.number(candidate.severity) || Is.undefined(candidate.severity)) && (Is.integer(candidate.code) || Is.string(candidate.code) || Is.undefined(candidate.code)) && (Is.undefined(candidate.codeDescription) || Is.string((_a = candidate.codeDescription) === null || _a === void 0 ? void 0 : _a.href)) && (Is.string(candidate.source) || Is.undefined(candidate.source)) && (Is.undefined(candidate.relatedInformation) || Is.typedArray(candidate.relatedInformation, DiagnosticRelatedInformation.is));
         }
         Diagnostic4.is = is;
       })(Diagnostic3 = exports2.Diagnostic || (exports2.Diagnostic = {}));
@@ -3599,26 +3599,26 @@ var require_main2 = __commonJS({
         }
         Command2.is = is;
       })(Command = exports2.Command || (exports2.Command = {}));
-      var TextEdit2;
-      (function(TextEdit3) {
+      var TextEdit;
+      (function(TextEdit2) {
         function replace(range, newText) {
           return { range, newText };
         }
-        TextEdit3.replace = replace;
+        TextEdit2.replace = replace;
         function insert(position, newText) {
           return { range: { start: position, end: position }, newText };
         }
-        TextEdit3.insert = insert;
+        TextEdit2.insert = insert;
         function del(range) {
           return { range, newText: "" };
         }
-        TextEdit3.del = del;
+        TextEdit2.del = del;
         function is(value) {
           var candidate = value;
-          return Is.objectLiteral(candidate) && Is.string(candidate.newText) && Range3.is(candidate.range);
+          return Is.objectLiteral(candidate) && Is.string(candidate.newText) && Range2.is(candidate.range);
         }
-        TextEdit3.is = is;
-      })(TextEdit2 = exports2.TextEdit || (exports2.TextEdit = {}));
+        TextEdit2.is = is;
+      })(TextEdit = exports2.TextEdit || (exports2.TextEdit = {}));
       var ChangeAnnotation;
       (function(ChangeAnnotation2) {
         function create(label, needsConfirmation, description) {
@@ -3662,7 +3662,7 @@ var require_main2 = __commonJS({
         AnnotatedTextEdit2.del = del;
         function is(value) {
           var candidate = value;
-          return TextEdit2.is(candidate) && (ChangeAnnotation.is(candidate.annotationId) || ChangeAnnotationIdentifier.is(candidate.annotationId));
+          return TextEdit.is(candidate) && (ChangeAnnotation.is(candidate.annotationId) || ChangeAnnotationIdentifier.is(candidate.annotationId));
         }
         AnnotatedTextEdit2.is = is;
       })(AnnotatedTextEdit = exports2.AnnotatedTextEdit || (exports2.AnnotatedTextEdit = {}));
@@ -3770,7 +3770,7 @@ var require_main2 = __commonJS({
             var edit;
             var id;
             if (annotation === void 0) {
-              edit = TextEdit2.insert(position, newText);
+              edit = TextEdit.insert(position, newText);
             } else if (ChangeAnnotationIdentifier.is(annotation)) {
               id = annotation;
               edit = AnnotatedTextEdit.insert(position, newText, annotation);
@@ -3788,7 +3788,7 @@ var require_main2 = __commonJS({
             var edit;
             var id;
             if (annotation === void 0) {
-              edit = TextEdit2.replace(range, newText);
+              edit = TextEdit.replace(range, newText);
             } else if (ChangeAnnotationIdentifier.is(annotation)) {
               id = annotation;
               edit = AnnotatedTextEdit.replace(range, newText, annotation);
@@ -3806,7 +3806,7 @@ var require_main2 = __commonJS({
             var edit;
             var id;
             if (annotation === void 0) {
-              edit = TextEdit2.del(range);
+              edit = TextEdit.del(range);
             } else if (ChangeAnnotationIdentifier.is(annotation)) {
               id = annotation;
               edit = AnnotatedTextEdit.del(range, annotation);
@@ -4096,52 +4096,52 @@ var require_main2 = __commonJS({
         }
         TextDocumentItem2.is = is;
       })(TextDocumentItem = exports2.TextDocumentItem || (exports2.TextDocumentItem = {}));
-      var MarkupKind2;
-      (function(MarkupKind3) {
-        MarkupKind3.PlainText = "plaintext";
-        MarkupKind3.Markdown = "markdown";
+      var MarkupKind3;
+      (function(MarkupKind4) {
+        MarkupKind4.PlainText = "plaintext";
+        MarkupKind4.Markdown = "markdown";
         function is(value) {
           var candidate = value;
-          return candidate === MarkupKind3.PlainText || candidate === MarkupKind3.Markdown;
+          return candidate === MarkupKind4.PlainText || candidate === MarkupKind4.Markdown;
         }
-        MarkupKind3.is = is;
-      })(MarkupKind2 = exports2.MarkupKind || (exports2.MarkupKind = {}));
+        MarkupKind4.is = is;
+      })(MarkupKind3 = exports2.MarkupKind || (exports2.MarkupKind = {}));
       var MarkupContent;
       (function(MarkupContent2) {
         function is(value) {
           var candidate = value;
-          return Is.objectLiteral(value) && MarkupKind2.is(candidate.kind) && Is.string(candidate.value);
+          return Is.objectLiteral(value) && MarkupKind3.is(candidate.kind) && Is.string(candidate.value);
         }
         MarkupContent2.is = is;
       })(MarkupContent = exports2.MarkupContent || (exports2.MarkupContent = {}));
-      var CompletionItemKind3;
-      (function(CompletionItemKind4) {
-        CompletionItemKind4.Text = 1;
-        CompletionItemKind4.Method = 2;
-        CompletionItemKind4.Function = 3;
-        CompletionItemKind4.Constructor = 4;
-        CompletionItemKind4.Field = 5;
-        CompletionItemKind4.Variable = 6;
-        CompletionItemKind4.Class = 7;
-        CompletionItemKind4.Interface = 8;
-        CompletionItemKind4.Module = 9;
-        CompletionItemKind4.Property = 10;
-        CompletionItemKind4.Unit = 11;
-        CompletionItemKind4.Value = 12;
-        CompletionItemKind4.Enum = 13;
-        CompletionItemKind4.Keyword = 14;
-        CompletionItemKind4.Snippet = 15;
-        CompletionItemKind4.Color = 16;
-        CompletionItemKind4.File = 17;
-        CompletionItemKind4.Reference = 18;
-        CompletionItemKind4.Folder = 19;
-        CompletionItemKind4.EnumMember = 20;
-        CompletionItemKind4.Constant = 21;
-        CompletionItemKind4.Struct = 22;
-        CompletionItemKind4.Event = 23;
-        CompletionItemKind4.Operator = 24;
-        CompletionItemKind4.TypeParameter = 25;
-      })(CompletionItemKind3 = exports2.CompletionItemKind || (exports2.CompletionItemKind = {}));
+      var CompletionItemKind4;
+      (function(CompletionItemKind5) {
+        CompletionItemKind5.Text = 1;
+        CompletionItemKind5.Method = 2;
+        CompletionItemKind5.Function = 3;
+        CompletionItemKind5.Constructor = 4;
+        CompletionItemKind5.Field = 5;
+        CompletionItemKind5.Variable = 6;
+        CompletionItemKind5.Class = 7;
+        CompletionItemKind5.Interface = 8;
+        CompletionItemKind5.Module = 9;
+        CompletionItemKind5.Property = 10;
+        CompletionItemKind5.Unit = 11;
+        CompletionItemKind5.Value = 12;
+        CompletionItemKind5.Enum = 13;
+        CompletionItemKind5.Keyword = 14;
+        CompletionItemKind5.Snippet = 15;
+        CompletionItemKind5.Color = 16;
+        CompletionItemKind5.File = 17;
+        CompletionItemKind5.Reference = 18;
+        CompletionItemKind5.Folder = 19;
+        CompletionItemKind5.EnumMember = 20;
+        CompletionItemKind5.Constant = 21;
+        CompletionItemKind5.Struct = 22;
+        CompletionItemKind5.Event = 23;
+        CompletionItemKind5.Operator = 24;
+        CompletionItemKind5.TypeParameter = 25;
+      })(CompletionItemKind4 = exports2.CompletionItemKind || (exports2.CompletionItemKind = {}));
       var InsertTextFormat3;
       (function(InsertTextFormat4) {
         InsertTextFormat4.PlainText = 1;
@@ -4159,7 +4159,7 @@ var require_main2 = __commonJS({
         InsertReplaceEdit2.create = create;
         function is(value) {
           var candidate = value;
-          return candidate && Is.string(candidate.newText) && Range3.is(candidate.insert) && Range3.is(candidate.replace);
+          return candidate && Is.string(candidate.newText) && Range2.is(candidate.insert) && Range2.is(candidate.replace);
         }
         InsertReplaceEdit2.is = is;
       })(InsertReplaceEdit = exports2.InsertReplaceEdit || (exports2.InsertReplaceEdit = {}));
@@ -4176,13 +4176,13 @@ var require_main2 = __commonJS({
         }
         CompletionItemLabelDetails2.is = is;
       })(CompletionItemLabelDetails = exports2.CompletionItemLabelDetails || (exports2.CompletionItemLabelDetails = {}));
-      var CompletionItem3;
-      (function(CompletionItem4) {
+      var CompletionItem4;
+      (function(CompletionItem5) {
         function create(label) {
           return { label };
         }
-        CompletionItem4.create = create;
-      })(CompletionItem3 = exports2.CompletionItem || (exports2.CompletionItem = {}));
+        CompletionItem5.create = create;
+      })(CompletionItem4 = exports2.CompletionItem || (exports2.CompletionItem = {}));
       var CompletionList;
       (function(CompletionList2) {
         function create(items, isIncomplete) {
@@ -4206,7 +4206,7 @@ var require_main2 = __commonJS({
       (function(Hover2) {
         function is(value) {
           var candidate = value;
-          return !!candidate && Is.objectLiteral(candidate) && (MarkupContent.is(candidate.contents) || MarkedString.is(candidate.contents) || Is.typedArray(candidate.contents, MarkedString.is)) && (value.range === void 0 || Range3.is(value.range));
+          return !!candidate && Is.objectLiteral(candidate) && (MarkupContent.is(candidate.contents) || MarkedString.is(candidate.contents) || Is.typedArray(candidate.contents, MarkedString.is)) && (value.range === void 0 || Range2.is(value.range));
         }
         Hover2.is = is;
       })(Hover = exports2.Hover || (exports2.Hover = {}));
@@ -4327,7 +4327,7 @@ var require_main2 = __commonJS({
         DocumentSymbol2.create = create;
         function is(value) {
           var candidate = value;
-          return candidate && Is.string(candidate.name) && Is.number(candidate.kind) && Range3.is(candidate.range) && Range3.is(candidate.selectionRange) && (candidate.detail === void 0 || Is.string(candidate.detail)) && (candidate.deprecated === void 0 || Is.boolean(candidate.deprecated)) && (candidate.children === void 0 || Array.isArray(candidate.children)) && (candidate.tags === void 0 || Array.isArray(candidate.tags));
+          return candidate && Is.string(candidate.name) && Is.number(candidate.kind) && Range2.is(candidate.range) && Range2.is(candidate.selectionRange) && (candidate.detail === void 0 || Is.string(candidate.detail)) && (candidate.deprecated === void 0 || Is.boolean(candidate.deprecated)) && (candidate.children === void 0 || Array.isArray(candidate.children)) && (candidate.tags === void 0 || Array.isArray(candidate.tags));
         }
         DocumentSymbol2.is = is;
       })(DocumentSymbol = exports2.DocumentSymbol || (exports2.DocumentSymbol = {}));
@@ -4404,7 +4404,7 @@ var require_main2 = __commonJS({
         CodeLens2.create = create;
         function is(value) {
           var candidate = value;
-          return Is.defined(candidate) && Range3.is(candidate.range) && (Is.undefined(candidate.command) || Command.is(candidate.command));
+          return Is.defined(candidate) && Range2.is(candidate.range) && (Is.undefined(candidate.command) || Command.is(candidate.command));
         }
         CodeLens2.is = is;
       })(CodeLens = exports2.CodeLens || (exports2.CodeLens = {}));
@@ -4428,7 +4428,7 @@ var require_main2 = __commonJS({
         DocumentLink2.create = create;
         function is(value) {
           var candidate = value;
-          return Is.defined(candidate) && Range3.is(candidate.range) && (Is.undefined(candidate.target) || Is.string(candidate.target));
+          return Is.defined(candidate) && Range2.is(candidate.range) && (Is.undefined(candidate.target) || Is.string(candidate.target));
         }
         DocumentLink2.is = is;
       })(DocumentLink = exports2.DocumentLink || (exports2.DocumentLink = {}));
@@ -4440,7 +4440,7 @@ var require_main2 = __commonJS({
         SelectionRange2.create = create;
         function is(value) {
           var candidate = value;
-          return Is.objectLiteral(candidate) && Range3.is(candidate.range) && (candidate.parent === void 0 || SelectionRange2.is(candidate.parent));
+          return Is.objectLiteral(candidate) && Range2.is(candidate.range) && (candidate.parent === void 0 || SelectionRange2.is(candidate.parent));
         }
         SelectionRange2.is = is;
       })(SelectionRange = exports2.SelectionRange || (exports2.SelectionRange = {}));
@@ -4499,7 +4499,7 @@ var require_main2 = __commonJS({
         InlineValueText2.create = create;
         function is(value) {
           var candidate = value;
-          return candidate !== void 0 && candidate !== null && Range3.is(candidate.range) && Is.string(candidate.text);
+          return candidate !== void 0 && candidate !== null && Range2.is(candidate.range) && Is.string(candidate.text);
         }
         InlineValueText2.is = is;
       })(InlineValueText = exports2.InlineValueText || (exports2.InlineValueText = {}));
@@ -4511,7 +4511,7 @@ var require_main2 = __commonJS({
         InlineValueVariableLookup2.create = create;
         function is(value) {
           var candidate = value;
-          return candidate !== void 0 && candidate !== null && Range3.is(candidate.range) && Is.boolean(candidate.caseSensitiveLookup) && (Is.string(candidate.variableName) || candidate.variableName === void 0);
+          return candidate !== void 0 && candidate !== null && Range2.is(candidate.range) && Is.boolean(candidate.caseSensitiveLookup) && (Is.string(candidate.variableName) || candidate.variableName === void 0);
         }
         InlineValueVariableLookup2.is = is;
       })(InlineValueVariableLookup = exports2.InlineValueVariableLookup || (exports2.InlineValueVariableLookup = {}));
@@ -4523,7 +4523,7 @@ var require_main2 = __commonJS({
         InlineValueEvaluatableExpression2.create = create;
         function is(value) {
           var candidate = value;
-          return candidate !== void 0 && candidate !== null && Range3.is(candidate.range) && (Is.string(candidate.expression) || candidate.expression === void 0);
+          return candidate !== void 0 && candidate !== null && Range2.is(candidate.range) && (Is.string(candidate.expression) || candidate.expression === void 0);
         }
         InlineValueEvaluatableExpression2.is = is;
       })(InlineValueEvaluatableExpression = exports2.InlineValueEvaluatableExpression || (exports2.InlineValueEvaluatableExpression = {}));
@@ -4535,7 +4535,7 @@ var require_main2 = __commonJS({
         InlineValueContext2.create = create;
         function is(value) {
           var candidate = value;
-          return Is.defined(candidate) && Range3.is(value.stoppedLocation);
+          return Is.defined(candidate) && Range2.is(value.stoppedLocation);
         }
         InlineValueContext2.is = is;
       })(InlineValueContext = exports2.InlineValueContext || (exports2.InlineValueContext = {}));
@@ -4572,7 +4572,7 @@ var require_main2 = __commonJS({
         InlayHint2.create = create;
         function is(value) {
           var candidate = value;
-          return Is.objectLiteral(candidate) && Position3.is(candidate.position) && (Is.string(candidate.label) || Is.typedArray(candidate.label, InlayHintLabelPart.is)) && (candidate.kind === void 0 || InlayHintKind.is(candidate.kind)) && candidate.textEdits === void 0 || Is.typedArray(candidate.textEdits, TextEdit2.is) && (candidate.tooltip === void 0 || Is.string(candidate.tooltip) || MarkupContent.is(candidate.tooltip)) && (candidate.paddingLeft === void 0 || Is.boolean(candidate.paddingLeft)) && (candidate.paddingRight === void 0 || Is.boolean(candidate.paddingRight));
+          return Is.objectLiteral(candidate) && Position2.is(candidate.position) && (Is.string(candidate.label) || Is.typedArray(candidate.label, InlayHintLabelPart.is)) && (candidate.kind === void 0 || InlayHintKind.is(candidate.kind)) && candidate.textEdits === void 0 || Is.typedArray(candidate.textEdits, TextEdit.is) && (candidate.tooltip === void 0 || Is.string(candidate.tooltip) || MarkupContent.is(candidate.tooltip)) && (candidate.paddingLeft === void 0 || Is.boolean(candidate.paddingLeft)) && (candidate.paddingRight === void 0 || Is.boolean(candidate.paddingRight));
         }
         InlayHint2.is = is;
       })(InlayHint = exports2.InlayHint || (exports2.InlayHint = {}));
@@ -4721,7 +4721,7 @@ var require_main2 = __commonJS({
             var lineOffsets = this.getLineOffsets();
             var low = 0, high = lineOffsets.length;
             if (high === 0) {
-              return Position3.create(0, offset);
+              return Position2.create(0, offset);
             }
             while (low < high) {
               var mid = Math.floor((low + high) / 2);
@@ -4732,7 +4732,7 @@ var require_main2 = __commonJS({
               }
             }
             var line = low - 1;
-            return Position3.create(line, offset - lineOffsets[line]);
+            return Position2.create(line, offset - lineOffsets[line]);
           };
           FullTextDocument2.prototype.offsetAt = function(position) {
             var lineOffsets = this.getLineOffsets();
@@ -6425,8 +6425,8 @@ var require_progress = __commonJS({
     };
     WorkDoneProgressReporterImpl.Instances = /* @__PURE__ */ new Map();
     var WorkDoneProgressServerReporterImpl = class extends WorkDoneProgressReporterImpl {
-      constructor(connection3, token) {
-        super(connection3, token);
+      constructor(connection2, token) {
+        super(connection2, token);
         this._source = new vscode_languageserver_protocol_1.CancellationTokenSource();
       }
       get token() {
@@ -6465,13 +6465,13 @@ var require_progress = __commonJS({
         this._source.cancel();
       }
     };
-    function attachWorkDone(connection3, params) {
+    function attachWorkDone(connection2, params) {
       if (params === void 0 || params.workDoneToken === void 0) {
         return new NullProgressReporter();
       }
       const token = params.workDoneToken;
       delete params.workDoneToken;
-      return new WorkDoneProgressReporterImpl(connection3, token);
+      return new WorkDoneProgressReporterImpl(connection2, token);
     }
     exports.attachWorkDone = attachWorkDone;
     var ProgressFeature = (Base) => {
@@ -6526,13 +6526,13 @@ var require_progress = __commonJS({
         this._connection.sendProgress(ResultProgress.type, this._token, data);
       }
     };
-    function attachPartialResult(connection3, params) {
+    function attachPartialResult(connection2, params) {
       if (params === void 0 || params.partialResultToken === void 0) {
         return void 0;
       }
       const token = params.partialResultToken;
       delete params.partialResultToken;
-      return new ResultProgressReporterImpl(connection3, token);
+      return new ResultProgressReporterImpl(connection2, token);
     }
     exports.attachPartialResult = attachPartialResult;
   }
@@ -7116,10 +7116,10 @@ var require_textDocuments = __commonJS({
        *
        * @param connection The connection to listen on.
        */
-      listen(connection3) {
-        connection3.__textDocumentSync = vscode_languageserver_protocol_1.TextDocumentSyncKind.Incremental;
+      listen(connection2) {
+        connection2.__textDocumentSync = vscode_languageserver_protocol_1.TextDocumentSyncKind.Incremental;
         const disposables = [];
-        disposables.push(connection3.onDidOpenTextDocument((event) => {
+        disposables.push(connection2.onDidOpenTextDocument((event) => {
           const td = event.textDocument;
           const document = this._configuration.create(td.uri, td.languageId, td.version, td.text);
           this._syncedDocuments.set(td.uri, document);
@@ -7127,7 +7127,7 @@ var require_textDocuments = __commonJS({
           this._onDidOpen.fire(toFire);
           this._onDidChangeContent.fire(toFire);
         }));
-        disposables.push(connection3.onDidChangeTextDocument((event) => {
+        disposables.push(connection2.onDidChangeTextDocument((event) => {
           const td = event.textDocument;
           const changes = event.contentChanges;
           if (changes.length === 0) {
@@ -7144,20 +7144,20 @@ var require_textDocuments = __commonJS({
             this._onDidChangeContent.fire(Object.freeze({ document: syncedDocument }));
           }
         }));
-        disposables.push(connection3.onDidCloseTextDocument((event) => {
+        disposables.push(connection2.onDidCloseTextDocument((event) => {
           let syncedDocument = this._syncedDocuments.get(event.textDocument.uri);
           if (syncedDocument !== void 0) {
             this._syncedDocuments.delete(event.textDocument.uri);
             this._onDidClose.fire(Object.freeze({ document: syncedDocument }));
           }
         }));
-        disposables.push(connection3.onWillSaveTextDocument((event) => {
+        disposables.push(connection2.onWillSaveTextDocument((event) => {
           let syncedDocument = this._syncedDocuments.get(event.textDocument.uri);
           if (syncedDocument !== void 0) {
             this._onWillSave.fire(Object.freeze({ document: syncedDocument, reason: event.reason }));
           }
         }));
-        disposables.push(connection3.onWillSaveTextDocumentWaitUntil((event, token) => {
+        disposables.push(connection2.onWillSaveTextDocumentWaitUntil((event, token) => {
           let syncedDocument = this._syncedDocuments.get(event.textDocument.uri);
           if (syncedDocument !== void 0 && this._willSaveWaitUntil) {
             return this._willSaveWaitUntil(Object.freeze({ document: syncedDocument, reason: event.reason }), token);
@@ -7165,7 +7165,7 @@ var require_textDocuments = __commonJS({
             return [];
           }
         }));
-        disposables.push(connection3.onDidSaveTextDocument((event) => {
+        disposables.push(connection2.onDidSaveTextDocument((event) => {
           let syncedDocument = this._syncedDocuments.get(event.textDocument.uri);
           if (syncedDocument !== void 0) {
             this._onDidSave.fire(Object.freeze({ document: syncedDocument }));
@@ -7312,11 +7312,11 @@ var require_notebook = __commonJS({
        *
        * @param connection The connection to listen on.
        */
-      listen(connection3) {
+      listen(connection2) {
         const cellTextDocumentConnection = new CellTextDocumentConnection();
         const disposables = [];
         disposables.push(this.cellTextDocuments.listen(cellTextDocumentConnection));
-        disposables.push(connection3.notebooks.synchronization.onDidOpenNotebookDocument((params) => {
+        disposables.push(connection2.notebooks.synchronization.onDidOpenNotebookDocument((params) => {
           this.notebookDocuments.set(params.notebookDocument.uri, params.notebookDocument);
           for (const cellTextDocument of params.cellTextDocuments) {
             cellTextDocumentConnection.openTextDocument({ textDocument: cellTextDocument });
@@ -7324,7 +7324,7 @@ var require_notebook = __commonJS({
           this.updateCellMap(params.notebookDocument);
           this._onDidOpen.fire(params.notebookDocument);
         }));
-        disposables.push(connection3.notebooks.synchronization.onDidChangeNotebookDocument((params) => {
+        disposables.push(connection2.notebooks.synchronization.onDidChangeNotebookDocument((params) => {
           const notebookDocument = this.notebookDocuments.get(params.notebookDocument.uri);
           if (notebookDocument === void 0) {
             return;
@@ -7404,14 +7404,14 @@ var require_notebook = __commonJS({
             this._onDidChange.fire(changeEvent);
           }
         }));
-        disposables.push(connection3.notebooks.synchronization.onDidSaveNotebookDocument((params) => {
+        disposables.push(connection2.notebooks.synchronization.onDidSaveNotebookDocument((params) => {
           const notebookDocument = this.notebookDocuments.get(params.notebookDocument.uri);
           if (notebookDocument === void 0) {
             return;
           }
           this._onDidSave.fire(notebookDocument);
         }));
-        disposables.push(connection3.notebooks.synchronization.onDidCloseNotebookDocument((params) => {
+        disposables.push(connection2.notebooks.synchronization.onDidCloseNotebookDocument((params) => {
           const notebookDocument = this.notebookDocuments.get(params.notebookDocument.uri);
           if (notebookDocument === void 0) {
             return;
@@ -7515,9 +7515,9 @@ var require_server = __commonJS({
        *
        * @param connection The connection established between client and server.
        */
-      sendErrors(connection3) {
+      sendErrors(connection2) {
         Object.keys(this._messages).forEach((message) => {
-          connection3.window.showErrorMessage(message);
+          connection2.window.showErrorMessage(message);
         });
       }
     };
@@ -7525,11 +7525,11 @@ var require_server = __commonJS({
     var RemoteConsoleImpl = class {
       constructor() {
       }
-      rawAttach(connection3) {
-        this._rawConnection = connection3;
+      rawAttach(connection2) {
+        this._rawConnection = connection2;
       }
-      attach(connection3) {
-        this._connection = connection3;
+      attach(connection2) {
+        this._connection = connection2;
       }
       get connection() {
         if (!this._connection) {
@@ -7564,8 +7564,8 @@ var require_server = __commonJS({
     var _RemoteWindowImpl = class {
       constructor() {
       }
-      attach(connection3) {
-        this._connection = connection3;
+      attach(connection2) {
+        this._connection = connection2;
       }
       get connection() {
         if (!this._connection) {
@@ -7640,8 +7640,8 @@ var require_server = __commonJS({
       get isAttached() {
         return !!this._connection;
       }
-      attach(connection3) {
-        this._connection = connection3;
+      attach(connection2) {
+        this._connection = connection2;
       }
       add(unregistration) {
         this._unregistrations.set(unregistration.method, unregistration);
@@ -7676,8 +7676,8 @@ var require_server = __commonJS({
       }
     };
     var RemoteClientImpl = class {
-      attach(connection3) {
-        this._connection = connection3;
+      attach(connection2) {
+        this._connection = connection2;
       }
       get connection() {
         if (!this._connection) {
@@ -7755,8 +7755,8 @@ var require_server = __commonJS({
     var _RemoteWorkspaceImpl = class {
       constructor() {
       }
-      attach(connection3) {
-        this._connection = connection3;
+      attach(connection2) {
+        this._connection = connection2;
       }
       get connection() {
         if (!this._connection) {
@@ -7781,8 +7781,8 @@ var require_server = __commonJS({
       constructor() {
         this._trace = vscode_languageserver_protocol_1.Trace.Off;
       }
-      attach(connection3) {
-        this._connection = connection3;
+      attach(connection2) {
+        this._connection = connection2;
       }
       get connection() {
         if (!this._connection) {
@@ -7811,8 +7811,8 @@ var require_server = __commonJS({
     var TelemetryImpl = class {
       constructor() {
       }
-      attach(connection3) {
-        this._connection = connection3;
+      attach(connection2) {
+        this._connection = connection2;
       }
       get connection() {
         if (!this._connection) {
@@ -7833,8 +7833,8 @@ var require_server = __commonJS({
     var _LanguagesImpl = class {
       constructor() {
       }
-      attach(connection3) {
-        this._connection = connection3;
+      attach(connection2) {
+        this._connection = connection2;
       }
       get connection() {
         if (!this._connection) {
@@ -7858,8 +7858,8 @@ var require_server = __commonJS({
     var _NotebooksImpl = class {
       constructor() {
       }
-      attach(connection3) {
-        this._connection = connection3;
+      attach(connection2) {
+        this._connection = connection2;
       }
       get connection() {
         if (!this._connection) {
@@ -7954,8 +7954,8 @@ var require_server = __commonJS({
     exports.combineFeatures = combineFeatures;
     function createConnection2(connectionFactory, watchDog, factories) {
       const logger = factories && factories.console ? new (factories.console(RemoteConsoleImpl))() : new RemoteConsoleImpl();
-      const connection3 = connectionFactory(logger);
-      logger.rawAttach(connection3);
+      const connection2 = connectionFactory(logger);
+      logger.rawAttach(connection2);
       const tracer = factories && factories.tracer ? new (factories.tracer(TracerImpl))() : new TracerImpl();
       const telemetry = factories && factories.telemetry ? new (factories.telemetry(TelemetryImpl))() : new TelemetryImpl();
       const client = factories && factories.client ? new (factories.client(RemoteClientImpl))() : new RemoteClientImpl();
@@ -7979,20 +7979,20 @@ var require_server = __commonJS({
       let initializeHandler = void 0;
       let exitHandler = void 0;
       let protocolConnection = {
-        listen: () => connection3.listen(),
-        sendRequest: (type, ...params) => connection3.sendRequest(Is.string(type) ? type : type.method, ...params),
-        onRequest: (type, handler) => connection3.onRequest(type, handler),
+        listen: () => connection2.listen(),
+        sendRequest: (type, ...params) => connection2.sendRequest(Is.string(type) ? type : type.method, ...params),
+        onRequest: (type, handler) => connection2.onRequest(type, handler),
         sendNotification: (type, param) => {
           const method = Is.string(type) ? type : type.method;
           if (arguments.length === 1) {
-            return connection3.sendNotification(method);
+            return connection2.sendNotification(method);
           } else {
-            return connection3.sendNotification(method, param);
+            return connection2.sendNotification(method, param);
           }
         },
-        onNotification: (type, handler) => connection3.onNotification(type, handler),
-        onProgress: connection3.onProgress,
-        sendProgress: connection3.sendProgress,
+        onNotification: (type, handler) => connection2.onNotification(type, handler),
+        onProgress: connection2.onProgress,
+        sendProgress: connection2.sendProgress,
         onInitialize: (handler) => {
           initializeHandler = handler;
           return {
@@ -8001,7 +8001,7 @@ var require_server = __commonJS({
             }
           };
         },
-        onInitialized: (handler) => connection3.onNotification(vscode_languageserver_protocol_1.InitializedNotification.type, handler),
+        onInitialized: (handler) => connection2.onNotification(vscode_languageserver_protocol_1.InitializedNotification.type, handler),
         onShutdown: (handler) => {
           shutdownHandler = handler;
           return {
@@ -8042,105 +8042,105 @@ var require_server = __commonJS({
         get notebooks() {
           return notebooks;
         },
-        onDidChangeConfiguration: (handler) => connection3.onNotification(vscode_languageserver_protocol_1.DidChangeConfigurationNotification.type, handler),
-        onDidChangeWatchedFiles: (handler) => connection3.onNotification(vscode_languageserver_protocol_1.DidChangeWatchedFilesNotification.type, handler),
+        onDidChangeConfiguration: (handler) => connection2.onNotification(vscode_languageserver_protocol_1.DidChangeConfigurationNotification.type, handler),
+        onDidChangeWatchedFiles: (handler) => connection2.onNotification(vscode_languageserver_protocol_1.DidChangeWatchedFilesNotification.type, handler),
         __textDocumentSync: void 0,
-        onDidOpenTextDocument: (handler) => connection3.onNotification(vscode_languageserver_protocol_1.DidOpenTextDocumentNotification.type, handler),
-        onDidChangeTextDocument: (handler) => connection3.onNotification(vscode_languageserver_protocol_1.DidChangeTextDocumentNotification.type, handler),
-        onDidCloseTextDocument: (handler) => connection3.onNotification(vscode_languageserver_protocol_1.DidCloseTextDocumentNotification.type, handler),
-        onWillSaveTextDocument: (handler) => connection3.onNotification(vscode_languageserver_protocol_1.WillSaveTextDocumentNotification.type, handler),
-        onWillSaveTextDocumentWaitUntil: (handler) => connection3.onRequest(vscode_languageserver_protocol_1.WillSaveTextDocumentWaitUntilRequest.type, handler),
-        onDidSaveTextDocument: (handler) => connection3.onNotification(vscode_languageserver_protocol_1.DidSaveTextDocumentNotification.type, handler),
-        sendDiagnostics: (params) => connection3.sendNotification(vscode_languageserver_protocol_1.PublishDiagnosticsNotification.type, params),
-        onHover: (handler) => connection3.onRequest(vscode_languageserver_protocol_1.HoverRequest.type, (params, cancel) => {
-          return handler(params, cancel, (0, progress_1.attachWorkDone)(connection3, params), void 0);
+        onDidOpenTextDocument: (handler) => connection2.onNotification(vscode_languageserver_protocol_1.DidOpenTextDocumentNotification.type, handler),
+        onDidChangeTextDocument: (handler) => connection2.onNotification(vscode_languageserver_protocol_1.DidChangeTextDocumentNotification.type, handler),
+        onDidCloseTextDocument: (handler) => connection2.onNotification(vscode_languageserver_protocol_1.DidCloseTextDocumentNotification.type, handler),
+        onWillSaveTextDocument: (handler) => connection2.onNotification(vscode_languageserver_protocol_1.WillSaveTextDocumentNotification.type, handler),
+        onWillSaveTextDocumentWaitUntil: (handler) => connection2.onRequest(vscode_languageserver_protocol_1.WillSaveTextDocumentWaitUntilRequest.type, handler),
+        onDidSaveTextDocument: (handler) => connection2.onNotification(vscode_languageserver_protocol_1.DidSaveTextDocumentNotification.type, handler),
+        sendDiagnostics: (params) => connection2.sendNotification(vscode_languageserver_protocol_1.PublishDiagnosticsNotification.type, params),
+        onHover: (handler) => connection2.onRequest(vscode_languageserver_protocol_1.HoverRequest.type, (params, cancel) => {
+          return handler(params, cancel, (0, progress_1.attachWorkDone)(connection2, params), void 0);
         }),
-        onCompletion: (handler) => connection3.onRequest(vscode_languageserver_protocol_1.CompletionRequest.type, (params, cancel) => {
-          return handler(params, cancel, (0, progress_1.attachWorkDone)(connection3, params), (0, progress_1.attachPartialResult)(connection3, params));
+        onCompletion: (handler) => connection2.onRequest(vscode_languageserver_protocol_1.CompletionRequest.type, (params, cancel) => {
+          return handler(params, cancel, (0, progress_1.attachWorkDone)(connection2, params), (0, progress_1.attachPartialResult)(connection2, params));
         }),
-        onCompletionResolve: (handler) => connection3.onRequest(vscode_languageserver_protocol_1.CompletionResolveRequest.type, handler),
-        onSignatureHelp: (handler) => connection3.onRequest(vscode_languageserver_protocol_1.SignatureHelpRequest.type, (params, cancel) => {
-          return handler(params, cancel, (0, progress_1.attachWorkDone)(connection3, params), void 0);
+        onCompletionResolve: (handler) => connection2.onRequest(vscode_languageserver_protocol_1.CompletionResolveRequest.type, handler),
+        onSignatureHelp: (handler) => connection2.onRequest(vscode_languageserver_protocol_1.SignatureHelpRequest.type, (params, cancel) => {
+          return handler(params, cancel, (0, progress_1.attachWorkDone)(connection2, params), void 0);
         }),
-        onDeclaration: (handler) => connection3.onRequest(vscode_languageserver_protocol_1.DeclarationRequest.type, (params, cancel) => {
-          return handler(params, cancel, (0, progress_1.attachWorkDone)(connection3, params), (0, progress_1.attachPartialResult)(connection3, params));
+        onDeclaration: (handler) => connection2.onRequest(vscode_languageserver_protocol_1.DeclarationRequest.type, (params, cancel) => {
+          return handler(params, cancel, (0, progress_1.attachWorkDone)(connection2, params), (0, progress_1.attachPartialResult)(connection2, params));
         }),
-        onDefinition: (handler) => connection3.onRequest(vscode_languageserver_protocol_1.DefinitionRequest.type, (params, cancel) => {
-          return handler(params, cancel, (0, progress_1.attachWorkDone)(connection3, params), (0, progress_1.attachPartialResult)(connection3, params));
+        onDefinition: (handler) => connection2.onRequest(vscode_languageserver_protocol_1.DefinitionRequest.type, (params, cancel) => {
+          return handler(params, cancel, (0, progress_1.attachWorkDone)(connection2, params), (0, progress_1.attachPartialResult)(connection2, params));
         }),
-        onTypeDefinition: (handler) => connection3.onRequest(vscode_languageserver_protocol_1.TypeDefinitionRequest.type, (params, cancel) => {
-          return handler(params, cancel, (0, progress_1.attachWorkDone)(connection3, params), (0, progress_1.attachPartialResult)(connection3, params));
+        onTypeDefinition: (handler) => connection2.onRequest(vscode_languageserver_protocol_1.TypeDefinitionRequest.type, (params, cancel) => {
+          return handler(params, cancel, (0, progress_1.attachWorkDone)(connection2, params), (0, progress_1.attachPartialResult)(connection2, params));
         }),
-        onImplementation: (handler) => connection3.onRequest(vscode_languageserver_protocol_1.ImplementationRequest.type, (params, cancel) => {
-          return handler(params, cancel, (0, progress_1.attachWorkDone)(connection3, params), (0, progress_1.attachPartialResult)(connection3, params));
+        onImplementation: (handler) => connection2.onRequest(vscode_languageserver_protocol_1.ImplementationRequest.type, (params, cancel) => {
+          return handler(params, cancel, (0, progress_1.attachWorkDone)(connection2, params), (0, progress_1.attachPartialResult)(connection2, params));
         }),
-        onReferences: (handler) => connection3.onRequest(vscode_languageserver_protocol_1.ReferencesRequest.type, (params, cancel) => {
-          return handler(params, cancel, (0, progress_1.attachWorkDone)(connection3, params), (0, progress_1.attachPartialResult)(connection3, params));
+        onReferences: (handler) => connection2.onRequest(vscode_languageserver_protocol_1.ReferencesRequest.type, (params, cancel) => {
+          return handler(params, cancel, (0, progress_1.attachWorkDone)(connection2, params), (0, progress_1.attachPartialResult)(connection2, params));
         }),
-        onDocumentHighlight: (handler) => connection3.onRequest(vscode_languageserver_protocol_1.DocumentHighlightRequest.type, (params, cancel) => {
-          return handler(params, cancel, (0, progress_1.attachWorkDone)(connection3, params), (0, progress_1.attachPartialResult)(connection3, params));
+        onDocumentHighlight: (handler) => connection2.onRequest(vscode_languageserver_protocol_1.DocumentHighlightRequest.type, (params, cancel) => {
+          return handler(params, cancel, (0, progress_1.attachWorkDone)(connection2, params), (0, progress_1.attachPartialResult)(connection2, params));
         }),
-        onDocumentSymbol: (handler) => connection3.onRequest(vscode_languageserver_protocol_1.DocumentSymbolRequest.type, (params, cancel) => {
-          return handler(params, cancel, (0, progress_1.attachWorkDone)(connection3, params), (0, progress_1.attachPartialResult)(connection3, params));
+        onDocumentSymbol: (handler) => connection2.onRequest(vscode_languageserver_protocol_1.DocumentSymbolRequest.type, (params, cancel) => {
+          return handler(params, cancel, (0, progress_1.attachWorkDone)(connection2, params), (0, progress_1.attachPartialResult)(connection2, params));
         }),
-        onWorkspaceSymbol: (handler) => connection3.onRequest(vscode_languageserver_protocol_1.WorkspaceSymbolRequest.type, (params, cancel) => {
-          return handler(params, cancel, (0, progress_1.attachWorkDone)(connection3, params), (0, progress_1.attachPartialResult)(connection3, params));
+        onWorkspaceSymbol: (handler) => connection2.onRequest(vscode_languageserver_protocol_1.WorkspaceSymbolRequest.type, (params, cancel) => {
+          return handler(params, cancel, (0, progress_1.attachWorkDone)(connection2, params), (0, progress_1.attachPartialResult)(connection2, params));
         }),
-        onWorkspaceSymbolResolve: (handler) => connection3.onRequest(vscode_languageserver_protocol_1.WorkspaceSymbolResolveRequest.type, handler),
-        onCodeAction: (handler) => connection3.onRequest(vscode_languageserver_protocol_1.CodeActionRequest.type, (params, cancel) => {
-          return handler(params, cancel, (0, progress_1.attachWorkDone)(connection3, params), (0, progress_1.attachPartialResult)(connection3, params));
+        onWorkspaceSymbolResolve: (handler) => connection2.onRequest(vscode_languageserver_protocol_1.WorkspaceSymbolResolveRequest.type, handler),
+        onCodeAction: (handler) => connection2.onRequest(vscode_languageserver_protocol_1.CodeActionRequest.type, (params, cancel) => {
+          return handler(params, cancel, (0, progress_1.attachWorkDone)(connection2, params), (0, progress_1.attachPartialResult)(connection2, params));
         }),
-        onCodeActionResolve: (handler) => connection3.onRequest(vscode_languageserver_protocol_1.CodeActionResolveRequest.type, (params, cancel) => {
+        onCodeActionResolve: (handler) => connection2.onRequest(vscode_languageserver_protocol_1.CodeActionResolveRequest.type, (params, cancel) => {
           return handler(params, cancel);
         }),
-        onCodeLens: (handler) => connection3.onRequest(vscode_languageserver_protocol_1.CodeLensRequest.type, (params, cancel) => {
-          return handler(params, cancel, (0, progress_1.attachWorkDone)(connection3, params), (0, progress_1.attachPartialResult)(connection3, params));
+        onCodeLens: (handler) => connection2.onRequest(vscode_languageserver_protocol_1.CodeLensRequest.type, (params, cancel) => {
+          return handler(params, cancel, (0, progress_1.attachWorkDone)(connection2, params), (0, progress_1.attachPartialResult)(connection2, params));
         }),
-        onCodeLensResolve: (handler) => connection3.onRequest(vscode_languageserver_protocol_1.CodeLensResolveRequest.type, (params, cancel) => {
+        onCodeLensResolve: (handler) => connection2.onRequest(vscode_languageserver_protocol_1.CodeLensResolveRequest.type, (params, cancel) => {
           return handler(params, cancel);
         }),
-        onDocumentFormatting: (handler) => connection3.onRequest(vscode_languageserver_protocol_1.DocumentFormattingRequest.type, (params, cancel) => {
-          return handler(params, cancel, (0, progress_1.attachWorkDone)(connection3, params), void 0);
+        onDocumentFormatting: (handler) => connection2.onRequest(vscode_languageserver_protocol_1.DocumentFormattingRequest.type, (params, cancel) => {
+          return handler(params, cancel, (0, progress_1.attachWorkDone)(connection2, params), void 0);
         }),
-        onDocumentRangeFormatting: (handler) => connection3.onRequest(vscode_languageserver_protocol_1.DocumentRangeFormattingRequest.type, (params, cancel) => {
-          return handler(params, cancel, (0, progress_1.attachWorkDone)(connection3, params), void 0);
+        onDocumentRangeFormatting: (handler) => connection2.onRequest(vscode_languageserver_protocol_1.DocumentRangeFormattingRequest.type, (params, cancel) => {
+          return handler(params, cancel, (0, progress_1.attachWorkDone)(connection2, params), void 0);
         }),
-        onDocumentOnTypeFormatting: (handler) => connection3.onRequest(vscode_languageserver_protocol_1.DocumentOnTypeFormattingRequest.type, (params, cancel) => {
+        onDocumentOnTypeFormatting: (handler) => connection2.onRequest(vscode_languageserver_protocol_1.DocumentOnTypeFormattingRequest.type, (params, cancel) => {
           return handler(params, cancel);
         }),
-        onRenameRequest: (handler) => connection3.onRequest(vscode_languageserver_protocol_1.RenameRequest.type, (params, cancel) => {
-          return handler(params, cancel, (0, progress_1.attachWorkDone)(connection3, params), void 0);
+        onRenameRequest: (handler) => connection2.onRequest(vscode_languageserver_protocol_1.RenameRequest.type, (params, cancel) => {
+          return handler(params, cancel, (0, progress_1.attachWorkDone)(connection2, params), void 0);
         }),
-        onPrepareRename: (handler) => connection3.onRequest(vscode_languageserver_protocol_1.PrepareRenameRequest.type, (params, cancel) => {
+        onPrepareRename: (handler) => connection2.onRequest(vscode_languageserver_protocol_1.PrepareRenameRequest.type, (params, cancel) => {
           return handler(params, cancel);
         }),
-        onDocumentLinks: (handler) => connection3.onRequest(vscode_languageserver_protocol_1.DocumentLinkRequest.type, (params, cancel) => {
-          return handler(params, cancel, (0, progress_1.attachWorkDone)(connection3, params), (0, progress_1.attachPartialResult)(connection3, params));
+        onDocumentLinks: (handler) => connection2.onRequest(vscode_languageserver_protocol_1.DocumentLinkRequest.type, (params, cancel) => {
+          return handler(params, cancel, (0, progress_1.attachWorkDone)(connection2, params), (0, progress_1.attachPartialResult)(connection2, params));
         }),
-        onDocumentLinkResolve: (handler) => connection3.onRequest(vscode_languageserver_protocol_1.DocumentLinkResolveRequest.type, (params, cancel) => {
+        onDocumentLinkResolve: (handler) => connection2.onRequest(vscode_languageserver_protocol_1.DocumentLinkResolveRequest.type, (params, cancel) => {
           return handler(params, cancel);
         }),
-        onDocumentColor: (handler) => connection3.onRequest(vscode_languageserver_protocol_1.DocumentColorRequest.type, (params, cancel) => {
-          return handler(params, cancel, (0, progress_1.attachWorkDone)(connection3, params), (0, progress_1.attachPartialResult)(connection3, params));
+        onDocumentColor: (handler) => connection2.onRequest(vscode_languageserver_protocol_1.DocumentColorRequest.type, (params, cancel) => {
+          return handler(params, cancel, (0, progress_1.attachWorkDone)(connection2, params), (0, progress_1.attachPartialResult)(connection2, params));
         }),
-        onColorPresentation: (handler) => connection3.onRequest(vscode_languageserver_protocol_1.ColorPresentationRequest.type, (params, cancel) => {
-          return handler(params, cancel, (0, progress_1.attachWorkDone)(connection3, params), (0, progress_1.attachPartialResult)(connection3, params));
+        onColorPresentation: (handler) => connection2.onRequest(vscode_languageserver_protocol_1.ColorPresentationRequest.type, (params, cancel) => {
+          return handler(params, cancel, (0, progress_1.attachWorkDone)(connection2, params), (0, progress_1.attachPartialResult)(connection2, params));
         }),
-        onFoldingRanges: (handler) => connection3.onRequest(vscode_languageserver_protocol_1.FoldingRangeRequest.type, (params, cancel) => {
-          return handler(params, cancel, (0, progress_1.attachWorkDone)(connection3, params), (0, progress_1.attachPartialResult)(connection3, params));
+        onFoldingRanges: (handler) => connection2.onRequest(vscode_languageserver_protocol_1.FoldingRangeRequest.type, (params, cancel) => {
+          return handler(params, cancel, (0, progress_1.attachWorkDone)(connection2, params), (0, progress_1.attachPartialResult)(connection2, params));
         }),
-        onSelectionRanges: (handler) => connection3.onRequest(vscode_languageserver_protocol_1.SelectionRangeRequest.type, (params, cancel) => {
-          return handler(params, cancel, (0, progress_1.attachWorkDone)(connection3, params), (0, progress_1.attachPartialResult)(connection3, params));
+        onSelectionRanges: (handler) => connection2.onRequest(vscode_languageserver_protocol_1.SelectionRangeRequest.type, (params, cancel) => {
+          return handler(params, cancel, (0, progress_1.attachWorkDone)(connection2, params), (0, progress_1.attachPartialResult)(connection2, params));
         }),
-        onExecuteCommand: (handler) => connection3.onRequest(vscode_languageserver_protocol_1.ExecuteCommandRequest.type, (params, cancel) => {
-          return handler(params, cancel, (0, progress_1.attachWorkDone)(connection3, params), void 0);
+        onExecuteCommand: (handler) => connection2.onRequest(vscode_languageserver_protocol_1.ExecuteCommandRequest.type, (params, cancel) => {
+          return handler(params, cancel, (0, progress_1.attachWorkDone)(connection2, params), void 0);
         }),
-        dispose: () => connection3.dispose()
+        dispose: () => connection2.dispose()
       };
       for (let remote of allRemotes) {
         remote.attach(protocolConnection);
       }
-      connection3.onRequest(vscode_languageserver_protocol_1.InitializeRequest.type, (params) => {
+      connection2.onRequest(vscode_languageserver_protocol_1.InitializeRequest.type, (params) => {
         watchDog.initialize(params);
         if (Is.string(params.trace)) {
           tracer.trace = vscode_languageserver_protocol_1.Trace.fromString(params.trace);
@@ -8149,7 +8149,7 @@ var require_server = __commonJS({
           remote.initialize(params.capabilities);
         }
         if (initializeHandler) {
-          let result = initializeHandler(params, new vscode_languageserver_protocol_1.CancellationTokenSource().token, (0, progress_1.attachWorkDone)(connection3, params), void 0);
+          let result = initializeHandler(params, new vscode_languageserver_protocol_1.CancellationTokenSource().token, (0, progress_1.attachWorkDone)(connection2, params), void 0);
           return asPromise(result).then((value) => {
             if (value instanceof vscode_languageserver_protocol_1.ResponseError) {
               return value;
@@ -8181,7 +8181,7 @@ var require_server = __commonJS({
           return result;
         }
       });
-      connection3.onRequest(vscode_languageserver_protocol_1.ShutdownRequest.type, () => {
+      connection2.onRequest(vscode_languageserver_protocol_1.ShutdownRequest.type, () => {
         watchDog.shutdownReceived = true;
         if (shutdownHandler) {
           return shutdownHandler(new vscode_languageserver_protocol_1.CancellationTokenSource().token);
@@ -8189,7 +8189,7 @@ var require_server = __commonJS({
           return void 0;
         }
       });
-      connection3.onNotification(vscode_languageserver_protocol_1.ExitNotification.type, () => {
+      connection2.onNotification(vscode_languageserver_protocol_1.ExitNotification.type, () => {
         try {
           if (exitHandler) {
             exitHandler();
@@ -8202,7 +8202,7 @@ var require_server = __commonJS({
           }
         }
       });
-      connection3.onNotification(vscode_languageserver_protocol_1.SetTraceNotification.type, (params) => {
+      connection2.onNotification(vscode_languageserver_protocol_1.SetTraceNotification.type, (params) => {
         tracer.trace = vscode_languageserver_protocol_1.Trace.fromString(params.value);
       });
       return protocolConnection;
@@ -8971,7 +8971,7 @@ var require_main5 = __commonJS({
 // src/server.ts
 var server_exports = {};
 __export(server_exports, {
-  connection: () => connection2,
+  connection: () => connection,
   documents: () => documents,
   visitors: () => visitors
 });
@@ -8984,7 +8984,7 @@ var import_vscode_languageserver = __toESM(require_main4());
 var hasConfigurationCapability = false;
 var hasWorkspaceFolderCapability = false;
 var hasDiagnosticRelatedInformationCapability = false;
-function handleOnInitialize({ params, connection: connection3 }) {
+function handleOnInitialize({ params, connection: connection2 }) {
   const capabilities = params.capabilities;
   hasConfigurationCapability = !!(capabilities.workspace != null && !!capabilities.workspace.configuration);
   hasWorkspaceFolderCapability = !!(capabilities.workspace != null && !!capabilities.workspace.workspaceFolders);
@@ -9021,408 +9021,411 @@ function handleOnInitialize({ params, connection: connection3 }) {
   }
   return result;
 }
-function handleOnInitialized({ params, connection: connection3 }) {
-  connection3.console.log("Mlang Initialized correctly!");
+function handleOnInitialized({ params, connection: connection2 }) {
+  connection2.console.log("Mlang Initialized correctly!");
   if (hasConfigurationCapability) {
-    connection3.client.register(
+    connection2.client.register(
       import_vscode_languageserver.DidChangeConfigurationNotification.type,
       void 0
     );
   }
   if (hasWorkspaceFolderCapability) {
-    connection3.workspace.onDidChangeWorkspaceFolders((_event) => {
-      connection3.console.log("Workspace folder change event received.");
+    connection2.workspace.onDidChangeWorkspaceFolders((_event) => {
+      connection2.console.log("Workspace folder change event received.");
     });
   }
 }
 
 // src/data/completionKeywords.ts
 var import_vscode_languageserver2 = __toESM(require_main4());
-function completionKeywords(position) {
-  return [
-    {
-      label: "quad",
-      kind: import_vscode_languageserver2.CompletionItemKind.Function,
-      documentation: {
-        kind: import_vscode_languageserver2.MarkupKind.Markdown,
-        value: ": q = quad (f, a, b)\n: q = quad (f, a, b, tol)\n: q = quad (f, a, b, tol, sing)\n: [q, ier, nfun, err] = quad (\u2026)\n    Numerically evaluate the integral of f from a to b using Fortran routines from QUADPACK.\n    f is a function handle, inline function, or a string containing the name of the function to evaluate. The function must have the form y = f (x) where y and x are scalars.\n    a and b are the lower and upper limits of integration. Either or both may be infinite.\n    The optional argument tol is a vector that specifies the desired accuracy of the result. The first element of the vector is the desired absolute tolerance, and the second element is the desired relative tolerance. To choose a relative test only, set the absolute tolerance to zero. To choose an absolute test only, set the relative tolerance to zero. Both tolerances default to sqrt (eps) or approximately 1.5e^{-8}.\n    The optional argument sing is a vector of values at which the integrand is known to be singular.\n    The result of the integration is returned in q.\n    ier contains an integer error code (0 indicates a successful integration).\n    nfun indicates the number of function evaluations that were made.\n    err contains an estimate of the error in the solution.\n    The function quad_options can set other optional parameters for quad.\n    Note: because quad is written in Fortran it cannot be called recursively. This prevents its use in integrating over more than one variable by routines dblquad and triplequad.\n    See also: quad_options, quadv, quadl, quadgk, quadcc, trapz, dblquad, triplequad. \n\n[quad function](https://octave.sourceforge.io/octave/function/quad.html)"
-      }
-    },
-    {
-      label: "inputParser",
-      kind: import_vscode_languageserver2.CompletionItemKind.Function,
-      documentation: {
-        kind: import_vscode_languageserver2.MarkupKind.Markdown,
-        value: "Not documented \n\n[inputParser function](https://octave.sourceforge.io/octave/function/inputParser.html)"
-      }
-    },
-    {
-      label: "pol2cart",
-      kind: import_vscode_languageserver2.CompletionItemKind.Function,
-      documentation: {
-        kind: import_vscode_languageserver2.MarkupKind.Markdown,
-        value: " __[x, y] = pol2cart (theta, r)__\n __[x, y, z] = pol2cart (theta, r, z)__\n __[x, y] = pol2cart (P)__\n __[x, y, z] = pol2cart (P)__\n __C = pol2cart (\u2026)__\n    Transform polar or cylindrical coordinates to Cartesian coordinates.\n    The inputs theta, r, (and z) must be the same shape, or scalar. If called with a single matrix argument then each row of P represents the polar/(cylindrical) coordinate (theta, r (, z)).\n    theta describes the angle relative to the positive x-axis.\n    r is the distance to the z-axis (0, 0, z).\n    If only a single return argument is requested then return a matrix C where each row represents one Cartesian coordinate (x, y (, z)).\n    See also: cart2pol, sph2cart, cart2sph. \n\n[pol2cart function](https://octave.sourceforge.io/octave/function/pol2cart.html)"
-      }
-    },
-    {
-      label: "deg2rad",
-      kind: import_vscode_languageserver2.CompletionItemKind.Function,
-      documentation: {
-        kind: import_vscode_languageserver2.MarkupKind.Markdown,
-        value: " __rad = deg2rad (deg)__\n    Convert degrees to radians.\n    The input deg must be a scalar, vector, or N-dimensional array of double or single floating point values. deg may be complex in which case the real and imaginary components are converted separately.\n    The output rad is the same size and shape as deg with degrees converted to radians using the conversion constant pi/180.\n    Example:\n    deg2rad ([0, 90, 180, 270, 360])\n      \u21D2  0.00000   1.57080   3.14159   4.71239   6.28319\n    See also: rad2deg. \n\n[deg2rad function](https://octave.sourceforge.io/octave/function/deg2rad.html)"
-      }
-    },
-    {
-      label: "length",
-      kind: import_vscode_languageserver2.CompletionItemKind.Function,
-      documentation: {
-        kind: import_vscode_languageserver2.MarkupKind.Markdown,
-        value: " __length (a)__\n    Return the length of the object a.\n    The length is 0 for empty objects, 1 for scalars, and the number of elements for vectors. For matrix or N-dimensional objects, the length is the number of elements along the largest dimension (equivalent to max (size (a))).\n    See also: numel, size. \n\n[length function](https://octave.sourceforge.io/octave/function/length.html)"
-      }
-    },
-    {
-      label: "struct",
-      kind: import_vscode_languageserver2.CompletionItemKind.Function,
-      documentation: {
-        kind: import_vscode_languageserver2.MarkupKind.Markdown,
-        value: '  __s = struct ()__\n __s = struct (field1, value1, field2, value2, \u2026)__\n __s = struct (obj)__\n    Create a scalar or array structure and initialize its values.\n    The field1, field2, \u2026 variables are strings specifying the names of the fields and the value1, value2, \u2026 variables can be of any type.\n    If the values are cell arrays, create a structure array and initialize its values. The dimensions of each cell array of values must match. Singleton cells and non-cell values are repeated so that they fill the entire array. If the cells are empty, create an empty structure array with the specified field names.\n    If the argument is an object, return the underlying struct.\n    Observe that the syntax is optimized for struct arrays. Consider the following examples:\n    struct ("foo", 1)\n     \u21D2 scalar structure containing the fields:\n       foo =  1\n    struct ("foo", {})\n     \u21D2 0x0 struct array containing the fields:\n       foo\n    struct ("foo", { {} })\n     \u21D2 scalar structure containing the fields:\n       foo = {}(0x0)\n    struct ("foo", {1, 2, 3})\n     \u21D2 1x3 struct array containing the fields:\n       foo\n    The first case is an ordinary scalar struct\u2014one field, one value. The second produces an empty struct array with one field and no values, since being passed an empty cell array of struct array values. When the value is a cell array containing a single entry, this becomes a scalar struct with that single entry as the value of the field. That single entry happens to be an empty cell array.\n    Finally, if the value is a non-scalar cell array, then struct produces a struct array.\n    See also: cell2struct, fieldnames, getfield, setfield, rmfield, isfield, orderfields, isstruct, structfun. \n\n[struct function](https://octave.sourceforge.io/octave/function/struct.html)'
-      }
-    },
-    {
-      label: "addpath",
-      kind: import_vscode_languageserver2.CompletionItemKind.Function,
-      documentation: {
-        kind: import_vscode_languageserver2.MarkupKind.Markdown,
-        value: ' __addpath (dir1, \u2026)__\n __addpath (dir1, \u2026, option)__\n    Add named directories to the function search path.\n    If option is "-begin" or 0 (the default), prepend the directory name to the current path. If option is "-end" or 1, append the directory name to the current path. Directories added to the path must exist.\n    In addition to accepting individual directory arguments, lists of directory names separated by pathsep are also accepted. For example:\n    addpath ("dir1:/dir2:~/dir3")\n    For each directory that is added, and that was not already in the path, addpath checks for the existence of a file named PKG_ADD (note lack of .m extension) and runs it if it exists.\n    See also: path, rmpath, genpath, pathdef, savepath, pathsep. \n\n[addpath function](https://octave.sourceforge.io/octave/function/addpath.html)'
-      }
-    },
-    {
-      label: "argv",
-      kind: import_vscode_languageserver2.CompletionItemKind.Function,
-      documentation: {
-        kind: import_vscode_languageserver2.MarkupKind.Markdown,
-        value: "Return the command line arguments passed to Octave.\n\nFor example, if you invoked Octave using the command\n\noctave --no-line-editing --silent\n\nargv would return a cell array of strings with the elements --no-line-editing and --silent.\n\nIf you write an executable Octave script, argv will return the list of arguments passed to the script. See \u2018Executable Octave Programs\u2019, for an example of how to create an executable Octave script.\n\n[argv function](https://octave.sourceforge.io/octave/function/argv.html)"
-      }
-    },
-    {
-      label: "hold",
-      kind: import_vscode_languageserver2.CompletionItemKind.Function,
-      documentation: {
-        kind: import_vscode_languageserver2.MarkupKind.Markdown,
-        value: "[hold function](https://octave.sourceforge.io/octave/function/hold.html)"
-      }
-    },
-    {
-      label: "axis",
-      kind: import_vscode_languageserver2.CompletionItemKind.Function,
-      documentation: {
-        kind: import_vscode_languageserver2.MarkupKind.Markdown,
-        value: "[axis function](https://octave.sourceforge.io/octave/function/axis.html)"
-      }
-    },
-    {
-      label: "printf",
-      kind: import_vscode_languageserver2.CompletionItemKind.Function,
-      documentation: {
-        kind: import_vscode_languageserver2.MarkupKind.Markdown,
-        value: "[printf function](https://octave.sourceforge.io/octave/function/printf.html)"
-      }
-    },
-    {
-      label: "figure",
-      kind: import_vscode_languageserver2.CompletionItemKind.Function,
-      documentation: {
-        kind: import_vscode_languageserver2.MarkupKind.Markdown,
-        value: "[figure function](https://octave.sourceforge.io/octave/function/figure.html)"
-      }
-    },
-    {
-      label: "set",
-      kind: import_vscode_languageserver2.CompletionItemKind.Function,
-      documentation: {
-        kind: import_vscode_languageserver2.MarkupKind.Markdown,
-        value: "[set function](https://octave.sourceforge.io/octave/function/set.html)"
-      }
-    },
-    {
-      label: "grid",
-      kind: import_vscode_languageserver2.CompletionItemKind.Function,
-      documentation: {
-        kind: import_vscode_languageserver2.MarkupKind.Markdown,
-        value: "[grid function](https://octave.sourceforge.io/octave/function/grid.html)"
-      }
-    },
-    {
-      label: "clc",
-      kind: import_vscode_languageserver2.CompletionItemKind.Function,
-      documentation: {
-        kind: import_vscode_languageserver2.MarkupKind.Markdown,
-        value: "[clc function](https://octave.sourceforge.io/octave/function/clc.html)"
-      }
-    },
-    {
-      label: "quit",
-      kind: import_vscode_languageserver2.CompletionItemKind.Function,
-      documentation: {
-        kind: import_vscode_languageserver2.MarkupKind.Markdown,
-        value: "[quit function](https://docs.octave.org/interpreter/Quitting-Octave.html)"
-      }
-    },
-    {
-      label: "help",
-      kind: import_vscode_languageserver2.CompletionItemKind.Function,
-      documentation: {
-        kind: import_vscode_languageserver2.MarkupKind.Markdown,
-        value: "[help function](https://octave.sourceforge.io/octave/function/help.html)"
-      }
-    },
-    {
-      label: "stem",
-      kind: import_vscode_languageserver2.CompletionItemKind.Function,
-      documentation: {
-        kind: import_vscode_languageserver2.MarkupKind.Markdown,
-        value: "[stem function](https://octave.sourceforge.io/octave/function/stem.html)"
-      }
-    },
-    {
-      label: "plot",
-      kind: import_vscode_languageserver2.CompletionItemKind.Function,
-      documentation: {
-        kind: import_vscode_languageserver2.MarkupKind.Markdown,
-        value: "[plot function](https://octave.sourceforge.io/octave/function/plot.html)"
-      }
-    },
-    {
-      label: "for",
-      insertText: "for (${1:var} = ${2})\n	${3}\n\nend",
-      insertTextFormat: import_vscode_languageserver2.InsertTextFormat.Snippet,
-      kind: import_vscode_languageserver2.CompletionItemKind.Keyword,
-      documentation: {
-        kind: import_vscode_languageserver2.MarkupKind.Markdown,
-        value: "[for loop](https://docs.octave.org/v4.2.0/The-for-Statement.html)"
-      }
-    },
-    {
-      label: "while",
-      kind: import_vscode_languageserver2.CompletionItemKind.Keyword,
-      documentation: {
-        kind: import_vscode_languageserver2.MarkupKind.Markdown,
-        value: "[while loop](https://docs.octave.org/v4.2.0/The-while-Statement.html)"
-      }
-    },
-    {
-      label: "if",
-      insertText: "if (${1:condition})\n	${2}\n\nend",
-      insertTextFormat: import_vscode_languageserver2.InsertTextFormat.Snippet,
-      kind: import_vscode_languageserver2.CompletionItemKind.Keyword,
-      documentation: {
-        kind: import_vscode_languageserver2.MarkupKind.Markdown,
-        value: "[if statement](https://docs.octave.org/v4.2.0/The-if-Statement.html)"
-      }
-    },
-    {
-      label: "else",
-      kind: import_vscode_languageserver2.CompletionItemKind.Keyword,
-      documentation: {
-        kind: import_vscode_languageserver2.MarkupKind.Markdown,
-        value: "[if statement else clause](https://docs.octave.org/v4.2.0/The-if-Statement.html)"
-      }
-    },
-    {
-      label: "elseif",
-      insertText: "elseif (${1:condition})\n	${2}",
-      insertTextFormat: import_vscode_languageserver2.InsertTextFormat.Snippet,
-      kind: import_vscode_languageserver2.CompletionItemKind.Keyword,
-      documentation: {
-        kind: import_vscode_languageserver2.MarkupKind.Markdown,
-        value: "[if statement elseif clause](https://docs.octave.org/v4.2.0/The-if-Statement.html)"
-      }
-    },
-    {
-      label: "switch",
-      insertText: "switch (${1:variable})\n	case ${2}\notherwise\n\nend",
-      insertTextFormat: import_vscode_languageserver2.InsertTextFormat.Snippet,
-      kind: import_vscode_languageserver2.CompletionItemKind.Keyword,
-      documentation: {
-        kind: import_vscode_languageserver2.MarkupKind.Markdown,
-        value: "[switch statement](https://docs.octave.org/v4.2.0/The-switch-Statement.html)"
-      }
-    },
-    {
-      label: "case",
-      kind: import_vscode_languageserver2.CompletionItemKind.Keyword,
-      documentation: {
-        kind: import_vscode_languageserver2.MarkupKind.Markdown,
-        value: "[switch statement case clause](https://docs.octave.org/v4.2.0/The-switch-Statement.html#index-case-statement)"
-      }
-    },
-    {
-      label: "otherwise",
-      kind: import_vscode_languageserver2.CompletionItemKind.Keyword,
-      documentation: {
-        kind: import_vscode_languageserver2.MarkupKind.Markdown,
-        value: "[switch statement otherwise clause](https://docs.octave.org/v4.2.0/The-switch-Statement.html#index-otherwise-statement)"
-      }
-    },
-    {
-      label: "break",
-      kind: import_vscode_languageserver2.CompletionItemKind.Keyword,
-      documentation: {
-        kind: import_vscode_languageserver2.MarkupKind.Markdown,
-        value: "[break statement](https://docs.octave.org/v4.2.0/The-break-Statement.html#index-break-statement)"
-      }
-    },
-    {
-      label: "continue",
-      kind: import_vscode_languageserver2.CompletionItemKind.Keyword,
-      documentation: {
-        kind: import_vscode_languageserver2.MarkupKind.Markdown,
-        value: "[continue statement](https://docs.octave.org/v4.2.0/The-continue-Statement.html#index-continue-statement)"
-      }
-    },
-    {
-      label: "return",
-      kind: import_vscode_languageserver2.CompletionItemKind.Keyword,
-      documentation: {
-        kind: import_vscode_languageserver2.MarkupKind.Markdown,
-        value: "return statement"
-      }
-    },
-    {
-      label: "end",
-      kind: import_vscode_languageserver2.CompletionItemKind.Keyword,
-      documentation: {
-        kind: import_vscode_languageserver2.MarkupKind.Markdown,
-        value: "block end marker"
-      }
-    },
-    {
-      label: "function",
-      kind: import_vscode_languageserver2.CompletionItemKind.Keyword,
-      insertText: "function ${1}()\n\nend",
-      insertTextFormat: import_vscode_languageserver2.InsertTextFormat.Snippet,
-      documentation: {
-        kind: import_vscode_languageserver2.MarkupKind.Markdown,
-        value: "[block end marker](https://docs.octave.org/v4.2.0/A-Sample-Function-Description.html#A-Sample-Function-Description)"
-      }
-    },
-    {
-      label: "abs",
-      kind: import_vscode_languageserver2.CompletionItemKind.Function,
-      documentation: "Return the absolute value of a number"
-    },
-    {
-      label: "acos",
-      kind: import_vscode_languageserver2.CompletionItemKind.Function,
-      documentation: "Return the arccosine of a number"
-    },
-    {
-      label: "acosh",
-      kind: import_vscode_languageserver2.CompletionItemKind.Function,
-      documentation: "Return the hyperbolic arccosine of a number"
-    },
-    {
-      label: "angle",
-      kind: import_vscode_languageserver2.CompletionItemKind.Function,
-      documentation: "Return the angle (in radians) of a complex number"
-    },
-    {
-      label: "arg",
-      kind: import_vscode_languageserver2.CompletionItemKind.Function,
-      documentation: "Return the argument (in radians) of a complex number"
-    },
-    {
-      label: "asin",
-      kind: import_vscode_languageserver2.CompletionItemKind.Function,
-      documentation: "Return the arcsine of a number"
-    },
-    {
-      label: "asinh",
-      kind: import_vscode_languageserver2.CompletionItemKind.Function,
-      documentation: "Return the hyperbolic arcsine of a number"
-    },
-    {
-      label: "atan",
-      kind: import_vscode_languageserver2.CompletionItemKind.Function,
-      documentation: "Return the arctangent of a number"
-    },
-    {
-      label: "atanh",
-      kind: import_vscode_languageserver2.CompletionItemKind.Function,
-      documentation: "Return the hyperbolic arctangent of a number"
-    },
-    {
-      label: "ceil",
-      kind: import_vscode_languageserver2.CompletionItemKind.Function,
-      documentation: "Round up to the nearest integer"
-    },
-    {
-      label: "conj",
-      kind: import_vscode_languageserver2.CompletionItemKind.Function,
-      documentation: "Return the complex conjugate of a number"
-    },
-    {
-      label: "cos",
-      kind: import_vscode_languageserver2.CompletionItemKind.Function,
-      documentation: "Return the cosine of a number"
-    },
-    {
-      label: "cosh",
-      kind: import_vscode_languageserver2.CompletionItemKind.Function,
-      documentation: "Return the hyperbolic cosine of a number"
-    },
-    {
-      label: "cot",
-      kind: import_vscode_languageserver2.CompletionItemKind.Function,
-      documentation: "Return the cotangent of a number"
-    },
-    {
-      label: "csc",
-      kind: import_vscode_languageserver2.CompletionItemKind.Function,
-      documentation: "Return the cosecant of a number"
-    },
-    {
-      label: "det",
-      kind: import_vscode_languageserver2.CompletionItemKind.Function,
-      documentation: "Compute the determinant of a matrix"
-    },
-    {
-      label: "diag",
-      kind: import_vscode_languageserver2.CompletionItemKind.Function,
-      documentation: "Extract or construct a diagonal matrix"
-    },
-    {
-      label: "diff",
-      kind: import_vscode_languageserver2.CompletionItemKind.Function,
-      documentation: "Compute the difference between adjacent elements of a matrix"
-    },
-    {
-      label: "disp",
-      kind: import_vscode_languageserver2.CompletionItemKind.Function,
-      documentation: "Display the value of an expression"
-    },
-    {
-      label: "eig",
-      kind: import_vscode_languageserver2.CompletionItemKind.Function,
-      documentation: "Compute the eigenvalues and eigenvectors of a matrix"
-    },
-    {
-      label: "eps",
-      kind: import_vscode_languageserver2.CompletionItemKind.Constant,
-      documentation: "Return the machine epsilon (smallest number representable in floating point arithmetic)"
-    },
-    {
-      label: "erf",
-      kind: import_vscode_languageserver2.CompletionItemKind.Function,
-      documentation: "Return the error function of a number"
-    },
-    {
-      label: "erfc",
-      kind: import_vscode_languageserver2.CompletionItemKind.Function,
-      documentation: "Return the complementary error function of a number"
+var completionKeywords = [
+  {
+    label: "for",
+    insertText: "for (${1:var} = ${2})\n	${3}\n\nend",
+    insertTextFormat: import_vscode_languageserver2.InsertTextFormat.Snippet,
+    kind: import_vscode_languageserver2.CompletionItemKind.Keyword,
+    documentation: {
+      kind: import_vscode_languageserver2.MarkupKind.Markdown,
+      value: "[for loop](https://docs.octave.org/v4.2.0/The-for-Statement.html)"
     }
-  ];
-}
+  },
+  {
+    label: "while",
+    kind: import_vscode_languageserver2.CompletionItemKind.Keyword,
+    documentation: {
+      kind: import_vscode_languageserver2.MarkupKind.Markdown,
+      value: "[while loop](https://docs.octave.org/v4.2.0/The-while-Statement.html)"
+    }
+  },
+  {
+    label: "if",
+    insertText: "if (${1:condition})\n	${2}\n\nend",
+    insertTextFormat: import_vscode_languageserver2.InsertTextFormat.Snippet,
+    kind: import_vscode_languageserver2.CompletionItemKind.Keyword,
+    documentation: {
+      kind: import_vscode_languageserver2.MarkupKind.Markdown,
+      value: "[if statement](https://docs.octave.org/v4.2.0/The-if-Statement.html)"
+    }
+  },
+  {
+    label: "else",
+    kind: import_vscode_languageserver2.CompletionItemKind.Keyword,
+    documentation: {
+      kind: import_vscode_languageserver2.MarkupKind.Markdown,
+      value: "[if statement else clause](https://docs.octave.org/v4.2.0/The-if-Statement.html)"
+    }
+  },
+  {
+    label: "elseif",
+    insertText: "elseif (${1:condition})\n	${2}",
+    insertTextFormat: import_vscode_languageserver2.InsertTextFormat.Snippet,
+    kind: import_vscode_languageserver2.CompletionItemKind.Keyword,
+    documentation: {
+      kind: import_vscode_languageserver2.MarkupKind.Markdown,
+      value: "[if statement elseif clause](https://docs.octave.org/v4.2.0/The-if-Statement.html)"
+    }
+  },
+  {
+    label: "switch",
+    insertText: "switch (${1:variable})\n	case ${2}\notherwise\n\nend",
+    insertTextFormat: import_vscode_languageserver2.InsertTextFormat.Snippet,
+    kind: import_vscode_languageserver2.CompletionItemKind.Keyword,
+    documentation: {
+      kind: import_vscode_languageserver2.MarkupKind.Markdown,
+      value: "[switch statement](https://docs.octave.org/v4.2.0/The-switch-Statement.html)"
+    }
+  },
+  {
+    label: "case",
+    kind: import_vscode_languageserver2.CompletionItemKind.Keyword,
+    documentation: {
+      kind: import_vscode_languageserver2.MarkupKind.Markdown,
+      value: "[switch statement case clause](https://docs.octave.org/v4.2.0/The-switch-Statement.html#index-case-statement)"
+    }
+  },
+  {
+    label: "otherwise",
+    kind: import_vscode_languageserver2.CompletionItemKind.Keyword,
+    documentation: {
+      kind: import_vscode_languageserver2.MarkupKind.Markdown,
+      value: "[switch statement otherwise clause](https://docs.octave.org/v4.2.0/The-switch-Statement.html#index-otherwise-statement)"
+    }
+  },
+  {
+    label: "break",
+    kind: import_vscode_languageserver2.CompletionItemKind.Keyword,
+    documentation: {
+      kind: import_vscode_languageserver2.MarkupKind.Markdown,
+      value: "[break statement](https://docs.octave.org/v4.2.0/The-break-Statement.html#index-break-statement)"
+    }
+  },
+  {
+    label: "continue",
+    kind: import_vscode_languageserver2.CompletionItemKind.Keyword,
+    documentation: {
+      kind: import_vscode_languageserver2.MarkupKind.Markdown,
+      value: "[continue statement](https://docs.octave.org/v4.2.0/The-continue-Statement.html#index-continue-statement)"
+    }
+  },
+  {
+    label: "return",
+    kind: import_vscode_languageserver2.CompletionItemKind.Keyword,
+    documentation: {
+      kind: import_vscode_languageserver2.MarkupKind.Markdown,
+      value: "return statement"
+    }
+  },
+  {
+    label: "end",
+    kind: import_vscode_languageserver2.CompletionItemKind.Keyword,
+    documentation: {
+      kind: import_vscode_languageserver2.MarkupKind.Markdown,
+      value: "block end marker"
+    }
+  },
+  {
+    label: "function",
+    kind: import_vscode_languageserver2.CompletionItemKind.Keyword,
+    insertText: "function ${1}()\n\nend",
+    insertTextFormat: import_vscode_languageserver2.InsertTextFormat.Snippet,
+    documentation: {
+      kind: import_vscode_languageserver2.MarkupKind.Markdown,
+      value: "[block end marker](https://docs.octave.org/v4.2.0/A-Sample-Function-Description.html#A-Sample-Function-Description)"
+    }
+  }
+];
+
+// src/data/completionNativeFunctions.ts
+var import_vscode_languageserver3 = __toESM(require_main4());
+var completionNativeFunctions = [
+  {
+    label: "quad",
+    kind: import_vscode_languageserver3.CompletionItemKind.Function,
+    documentation: {
+      kind: import_vscode_languageserver3.MarkupKind.Markdown,
+      value: ": q = quad (f, a, b)\n: q = quad (f, a, b, tol)\n: q = quad (f, a, b, tol, sing)\n: [q, ier, nfun, err] = quad (\u2026)\n    Numerically evaluate the integral of f from a to b using Fortran routines from QUADPACK.\n    f is a function handle, inline function, or a string containing the name of the function to evaluate. The function must have the form y = f (x) where y and x are scalars.\n    a and b are the lower and upper limits of integration. Either or both may be infinite.\n    The optional argument tol is a vector that specifies the desired accuracy of the result. The first element of the vector is the desired absolute tolerance, and the second element is the desired relative tolerance. To choose a relative test only, set the absolute tolerance to zero. To choose an absolute test only, set the relative tolerance to zero. Both tolerances default to sqrt (eps) or approximately 1.5e^{-8}.\n    The optional argument sing is a vector of values at which the integrand is known to be singular.\n    The result of the integration is returned in q.\n    ier contains an integer error code (0 indicates a successful integration).\n    nfun indicates the number of function evaluations that were made.\n    err contains an estimate of the error in the solution.\n    The function quad_options can set other optional parameters for quad.\n    Note: because quad is written in Fortran it cannot be called recursively. This prevents its use in integrating over more than one variable by routines dblquad and triplequad.\n    See also: quad_options, quadv, quadl, quadgk, quadcc, trapz, dblquad, triplequad. \n\n[quad function](https://octave.sourceforge.io/octave/function/quad.html)"
+    }
+  },
+  {
+    label: "inputParser",
+    kind: import_vscode_languageserver3.CompletionItemKind.Function,
+    documentation: {
+      kind: import_vscode_languageserver3.MarkupKind.Markdown,
+      value: "Not documented \n\n[inputParser function](https://octave.sourceforge.io/octave/function/inputParser.html)"
+    }
+  },
+  {
+    label: "pol2cart",
+    kind: import_vscode_languageserver3.CompletionItemKind.Function,
+    documentation: {
+      kind: import_vscode_languageserver3.MarkupKind.Markdown,
+      value: " __[x, y] = pol2cart (theta, r)__\n __[x, y, z] = pol2cart (theta, r, z)__\n __[x, y] = pol2cart (P)__\n __[x, y, z] = pol2cart (P)__\n __C = pol2cart (\u2026)__\n    Transform polar or cylindrical coordinates to Cartesian coordinates.\n    The inputs theta, r, (and z) must be the same shape, or scalar. If called with a single matrix argument then each row of P represents the polar/(cylindrical) coordinate (theta, r (, z)).\n    theta describes the angle relative to the positive x-axis.\n    r is the distance to the z-axis (0, 0, z).\n    If only a single return argument is requested then return a matrix C where each row represents one Cartesian coordinate (x, y (, z)).\n    See also: cart2pol, sph2cart, cart2sph. \n\n[pol2cart function](https://octave.sourceforge.io/octave/function/pol2cart.html)"
+    }
+  },
+  {
+    label: "deg2rad",
+    kind: import_vscode_languageserver3.CompletionItemKind.Function,
+    documentation: {
+      kind: import_vscode_languageserver3.MarkupKind.Markdown,
+      value: " __rad = deg2rad (deg)__\n    Convert degrees to radians.\n    The input deg must be a scalar, vector, or N-dimensional array of double or single floating point values. deg may be complex in which case the real and imaginary components are converted separately.\n    The output rad is the same size and shape as deg with degrees converted to radians using the conversion constant pi/180.\n    Example:\n    deg2rad ([0, 90, 180, 270, 360])\n      \u21D2  0.00000   1.57080   3.14159   4.71239   6.28319\n    See also: rad2deg. \n\n[deg2rad function](https://octave.sourceforge.io/octave/function/deg2rad.html)"
+    }
+  },
+  {
+    label: "length",
+    kind: import_vscode_languageserver3.CompletionItemKind.Function,
+    documentation: {
+      kind: import_vscode_languageserver3.MarkupKind.Markdown,
+      value: " __length (a)__\n    Return the length of the object a.\n    The length is 0 for empty objects, 1 for scalars, and the number of elements for vectors. For matrix or N-dimensional objects, the length is the number of elements along the largest dimension (equivalent to max (size (a))).\n    See also: numel, size. \n\n[length function](https://octave.sourceforge.io/octave/function/length.html)"
+    }
+  },
+  {
+    label: "struct",
+    kind: import_vscode_languageserver3.CompletionItemKind.Function,
+    documentation: {
+      kind: import_vscode_languageserver3.MarkupKind.Markdown,
+      value: '  __s = struct ()__\n __s = struct (field1, value1, field2, value2, \u2026)__\n __s = struct (obj)__\n    Create a scalar or array structure and initialize its values.\n    The field1, field2, \u2026 variables are strings specifying the names of the fields and the value1, value2, \u2026 variables can be of any type.\n    If the values are cell arrays, create a structure array and initialize its values. The dimensions of each cell array of values must match. Singleton cells and non-cell values are repeated so that they fill the entire array. If the cells are empty, create an empty structure array with the specified field names.\n    If the argument is an object, return the underlying struct.\n    Observe that the syntax is optimized for struct arrays. Consider the following examples:\n    struct ("foo", 1)\n     \u21D2 scalar structure containing the fields:\n       foo =  1\n    struct ("foo", {})\n     \u21D2 0x0 struct array containing the fields:\n       foo\n    struct ("foo", { {} })\n     \u21D2 scalar structure containing the fields:\n       foo = {}(0x0)\n    struct ("foo", {1, 2, 3})\n     \u21D2 1x3 struct array containing the fields:\n       foo\n    The first case is an ordinary scalar struct\u2014one field, one value. The second produces an empty struct array with one field and no values, since being passed an empty cell array of struct array values. When the value is a cell array containing a single entry, this becomes a scalar struct with that single entry as the value of the field. That single entry happens to be an empty cell array.\n    Finally, if the value is a non-scalar cell array, then struct produces a struct array.\n    See also: cell2struct, fieldnames, getfield, setfield, rmfield, isfield, orderfields, isstruct, structfun. \n\n[struct function](https://octave.sourceforge.io/octave/function/struct.html)'
+    }
+  },
+  {
+    label: "addpath",
+    kind: import_vscode_languageserver3.CompletionItemKind.Function,
+    documentation: {
+      kind: import_vscode_languageserver3.MarkupKind.Markdown,
+      value: ' __addpath (dir1, \u2026)__\n __addpath (dir1, \u2026, option)__\n    Add named directories to the function search path.\n    If option is "-begin" or 0 (the default), prepend the directory name to the current path. If option is "-end" or 1, append the directory name to the current path. Directories added to the path must exist.\n    In addition to accepting individual directory arguments, lists of directory names separated by pathsep are also accepted. For example:\n    addpath ("dir1:/dir2:~/dir3")\n    For each directory that is added, and that was not already in the path, addpath checks for the existence of a file named PKG_ADD (note lack of .m extension) and runs it if it exists.\n    See also: path, rmpath, genpath, pathdef, savepath, pathsep. \n\n[addpath function](https://octave.sourceforge.io/octave/function/addpath.html)'
+    }
+  },
+  {
+    label: "argv",
+    kind: import_vscode_languageserver3.CompletionItemKind.Function,
+    documentation: {
+      kind: import_vscode_languageserver3.MarkupKind.Markdown,
+      value: "Return the command line arguments passed to Octave.\n\nFor example, if you invoked Octave using the command\n\noctave --no-line-editing --silent\n\nargv would return a cell array of strings with the elements --no-line-editing and --silent.\n\nIf you write an executable Octave script, argv will return the list of arguments passed to the script. See \u2018Executable Octave Programs\u2019, for an example of how to create an executable Octave script.\n\n[argv function](https://octave.sourceforge.io/octave/function/argv.html)"
+    }
+  },
+  {
+    label: "hold",
+    kind: import_vscode_languageserver3.CompletionItemKind.Function,
+    documentation: {
+      kind: import_vscode_languageserver3.MarkupKind.Markdown,
+      value: "[hold function](https://octave.sourceforge.io/octave/function/hold.html)"
+    }
+  },
+  {
+    label: "axis",
+    kind: import_vscode_languageserver3.CompletionItemKind.Function,
+    documentation: {
+      kind: import_vscode_languageserver3.MarkupKind.Markdown,
+      value: "[axis function](https://octave.sourceforge.io/octave/function/axis.html)"
+    }
+  },
+  {
+    label: "printf",
+    kind: import_vscode_languageserver3.CompletionItemKind.Function,
+    documentation: {
+      kind: import_vscode_languageserver3.MarkupKind.Markdown,
+      value: "[printf function](https://octave.sourceforge.io/octave/function/printf.html)"
+    }
+  },
+  {
+    label: "figure",
+    kind: import_vscode_languageserver3.CompletionItemKind.Function,
+    documentation: {
+      kind: import_vscode_languageserver3.MarkupKind.Markdown,
+      value: "[figure function](https://octave.sourceforge.io/octave/function/figure.html)"
+    }
+  },
+  {
+    label: "set",
+    kind: import_vscode_languageserver3.CompletionItemKind.Function,
+    documentation: {
+      kind: import_vscode_languageserver3.MarkupKind.Markdown,
+      value: "[set function](https://octave.sourceforge.io/octave/function/set.html)"
+    }
+  },
+  {
+    label: "grid",
+    kind: import_vscode_languageserver3.CompletionItemKind.Function,
+    documentation: {
+      kind: import_vscode_languageserver3.MarkupKind.Markdown,
+      value: "[grid function](https://octave.sourceforge.io/octave/function/grid.html)"
+    }
+  },
+  {
+    label: "clc",
+    kind: import_vscode_languageserver3.CompletionItemKind.Function,
+    documentation: {
+      kind: import_vscode_languageserver3.MarkupKind.Markdown,
+      value: "[clc function](https://octave.sourceforge.io/octave/function/clc.html)"
+    }
+  },
+  {
+    label: "quit",
+    kind: import_vscode_languageserver3.CompletionItemKind.Function,
+    documentation: {
+      kind: import_vscode_languageserver3.MarkupKind.Markdown,
+      value: "[quit function](https://docs.octave.org/interpreter/Quitting-Octave.html)"
+    }
+  },
+  {
+    label: "help",
+    kind: import_vscode_languageserver3.CompletionItemKind.Function,
+    documentation: {
+      kind: import_vscode_languageserver3.MarkupKind.Markdown,
+      value: "[help function](https://octave.sourceforge.io/octave/function/help.html)"
+    }
+  },
+  {
+    label: "stem",
+    kind: import_vscode_languageserver3.CompletionItemKind.Function,
+    documentation: {
+      kind: import_vscode_languageserver3.MarkupKind.Markdown,
+      value: "[stem function](https://octave.sourceforge.io/octave/function/stem.html)"
+    }
+  },
+  {
+    label: "plot",
+    kind: import_vscode_languageserver3.CompletionItemKind.Function,
+    documentation: {
+      kind: import_vscode_languageserver3.MarkupKind.Markdown,
+      value: "[plot function](https://octave.sourceforge.io/octave/function/plot.html)"
+    }
+  },
+  {
+    label: "abs",
+    kind: import_vscode_languageserver3.CompletionItemKind.Function,
+    documentation: "Return the absolute value of a number"
+  },
+  {
+    label: "acos",
+    kind: import_vscode_languageserver3.CompletionItemKind.Function,
+    documentation: "Return the arccosine of a number"
+  },
+  {
+    label: "acosh",
+    kind: import_vscode_languageserver3.CompletionItemKind.Function,
+    documentation: "Return the hyperbolic arccosine of a number"
+  },
+  {
+    label: "angle",
+    kind: import_vscode_languageserver3.CompletionItemKind.Function,
+    documentation: "Return the angle (in radians) of a complex number"
+  },
+  {
+    label: "arg",
+    kind: import_vscode_languageserver3.CompletionItemKind.Function,
+    documentation: "Return the argument (in radians) of a complex number"
+  },
+  {
+    label: "asin",
+    kind: import_vscode_languageserver3.CompletionItemKind.Function,
+    documentation: "Return the arcsine of a number"
+  },
+  {
+    label: "asinh",
+    kind: import_vscode_languageserver3.CompletionItemKind.Function,
+    documentation: "Return the hyperbolic arcsine of a number"
+  },
+  {
+    label: "atan",
+    kind: import_vscode_languageserver3.CompletionItemKind.Function,
+    documentation: "Return the arctangent of a number"
+  },
+  {
+    label: "atanh",
+    kind: import_vscode_languageserver3.CompletionItemKind.Function,
+    documentation: "Return the hyperbolic arctangent of a number"
+  },
+  {
+    label: "ceil",
+    kind: import_vscode_languageserver3.CompletionItemKind.Function,
+    documentation: "Round up to the nearest integer"
+  },
+  {
+    label: "conj",
+    kind: import_vscode_languageserver3.CompletionItemKind.Function,
+    documentation: "Return the complex conjugate of a number"
+  },
+  {
+    label: "cos",
+    kind: import_vscode_languageserver3.CompletionItemKind.Function,
+    documentation: "Return the cosine of a number"
+  },
+  {
+    label: "cosh",
+    kind: import_vscode_languageserver3.CompletionItemKind.Function,
+    documentation: "Return the hyperbolic cosine of a number"
+  },
+  {
+    label: "cot",
+    kind: import_vscode_languageserver3.CompletionItemKind.Function,
+    documentation: "Return the cotangent of a number"
+  },
+  {
+    label: "csc",
+    kind: import_vscode_languageserver3.CompletionItemKind.Function,
+    documentation: "Return the cosecant of a number"
+  },
+  {
+    label: "det",
+    kind: import_vscode_languageserver3.CompletionItemKind.Function,
+    documentation: "Compute the determinant of a matrix"
+  },
+  {
+    label: "diag",
+    kind: import_vscode_languageserver3.CompletionItemKind.Function,
+    documentation: "Extract or construct a diagonal matrix"
+  },
+  {
+    label: "diff",
+    kind: import_vscode_languageserver3.CompletionItemKind.Function,
+    documentation: "Compute the difference between adjacent elements of a matrix"
+  },
+  {
+    label: "disp",
+    kind: import_vscode_languageserver3.CompletionItemKind.Function,
+    documentation: "Display the value of an expression"
+  },
+  {
+    label: "eig",
+    kind: import_vscode_languageserver3.CompletionItemKind.Function,
+    documentation: "Compute the eigenvalues and eigenvectors of a matrix"
+  },
+  {
+    label: "eps",
+    kind: import_vscode_languageserver3.CompletionItemKind.Constant,
+    documentation: "Return the machine epsilon (smallest number representable in floating point arithmetic)"
+  },
+  {
+    label: "erf",
+    kind: import_vscode_languageserver3.CompletionItemKind.Function,
+    documentation: "Return the error function of a number"
+  },
+  {
+    label: "erfc",
+    kind: import_vscode_languageserver3.CompletionItemKind.Function,
+    documentation: "Return the complementary error function of a number"
+  }
+];
 
 // src/data/defaultSettings.ts
 var os = __toESM(require("os"));
@@ -9448,7 +9451,7 @@ var defaultSettings = {
 
 // src/utils/getKeywordsFromCompletion.ts
 function getKeywordsFromCompletion() {
-  return completionKeywords().map((keyword) => keyword.label);
+  return completionKeywords.map((keyword) => keyword.label);
 }
 
 // src/utils/isLetter.ts
@@ -9475,7 +9478,7 @@ function getRowsAndColsInCursor({ text, characterPosition }) {
 }
 
 // src/utils/getWordRangeAtPosition.ts
-var import_vscode_languageserver3 = __toESM(require_main4());
+var import_vscode_languageserver4 = __toESM(require_main4());
 function getWordRangeAtPosition(document, position) {
   const text = document.getText();
   const wordRegex = /[\w]+/g;
@@ -9483,7 +9486,7 @@ function getWordRangeAtPosition(document, position) {
   while (match = wordRegex.exec(text)) {
     const startPos = match.index;
     const endPos = match.index + match[0].length;
-    const range = import_vscode_languageserver3.Range.create(document.positionAt(startPos), document.positionAt(endPos));
+    const range = import_vscode_languageserver4.Range.create(document.positionAt(startPos), document.positionAt(endPos));
     if (position.line === range.start.line && position.character >= range.start.character && position.character <= range.end.character) {
       return range;
     }
@@ -9539,11 +9542,11 @@ function handleReferences(document, position) {
 }
 
 // src/handlers/handleCompletion.ts
-var import_vscode_languageserver4 = __toESM(require_main4());
+var import_vscode_languageserver5 = __toESM(require_main4());
 function handleCompletion({
   params
 }) {
-  const items = completionKeywords(params.position);
+  const items = completionKeywords;
   const visitor = visitors.get(params.textDocument.uri);
   if (!visitor || !visitor?.definitions)
     return items;
@@ -9559,11 +9562,11 @@ function handleCompletion({
       const insertText = def.type !== "FUNCTION" ? def.name : `${def.name}(${args});`;
       const item = {
         label: def.name,
-        kind: def.type === "FUNCTION" ? import_vscode_languageserver4.CompletionItemKind.Function : import_vscode_languageserver4.CompletionItemKind.Variable,
+        kind: def.type === "FUNCTION" ? import_vscode_languageserver5.CompletionItemKind.Function : import_vscode_languageserver5.CompletionItemKind.Variable,
         documentation: def.documentation,
         data: def.arguments,
         insertText,
-        insertTextFormat: import_vscode_languageserver4.InsertTextFormat.Snippet
+        insertTextFormat: import_vscode_languageserver5.InsertTextFormat.Snippet
       };
       return item;
     }).filter((item, index, self) => index === self.findIndex((i) => i.label === item.label))
@@ -9599,6 +9602,7 @@ async function handleDefinitions({ params, documents: documents2 }) {
 }
 
 // src/parser/parser.ts
+var MAX_STATEMENTS = 5e3;
 var Parser = class {
   constructor(tokens) {
     this.tokens = tokens;
@@ -9677,9 +9681,9 @@ var Parser = class {
     const nextToken = this.getNextToken();
     if (currToken.content === "end" || currToken.content === "endfunction" || currToken.type === "EOF" || !nextToken) {
       this.getPrevToken();
-      return;
+      return null;
     }
-    if ((currToken.type === "IDENTIFIER" || currToken.type === "KEYWORD") && nextToken.type === "LPARENT") {
+    if ((currToken.type === "IDENTIFIER" || currToken.type === "NATIVE_FUNCTION") && nextToken.type === "LPARENT") {
       const args = this.getFunctionArguments();
       this.getNextToken();
       const supressOutput = this.isOutputSupressed();
@@ -9785,7 +9789,31 @@ var Parser = class {
         message: "Expected a valid token for a statement",
         range: this.getCurrentToken().position
       });
+      return null;
     }
+  }
+  /**
+   * Helper that returns a function definition
+   */
+  getParsedFunctionCall(currToken) {
+    const args = this.getFunctionArguments();
+    this.getNextToken();
+    const supressOutput = this.isOutputSupressed();
+    if (supressOutput) {
+      this.getNextToken();
+    }
+    return {
+      type: "FUNCTION_CALL",
+      supressOutput,
+      context: this.getCurrentContext(),
+      LHE: {
+        type: "IDENTIFIER",
+        value: currToken.content,
+        functionData: {
+          args
+        }
+      }
+    };
   }
   /**
    * Helper that sends an error if the arguments of a funcion call are wrong
@@ -9926,10 +9954,18 @@ var Parser = class {
     }
     this.getNextToken();
     const statements = [];
-    while (!this.isEndFunctionToken() && !this.isEOF()) {
+    let maxCalls = 0;
+    while (!this.isEndFunctionToken() && !this.isEOF() && maxCalls < MAX_STATEMENTS) {
       const statement = this.parseStatement();
       if (statement)
         statements.push(statement);
+      maxCalls++;
+    }
+    if (maxCalls >= MAX_STATEMENTS) {
+      this.errors.push({
+        message: "Max calls for statements in a function definition",
+        range: this.getCurrentToken().position
+      });
     }
     const endToken = this.getCurrentToken();
     if (endToken.type === "EOF") {
@@ -9994,10 +10030,18 @@ var Parser = class {
       this.getNextToken();
     }
     const statements = [];
-    while (!this.isEndFunctionToken() && !this.isEOF()) {
+    let maxCalls = 0;
+    while (!this.isEndFunctionToken() && !this.isEOF() && maxCalls < MAX_STATEMENTS) {
       const statement = this.parseStatement();
       if (statement)
         statements.push(statement);
+      maxCalls++;
+    }
+    if (maxCalls >= MAX_STATEMENTS) {
+      this.errors.push({
+        message: "Max calls for statements in a function definition",
+        range: this.getCurrentToken().position
+      });
     }
     const endToken = this.getCurrentToken();
     if (endToken.type === "EOF") {
@@ -10101,7 +10145,7 @@ var Parser = class {
       if (nextTokenType === "RBRACKET") {
         break;
       }
-    } while (tokens[tokens.length - 1].type !== "RBRACKET");
+    } while (tokens[tokens.length - 1].type !== "RBRACKET" && this.currentTokenIndex < this.tokens.length);
     return tokens;
   }
   /**
@@ -10336,12 +10380,21 @@ var Parser = class {
   * @returns Program - AST.
   */
   makeAST() {
+    let statementsCounter = 0;
     do {
       const statement = this.parseStatement();
       if (statement) {
         this.statements.push(statement);
       }
-    } while (this.getCurrentToken().type !== "EOF");
+      statementsCounter++;
+    } while (this.getCurrentToken().type !== "EOF" && statementsCounter < MAX_STATEMENTS);
+    if (statementsCounter >= MAX_STATEMENTS) {
+      console.error("MAX STATEMENTS MET");
+      this.errors.push({
+        message: "Maximum amount of statements reached.",
+        range: this.getCurrentToken().position
+      });
+    }
     return {
       type: "Program",
       body: this.statements
@@ -10403,6 +10456,8 @@ var Tokenizer = class {
     this.currPos = 0;
     this.nextPos = 0;
     this.tokens = [];
+    this.keywords = getKeywordsFromCompletion();
+    this.nativeFunctions = getKeywordsFromCompletion();
     this.readChar();
   }
   /**
@@ -10502,15 +10557,18 @@ var Tokenizer = class {
    * Returns the Token corresponding to keywords or literals.
    */
   tokenFromLiteral(literal) {
-    const keywords = getKeywordsFromCompletion();
-    for (const keyword of keywords) {
-      if (keyword === literal) {
-        return {
-          type: "KEYWORD",
-          content: literal,
-          position: this.getPosition(literal)
-        };
-      }
+    if (this.keywords.includes(literal)) {
+      return {
+        type: "KEYWORD",
+        content: literal,
+        position: this.getPosition(literal)
+      };
+    } else if (this.nativeFunctions.includes(literal)) {
+      return {
+        type: "NATIVE_FUNCTION",
+        content: literal,
+        position: this.getPosition(literal)
+      };
     }
     return {
       type: "IDENTIFIER",
@@ -10816,7 +10874,7 @@ var Visitor = class {
 
 // src/server.ts
 var DEBOUNCE_DELAY_MS = 1e3;
-var connection2 = (0, import_node2.createConnection)(import_node2.ProposedFeatures.all);
+var connection = (0, import_node2.createConnection)(import_node2.ProposedFeatures.all);
 var documentSettings = /* @__PURE__ */ new Map();
 var documents = new import_node2.TextDocuments(import_vscode_languageserver_textdocument2.TextDocument);
 var visitors = /* @__PURE__ */ new Map();
@@ -10824,10 +10882,10 @@ var documentChanges = /* @__PURE__ */ new Map();
 documents.onDidChangeContent((change) => {
   updateDocumentData(change.document.uri, change.document.getText());
 });
-connection2.onInitialize((params) => handleOnInitialize({ params, connection: connection2 }));
-connection2.onInitialized((params) => handleOnInitialized({ params, connection: connection2 }));
-connection2.onDefinition((params) => handleDefinitions({ params, documents }));
-connection2.onReferences((params) => {
+connection.onInitialize((params) => handleOnInitialize({ params, connection }));
+connection.onInitialized((params) => handleOnInitialized({ params, connection }));
+connection.onDefinition((params) => handleDefinitions({ params, documents }));
+connection.onReferences((params) => {
   const uri = params.textDocument.uri;
   const document = documents.get(uri);
   return handleReferences(document, params.position);
@@ -10835,12 +10893,12 @@ connection2.onReferences((params) => {
 documents.onDidClose((e) => {
   documentSettings.delete(e.document.uri);
 });
-connection2.onCompletion((params) => handleCompletion({ params }));
-connection2.onCompletionResolve((item) => {
+connection.onCompletion((params) => handleCompletion({ params }));
+connection.onCompletionResolve((item) => {
   return item;
 });
-documents.listen(connection2);
-connection2.listen();
+documents.listen(connection);
+connection.listen();
 function updateDocumentData(uri, text) {
   if (documentChanges.has(uri)) {
     clearTimeout(documentChanges.get(uri));
@@ -10857,7 +10915,7 @@ function updateDocumentData(uri, text) {
       visitors.set(uri, visitor);
       const errors = parser.getErrors().map((err) => getDiagnosticFromLitingMessage(err, "error"));
       const warnings = parser.getWarnings().map((warn) => getDiagnosticFromLitingMessage(warn, "warn"));
-      connection2.sendDiagnostics({
+      connection.sendDiagnostics({
         uri,
         diagnostics: [...errors, ...warnings]
       });

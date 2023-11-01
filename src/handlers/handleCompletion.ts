@@ -1,14 +1,13 @@
-import { CompletionItem, CompletionItemKind, TextDocumentPositionParams, TextEdit, Range, InsertTextFormat } from "vscode-languageserver";
+import { CompletionItem, CompletionItemKind, TextDocumentPositionParams, InsertTextFormat } from "vscode-languageserver";
 import { completionKeywords } from "../data";
-import { connection, documents, visitors } from "../server";
-import { getWordRangeAtPosition } from "../utils";
+import { documents, visitors } from "../server";
 
 export function handleCompletion({
   params,
 }: {
   params: TextDocumentPositionParams;
 }): CompletionItem[] {
-  const items: CompletionItem[] = completionKeywords(params.position);
+  const items: CompletionItem[] = completionKeywords;
 
   const visitor = visitors.get(params.textDocument.uri);
   if (!visitor || !(visitor?.definitions)) return items;
