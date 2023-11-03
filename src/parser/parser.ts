@@ -1,7 +1,8 @@
+import { ERROR_CODES } from "../constants";
 import { Expression, LintingError, LintingWarning, Program, Statement, Token, TokenType } from "../types";
 import { getRandomStringID } from "../utils";
 
-const MAX_STATEMENTS = 5000 as const; // TODO: this should be an user setting
+const MAX_STATEMENTS = 10 as const; // TODO: this should be an user setting
 
 /**
  * Takes in a list of Tokens and makes an AST
@@ -85,19 +86,20 @@ export class Parser {
    * Parses an statement
    */
   public parseStatement(): Statement | null {
-    // ignore comments
-    while (this.getCurrentToken().type === "COMMENT") {
+    // ignore comments and jump lines
+    while (this.getCurrentToken().type === "COMMENT" || this.getCurrentToken().type === "NL") {
       this.getNextToken();
     }
 
     const currToken = this.getCurrentToken();
     const nextToken = this.getNextToken();
 
+    if (!nextToken) return null;
+
     if (
       currToken.content === "end" ||
       currToken.content === "endfunction" ||
-      currToken.type === "EOF" ||
-      !nextToken) {
+      currToken.type === "EOF") {
       this.getPrevToken();
       return null;
     }
@@ -147,14 +149,16 @@ export class Parser {
           this.errors.push({
             message: `Unexpected token ${this.getCurrentToken().content}`,
             range: this.getCurrentToken().position,
+            code: ERROR_CODES.OUTPUT_VECTOR,
           });
           return;
         }
         const functionIdentifier = this.getNextToken();
-        if (functionIdentifier.type !== "IDENTIFIER" && functionIdentifier.type !== "KEYWORD") { // TODO: keyword it's not correct now
+        if (functionIdentifier.type !== "IDENTIFIER" && functionIdentifier.type !== "KEYWORD") {
           this.errors.push({
             message: `Expected a function call. Got ${this.getCurrentToken().content}`,
             range: this.getCurrentToken().position,
+            code: ERROR_CODES.EXPECTED_FN_IDENT,
           });
           return;
         }
@@ -206,10 +210,11 @@ export class Parser {
         this.getNextToken();
         counter++;
       }
-      this.logMaxStatementsReached(counter);
+      this.logErrorMaxCallsReached(counter, "Could not parse function call", ERROR_CODES.FN_CALL_EXCEEDED_CALLS);
       this.warnings.push({
         message: "Unadvised function call",
         range: nextToken.position,
+        code: 7,
       });
       return;
     } else {
@@ -217,11 +222,12 @@ export class Parser {
       // console.log("currToken: ", this.getCurrentToken());
       // console.log("currToken: ", currToken);
       this.errors.push({
-        message: "Expected a valid token for a statement",
+        message: `Expected a valid token for a statement. ${currToken ? ` Got: '${JSON.stringify(currToken.content)}'` : ""}`,
         range: currToken?.position ? currToken.position : {
           start: { line: 0, character: 0 },
           end: { line: 0, character: 0 },
         },
+        code: 24,
       });
       return null;
     }
@@ -237,6 +243,7 @@ export class Parser {
         this.errors.push({
           message: "Unexpected default value argument in function call",
           range: arg.position,
+          code: 23,
         });
       }
     }
@@ -300,6 +307,7 @@ export class Parser {
       this.errors.push({
         message: "Unexpected vector value",
         range: this.getCurrentToken().position,
+        code: 22,
       });
     }
 
@@ -348,6 +356,7 @@ export class Parser {
       this.errors.push({
         message: "Unexpected vector value",
         range: this.getCurrentToken().position,
+        code: 21,
       });
     }
 
@@ -376,6 +385,7 @@ export class Parser {
       this.errors.push({
         message: `Expected IDENTIFIER. Got: ${functionName.content}`,
         range: this.getCurrentToken().position,
+        code: 20,
       });
       return;
     }
@@ -392,7 +402,7 @@ export class Parser {
       if (statement) statements.push(statement);
       maxCalls++;
     }
-    this.logMaxStatementsReached(maxCalls);
+    this.logErrorMaxCallsReached(maxCalls, "Could not find closing keyword 'end'", ERROR_CODES.FN_DEF_MISSING_END);
     const endToken = this.getCurrentToken();
     if (endToken.type === "EOF") {
       this.errors.push({
@@ -401,6 +411,7 @@ export class Parser {
           start: functionName.position.start,
           end: endToken.position.end,
         },
+        code: 19,
       });
       return;
     }
@@ -445,6 +456,7 @@ export class Parser {
       this.errors.push({
         message: `Expected IDENTIFIER. Got: ${functionName.content}`,
         range: this.getCurrentToken().position,
+        code: 18,
       });
       return;
     }
@@ -467,6 +479,7 @@ export class Parser {
       this.errors.push({
         message: "Max calls for statements in a function definition",
         range: this.getCurrentToken().position,
+        code: 16,
       });
     }
     const endToken = this.getCurrentToken();
@@ -477,6 +490,7 @@ export class Parser {
           start: functionName.position.start,
           end: endToken.position.end,
         },
+        code: 17,
       });
       return;
     }
@@ -543,6 +557,7 @@ export class Parser {
       this.warnings.push({
         message: "Will output to the console",
         range: this.getPrevToken().position,
+        code: 15,
       });
       this.getNextToken();
       return;
@@ -572,6 +587,7 @@ export class Parser {
         this.errors.push({
           message: `Expected COMMA. Got: '${this.getCurrentToken().content}'`,
           range: this.getCurrentToken().position,
+          code: 14,
         });
         return tokens;
       }
@@ -635,6 +651,7 @@ export class Parser {
           this.errors.push({
             message: "Expected closing parenthesis ')'",
             range: this.getCurrentToken().position,
+            code: 13,
           });
           return;
         }
@@ -649,6 +666,7 @@ export class Parser {
         this.errors.push({
           message: `Unexpected token. ${currToken.content}`,
           range: this.getCurrentToken().position,
+          code: 12,
         });
         return;
     }
@@ -680,6 +698,7 @@ export class Parser {
       this.errors.push({
         message: `Expected a valid data type. Got ${token.content}`,
         range: this.getCurrentToken().position,
+        code: 11,
       });
     }
 
@@ -720,6 +739,7 @@ export class Parser {
       this.errors.push({
         message: `Expected '(' for function call. Got: ${this.getCurrentToken().content}`,
         range: this.getCurrentToken().position,
+        code: 10,
       });
       return tokens;
     }
@@ -736,6 +756,7 @@ export class Parser {
           this.errors.push({
             message: `Expected a valid default value. Got ${defaultValue.content}`,
             range: defaultValue.position,
+            code: 9,
           });
         }
         tokens.push({
@@ -764,6 +785,7 @@ export class Parser {
         this.errors.push({
           message: `Expected valid argument. Got ${arg}`,
           range: this.getCurrentToken().position,
+          code: 8,
         });
         return tokens;
       }
@@ -777,6 +799,7 @@ export class Parser {
         this.errors.push({
           message: `Expected ',' or ')'. Got '${commaOrRParen.content}'`,
           range: this.getCurrentToken().position,
+          code: ERROR_CODES.EXPECTED_COMMA_PAREN,
         });
         return tokens;
       }
@@ -785,6 +808,7 @@ export class Parser {
       this.errors.push({
         message: "Expected closing parenthesis ')' for function call",
         range: this.getCurrentToken().position,
+        code: ERROR_CODES.MISSING_PAREN,
       });
       return tokens;
     }
@@ -834,11 +858,12 @@ export class Parser {
   /**
    * Helper that adds the error of max statements reached
    */
-  private logMaxStatementsReached(counter: number): void {
+  private logErrorMaxCallsReached(counter: number, message: string, errorCode): void {
     if (counter >= MAX_STATEMENTS) {
       this.errors.push({
-        message: "Max calls for statements in a function definition",
+        message,
         range: this.getCurrentToken().position,
+        code: errorCode,
       });
     }
   }
@@ -865,11 +890,12 @@ export class Parser {
     } while (this.getCurrentToken().type !== "EOF" && statementsCounter < MAX_STATEMENTS);
 
     if (statementsCounter >= MAX_STATEMENTS) {
-      console.error("MAX STATEMENTS MET"); // TODO: remove this
       this.errors.push({
         message: "Maximum amount of statements reached.",
         range: this.getCurrentToken().position,
+        code: ERROR_CODES.AST_MAX_STMNT_REACHED,
       });
+      throw new Error("Maximum amount of statements reached.");
     }
 
     return {

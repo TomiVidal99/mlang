@@ -4,6 +4,7 @@ import { Symbols } from ".";
 export interface LintingMessage {
   message: string;
   range: Range;
+  code: number;
 }
 
 export interface LintingError extends LintingMessage {
