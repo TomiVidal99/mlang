@@ -61,6 +61,7 @@ end
 - [ ] ADD: block comments.
 - [ ] ADD: Maybe consider documentation with comments on variable as well.
 - [ ] ADD: CI/CD.
+- [ ] ADD: Finish refactor en error codes.
 - [ ] FEATURES?: Maybe have a user setting to be able to multiple variables and functions definitions, instead of grabbing the first one?
 
 
