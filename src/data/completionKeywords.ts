@@ -131,4 +131,4 @@ export const completionKeywords: CompletionItem[] = [
       "[block end marker](https://docs.octave.org/v4.2.0/A-Sample-Function-Description.html#A-Sample-Function-Description)",
     },
   },
-];
+] as const;
