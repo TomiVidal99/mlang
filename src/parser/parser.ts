@@ -1,7 +1,7 @@
 import { Expression, LintingError, LintingWarning, Program, Statement, Token, TokenType } from "../types";
 import { getRandomStringID } from "../utils";
 
-const MAX_STATEMENTS = 5000 as const;
+const MAX_STATEMENTS = 5000 as const; // TODO: this should be an user setting
 
 /**
  * Takes in a list of Tokens and makes an AST
@@ -107,9 +107,6 @@ export class Parser {
       const args = this.getFunctionArguments();
       this.getNextToken();
       const supressOutput = this.isOutputSupressed();
-      if (supressOutput) {
-        this.getNextToken();
-      }
       return {
         type: "FUNCTION_CALL",
         supressOutput,
@@ -127,9 +124,6 @@ export class Parser {
       this.getNextToken();
       const RHE = this.parseExpression();
       const supressOutput = this.isOutputSupressed();
-      if (supressOutput) {
-        this.getNextToken();
-      }
       return {
         type: "ASSIGNMENT",
         operator: nextToken.content as string,
@@ -169,9 +163,6 @@ export class Parser {
         this.validateFnCallArgs(args);
         this.getNextToken();
         const supressOutput = this.isOutputSupressed();
-        if (supressOutput) {
-          this.getNextToken();
-        }
         return {
           type: "MO_ASSIGNMENT",
           operator: "=",
@@ -206,12 +197,18 @@ export class Parser {
       } else {
         return this.getFunctionDefintionWithoutOutput();
       }
-    } else if (currToken.type === "IDENTIFIER" && (nextToken.type === "IDENTIFIER" || nextToken.type === "EOF" || nextToken.type === "NUMBER" || nextToken.type === "STRING")) {
+    } else if (currToken.type === "IDENTIFIER" && (nextToken.type === "EOF" || this.isTokenValidBasicDataType(nextToken))) {
       // FUNCTION CALL (NOT recommended way)
       // Printing outputs, single operations or function calls with arguments
       // TODO: make this a function call
+      let counter = 0;
+      while (this.getCurrentToken().type !== "EOF" && this.isTokenValidBasicDataType(this.getCurrentToken()) && counter < MAX_STATEMENTS) {
+        this.getNextToken();
+        counter++;
+      }
+      this.logMaxStatementsReached(counter);
       this.warnings.push({
-        message: "This is considered as a function call",
+        message: "Unadvised function call",
         range: nextToken.position,
       });
       return;
@@ -221,7 +218,10 @@ export class Parser {
       // console.log("currToken: ", currToken);
       this.errors.push({
         message: "Expected a valid token for a statement",
-        range: this.getCurrentToken().position,
+        range: currToken?.position ? currToken.position : {
+          start: { line: 0, character: 0 },
+          end: { line: 0, character: 0 },
+        },
       });
       return null;
     }
@@ -392,12 +392,7 @@ export class Parser {
       if (statement) statements.push(statement);
       maxCalls++;
     }
-    if (maxCalls >= MAX_STATEMENTS) {
-      this.errors.push({
-        message: "Max calls for statements in a function definition",
-        range: this.getCurrentToken().position,
-      });
-    }
+    this.logMaxStatementsReached(maxCalls);
     const endToken = this.getCurrentToken();
     if (endToken.type === "EOF") {
       this.errors.push({
@@ -545,14 +540,14 @@ export class Parser {
   private isOutputSupressed(): boolean {
     const isSupressed = this.getCurrentToken().type === "SEMICOLON";
     if (!isSupressed) {
-      this.getPrevToken();
       this.warnings.push({
         message: "Will output to the console",
         range: this.getPrevToken().position,
       });
       this.getNextToken();
-      this.getNextToken();
+      return;
     }
+    this.getNextToken();
     return isSupressed;
   }
 
@@ -834,6 +829,25 @@ export class Parser {
       return token.type === "IDENTIFIER" || token.type === "VECTOR" || token.type === "STRING" || token.type === "NUMBER";
     }
     return this.getCurrentToken().type === "IDENTIFIER" || this.getCurrentToken().type === "VECTOR" || this.getCurrentToken().type === "STRING" || this.getCurrentToken().type === "NUMBER";
+  }
+
+  /**
+   * Helper that adds the error of max statements reached
+   */
+  private logMaxStatementsReached(counter: number): void {
+    if (counter >= MAX_STATEMENTS) {
+      this.errors.push({
+        message: "Max calls for statements in a function definition",
+        range: this.getCurrentToken().position,
+      });
+    }
+  }
+
+  /**
+   * Returns the parsed statements in the provided text
+   */
+  public getStatements(): Statement[] {
+    return this.statements;
   }
 
   /**

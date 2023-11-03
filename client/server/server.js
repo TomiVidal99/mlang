@@ -9551,9 +9551,6 @@ function handleCompletion({
   if (!visitor || !visitor?.definitions)
     return items;
   const { definitions } = visitor;
-  const document = documents.get(params.textDocument.uri);
-  if (!document)
-    return items;
   items.push(
     ...definitions.map((def) => {
       const args = def?.arguments?.length > 0 ? def.arguments.map((d, i) => {
@@ -9687,9 +9684,6 @@ var Parser = class {
       const args = this.getFunctionArguments();
       this.getNextToken();
       const supressOutput = this.isOutputSupressed();
-      if (supressOutput) {
-        this.getNextToken();
-      }
       return {
         type: "FUNCTION_CALL",
         supressOutput,
@@ -9706,9 +9700,6 @@ var Parser = class {
       this.getNextToken();
       const RHE = this.parseExpression();
       const supressOutput = this.isOutputSupressed();
-      if (supressOutput) {
-        this.getNextToken();
-      }
       return {
         type: "ASSIGNMENT",
         operator: nextToken.content,
@@ -9744,9 +9735,6 @@ var Parser = class {
         this.validateFnCallArgs(args);
         this.getNextToken();
         const supressOutput = this.isOutputSupressed();
-        if (supressOutput) {
-          this.getNextToken();
-        }
         return {
           type: "MO_ASSIGNMENT",
           operator: "=",
@@ -9780,40 +9768,20 @@ var Parser = class {
       }
     } else if (currToken.type === "IDENTIFIER" && (nextToken.type === "IDENTIFIER" || nextToken.type === "EOF" || nextToken.type === "NUMBER" || nextToken.type === "STRING")) {
       this.warnings.push({
-        message: "This is considered as a function call",
+        message: "Unadvised function call",
         range: nextToken.position
       });
       return;
     } else {
       this.errors.push({
         message: "Expected a valid token for a statement",
-        range: this.getCurrentToken().position
+        range: currToken?.position ? currToken.position : {
+          start: { line: 0, character: 0 },
+          end: { line: 0, character: 0 }
+        }
       });
       return null;
     }
-  }
-  /**
-   * Helper that returns a function definition
-   */
-  getParsedFunctionCall(currToken) {
-    const args = this.getFunctionArguments();
-    this.getNextToken();
-    const supressOutput = this.isOutputSupressed();
-    if (supressOutput) {
-      this.getNextToken();
-    }
-    return {
-      type: "FUNCTION_CALL",
-      supressOutput,
-      context: this.getCurrentContext(),
-      LHE: {
-        type: "IDENTIFIER",
-        value: currToken.content,
-        functionData: {
-          args
-        }
-      }
-    };
   }
   /**
    * Helper that sends an error if the arguments of a funcion call are wrong
@@ -10112,14 +10080,14 @@ var Parser = class {
   isOutputSupressed() {
     const isSupressed = this.getCurrentToken().type === "SEMICOLON";
     if (!isSupressed) {
-      this.getPrevToken();
       this.warnings.push({
         message: "Will output to the console",
         range: this.getPrevToken().position
       });
       this.getNextToken();
-      this.getNextToken();
+      return;
     }
+    this.getNextToken();
     return isSupressed;
   }
   /**
@@ -10374,6 +10342,12 @@ var Parser = class {
       return token.type === "IDENTIFIER" || token.type === "VECTOR" || token.type === "STRING" || token.type === "NUMBER";
     }
     return this.getCurrentToken().type === "IDENTIFIER" || this.getCurrentToken().type === "VECTOR" || this.getCurrentToken().type === "STRING" || this.getCurrentToken().type === "NUMBER";
+  }
+  /**
+   * Returns the parsed statements in the provided text
+   */
+  getStatements() {
+    return this.statements;
   }
   /**
   * Makes the Abstract Syntax Tree with the given tokens.

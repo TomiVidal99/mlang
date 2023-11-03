@@ -78,3 +78,23 @@ test("Octave/Matlab Parser, should parse empty function definition with comments
   expect(parsedStatement.LHE.functionData.closingToken.content).toStrictEqual("end");
   expect(parsedStatement.LHE.functionData.contextCreated.length > 0).toStrictEqual(true);
 });
+
+// test("Octave/Matlab Parser, should parse multiple statements", function() {
+//   const inputCode = `
+//   myStr= "Lkjasldkaj"
+//   numberA = 20;
+//   function myCoolFunction()
+//     a = 1;
+//   end
+//   disp(numberA);
+//   `;
+//
+//   const tokenizer = new Tokenizer(inputCode);
+//   const tokens = tokenizer.getAllTokens();
+//   const parser = new Parser(tokens);
+//   const parsedStatement = parser.parseStatement();
+//
+//   const errors = parser.getErrors();
+//
+//   expect(errors.length).toStrictEqual(0);
+// });
