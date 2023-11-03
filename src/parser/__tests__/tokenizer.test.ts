@@ -3,10 +3,10 @@ import { TokenType } from "../../types";
 import { Tokenizer } from "../tokenizer";
 
 test("Octave/Matlab Tokenizer, testing Symbols", () => {
-  const text = `@:=-+*/1%^.;[]{}(),`;
+  const text = `@:=\n-+*/1%^.;[]{}(),`;
 
   const symbols: TokenType[] = [
-    "AT", "COLON", "EQUALS", "SUBTRACTION", "ADDITION", "MULTIPLICATION",
+    "AT", "COLON", "EQUALS", "NL", "SUBTRACTION", "ADDITION", "MULTIPLICATION",
     "DIVISION", "NUMBER", "MODULUS", "EXPONENTIATION", "PERIOD",
     "SEMICOLON", "LBRACKET", "RBRACKET", "LSQUIRLY", "RSQUIRLY",
     "LPARENT", "RPARENT", "COMMA", "EOF"
@@ -44,11 +44,11 @@ test("Octave/Matlab Tokenizer, complete test", function() {
   `;
 
   const symbols: TokenType[] = [
-    "KEYWORD", "LBRACKET", "IDENTIFIER", "COMMA", "IDENTIFIER", "RBRACKET", "EQUALS",
-    "IDENTIFIER", "LPARENT", "IDENTIFIER", "COMMA", "IDENTIFIER", "COMMA", "IDENTIFIER", "RPARENT",
+    "NL", "KEYWORD", "LBRACKET", "IDENTIFIER", "COMMA", "IDENTIFIER", "RBRACKET", "EQUALS",
+    "IDENTIFIER", "LPARENT", "IDENTIFIER", "COMMA", "IDENTIFIER", "COMMA", "IDENTIFIER", "RPARENT", "NL",
     "IDENTIFIER", "EQUALS", "IDENTIFIER", "ADDITION", "IDENTIFIER", "ADDITION", "STRING",
-    "SEMICOLON", "IDENTIFIER", "EQUALS", "IDENTIFIER",
-    "MULTIPLICATION", "NUMBER", "SEMICOLON", "KEYWORD",
+    "SEMICOLON", "NL", "IDENTIFIER", "EQUALS", "IDENTIFIER",
+    "MULTIPLICATION", "NUMBER", "SEMICOLON", "NL", "KEYWORD", "NL",
   ];
 
   const tokenizer = new Tokenizer(text);
@@ -67,7 +67,7 @@ test("Octave/Matlab Tokenizer, detect line comments", function() {
   `;
 
   const symbols: TokenType[] = [
-    "COMMENT", "COMMENT", "IDENTIFIER", "EQUALS", "STRING", "SEMICOLON"
+    "NL", "COMMENT", "NL", "COMMENT", "NL", "IDENTIFIER", "EQUALS", "STRING", "SEMICOLON", "NL",
   ];
 
   const tokenizer = new Tokenizer(text);

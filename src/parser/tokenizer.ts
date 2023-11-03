@@ -1,6 +1,8 @@
 import { Token, getTokenFromSymbols } from "../types";
 import { getKeywordsFromCompletion, getRowsAndColsInCursor, isLetter, isNumber } from "../utils";
-import {Range} from "vscode-languageserver";
+import { Range } from "vscode-languageserver";
+
+const MAX_TOKENS_CALLS = 10000 as const;
 
 export class Tokenizer {
   private currPos = 0;
@@ -21,9 +23,15 @@ export class Tokenizer {
    */
   public getAllTokens(): Token[] {
     const tokens: Token[] = [];
+    let counter = 0;
     do {
       tokens.push(this.getNextToken());
-    } while (tokens[tokens.length - 1].type !== "EOF");
+      counter++;
+    } while (tokens[tokens.length - 1].type !== "EOF" && counter <= MAX_TOKENS_CALLS);
+
+    if (counter >= MAX_TOKENS_CALLS) {
+      throw new Error("Tokens calls exeeded");
+    }
 
     return tokens;
   }
@@ -34,7 +42,7 @@ export class Tokenizer {
   public getNextToken(): Token {
 
     // ignore spaces and jump lines
-    while (/\s/.test(this.currChar)) {
+    while (this.currChar === " ") {
       this.readChar();
     }
 
@@ -58,7 +66,7 @@ export class Tokenizer {
       const intialPos = this.currPos;
       const literal = this.readLiteral();
       const postPos = this.currPos;
-      this.currPos = intialPos-1;
+      this.currPos = intialPos - 1;
       const position = this.getPosition(literal);
       this.currPos = postPos;
       return this.addToken({
@@ -171,7 +179,7 @@ export class Tokenizer {
  */
   private getRowsColsCursor(content?: string): [number, number] {
     const characterPosition = content ? this.currPos + content.length : this.currPos;
-    return getRowsAndColsInCursor({text: this.text, characterPosition});
+    return getRowsAndColsInCursor({ text: this.text, characterPosition });
   }
 
   /**
@@ -247,7 +255,7 @@ export class Tokenizer {
     do {
       this.readChar();
       literal += this.currChar;
-    } while (this.currChar !== '"' && this.currChar !== "'" && this.currPos < this.text.length);
+    } while (this.currChar !== '"' && this.currChar !== "'" && this.currChar !== "\n" && this.currPos < this.text.length);
     this.readChar();
 
     return literal;

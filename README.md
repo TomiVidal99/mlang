@@ -10,6 +10,7 @@ This is an implementation of the [Language Server Protocol](https://code.visuals
 
 - [Typescript](https://www.typescriptlang.org/)
 - [esbuild](https://esbuild.github.io/)
+- [bun](https://bun.sh/) _just for testing_
 - [vscode-languageserver](https://www.npmjs.com/package/vscode-languageserver) _(LSP official node package)_
 
 ## Working features

@@ -6,6 +6,7 @@ import { Token, TokenType } from ".";
  * @enum {string}
  */
 export const Symbols = {
+  NL: "\n",
   EOF: "\0",
   AT: "@",
   COLON: ":",
