@@ -18,6 +18,7 @@ import { getDiagnosticFromLitingMessage } from './utils';
 
 // THIS IS THE TIME THAT IT WAITS BEFORE TRIGGERING A REFRESH
 // OF PARSING THE DOCUMENT WHEN THE USER IT'S TYPING
+// TODO: this should be an user setting
 const DEBOUNCE_DELAY_MS = 1000;
 
 export const connection = createConnection(ProposedFeatures.all);
