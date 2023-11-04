@@ -50,6 +50,7 @@ end
 
 ## TODO
 
+- [ ] MAYBE: instead of creating new instances of Tokenizer, Parser and Visitor, reuse the same.
 - [ ] ADD: STRUCTS '{}'.
 - [ ] FIX: consider keywords like global.
 - [ ] FIX: multiple calls freezes the server.
