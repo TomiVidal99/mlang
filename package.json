@@ -34,6 +34,8 @@
     "vscode-uri": "3.0.7"
   },
   "scripts": {
+    "test-single-test": "bun test -t 'your-test-name-here'",
+    "test": "bun test",
     "compile": "esbuild src/server.ts --platform=node --bundle --outfile=./out/server.js && cp out/server.js client/server/server.js",
     "build": "tsc ./client/src/extension.ts --outDir ./client/out/",
     "watch": "tsc ./client/src/extension.ts -w --outDir ./client/out/",
