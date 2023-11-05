@@ -64,6 +64,7 @@ end
 - [ ] ADD: CI/CD.
 - [ ] ADD: Finish refactor on error codes (for the ERROR_CODES and the throw errors).
 - [ ] FEATURES?: Maybe have a user setting to be able to multiple variables and functions definitions, instead of grabbing the first one?
+- [ ] FEATURES: run lines of code or code blocks (%%).
 
 <!-- ## How to contribute? -->
 
