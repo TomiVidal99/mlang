@@ -2,7 +2,7 @@
   "name": "mlang",
   "displayName": "mlang",
   "description": "Octave/Matlab Language Server",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "repository": "https://github.com/TomiVidal99/mlang",
   "publisher": "mlang",
   "engines": {
