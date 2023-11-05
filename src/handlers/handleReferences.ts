@@ -16,12 +16,10 @@ export function handleReferences(
   const uri = document.uri;
 
   const wordRange = getWordRangeAtPosition(document, position);
-  if (!wordRange) {
-    return null;
-  }
+  if (wordRange === undefined) return [];
 
   const visitor = visitors.get(uri);
-  if (!visitor?.definitions) return [];
+  if (visitor?.definitions === undefined) return [];
   const { references } = visitor;
 
   const word = document.getText(wordRange);

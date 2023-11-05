@@ -3376,8 +3376,8 @@ var require_main2 = __commonJS({
         }
         uinteger2.is = is;
       })(uinteger = exports2.uinteger || (exports2.uinteger = {}));
-      var Position2;
-      (function(Position3) {
+      var Position;
+      (function(Position2) {
         function create(line, character) {
           if (line === Number.MAX_VALUE) {
             line = uinteger.MAX_VALUE;
@@ -3387,19 +3387,19 @@ var require_main2 = __commonJS({
           }
           return { line, character };
         }
-        Position3.create = create;
+        Position2.create = create;
         function is(value) {
           var candidate = value;
           return Is.objectLiteral(candidate) && Is.uinteger(candidate.line) && Is.uinteger(candidate.character);
         }
-        Position3.is = is;
-      })(Position2 = exports2.Position || (exports2.Position = {}));
+        Position2.is = is;
+      })(Position = exports2.Position || (exports2.Position = {}));
       var Range2;
       (function(Range3) {
         function create(one, two, three, four) {
           if (Is.uinteger(one) && Is.uinteger(two) && Is.uinteger(three) && Is.uinteger(four)) {
-            return { start: Position2.create(one, two), end: Position2.create(three, four) };
-          } else if (Position2.is(one) && Position2.is(two)) {
+            return { start: Position.create(one, two), end: Position.create(three, four) };
+          } else if (Position.is(one) && Position.is(two)) {
             return { start: one, end: two };
           } else {
             throw new Error("Range#create called with invalid arguments[".concat(one, ", ").concat(two, ", ").concat(three, ", ").concat(four, "]"));
@@ -3408,7 +3408,7 @@ var require_main2 = __commonJS({
         Range3.create = create;
         function is(value) {
           var candidate = value;
-          return Is.objectLiteral(candidate) && Position2.is(candidate.start) && Position2.is(candidate.end);
+          return Is.objectLiteral(candidate) && Position.is(candidate.start) && Position.is(candidate.end);
         }
         Range3.is = is;
       })(Range2 = exports2.Range || (exports2.Range = {}));
@@ -3553,8 +3553,8 @@ var require_main2 = __commonJS({
         }
         CodeDescription2.is = is;
       })(CodeDescription = exports2.CodeDescription || (exports2.CodeDescription = {}));
-      var Diagnostic3;
-      (function(Diagnostic4) {
+      var Diagnostic;
+      (function(Diagnostic2) {
         function create(range, message, severity, code, source, relatedInformation) {
           var result = { range, message };
           if (Is.defined(severity)) {
@@ -3571,14 +3571,14 @@ var require_main2 = __commonJS({
           }
           return result;
         }
-        Diagnostic4.create = create;
+        Diagnostic2.create = create;
         function is(value) {
           var _a;
           var candidate = value;
           return Is.defined(candidate) && Range2.is(candidate.range) && Is.string(candidate.message) && (Is.number(candidate.severity) || Is.undefined(candidate.severity)) && (Is.integer(candidate.code) || Is.string(candidate.code) || Is.undefined(candidate.code)) && (Is.undefined(candidate.codeDescription) || Is.string((_a = candidate.codeDescription) === null || _a === void 0 ? void 0 : _a.href)) && (Is.string(candidate.source) || Is.undefined(candidate.source)) && (Is.undefined(candidate.relatedInformation) || Is.typedArray(candidate.relatedInformation, DiagnosticRelatedInformation.is));
         }
-        Diagnostic4.is = is;
-      })(Diagnostic3 = exports2.Diagnostic || (exports2.Diagnostic = {}));
+        Diagnostic2.is = is;
+      })(Diagnostic = exports2.Diagnostic || (exports2.Diagnostic = {}));
       var Command;
       (function(Command2) {
         function create(title, command) {
@@ -4176,13 +4176,13 @@ var require_main2 = __commonJS({
         }
         CompletionItemLabelDetails2.is = is;
       })(CompletionItemLabelDetails = exports2.CompletionItemLabelDetails || (exports2.CompletionItemLabelDetails = {}));
-      var CompletionItem4;
-      (function(CompletionItem5) {
+      var CompletionItem;
+      (function(CompletionItem2) {
         function create(label) {
           return { label };
         }
-        CompletionItem5.create = create;
-      })(CompletionItem4 = exports2.CompletionItem || (exports2.CompletionItem = {}));
+        CompletionItem2.create = create;
+      })(CompletionItem = exports2.CompletionItem || (exports2.CompletionItem = {}));
       var CompletionList;
       (function(CompletionList2) {
         function create(items, isIncomplete) {
@@ -4363,7 +4363,7 @@ var require_main2 = __commonJS({
         CodeActionContext2.create = create;
         function is(value) {
           var candidate = value;
-          return Is.defined(candidate) && Is.typedArray(candidate.diagnostics, Diagnostic3.is) && (candidate.only === void 0 || Is.typedArray(candidate.only, Is.string)) && (candidate.triggerKind === void 0 || candidate.triggerKind === CodeActionTriggerKind.Invoked || candidate.triggerKind === CodeActionTriggerKind.Automatic);
+          return Is.defined(candidate) && Is.typedArray(candidate.diagnostics, Diagnostic.is) && (candidate.only === void 0 || Is.typedArray(candidate.only, Is.string)) && (candidate.triggerKind === void 0 || candidate.triggerKind === CodeActionTriggerKind.Invoked || candidate.triggerKind === CodeActionTriggerKind.Automatic);
         }
         CodeActionContext2.is = is;
       })(CodeActionContext = exports2.CodeActionContext || (exports2.CodeActionContext = {}));
@@ -4388,7 +4388,7 @@ var require_main2 = __commonJS({
         CodeAction2.create = create;
         function is(value) {
           var candidate = value;
-          return candidate && Is.string(candidate.title) && (candidate.diagnostics === void 0 || Is.typedArray(candidate.diagnostics, Diagnostic3.is)) && (candidate.kind === void 0 || Is.string(candidate.kind)) && (candidate.edit !== void 0 || candidate.command !== void 0) && (candidate.command === void 0 || Command.is(candidate.command)) && (candidate.isPreferred === void 0 || Is.boolean(candidate.isPreferred)) && (candidate.edit === void 0 || WorkspaceEdit.is(candidate.edit));
+          return candidate && Is.string(candidate.title) && (candidate.diagnostics === void 0 || Is.typedArray(candidate.diagnostics, Diagnostic.is)) && (candidate.kind === void 0 || Is.string(candidate.kind)) && (candidate.edit !== void 0 || candidate.command !== void 0) && (candidate.command === void 0 || Command.is(candidate.command)) && (candidate.isPreferred === void 0 || Is.boolean(candidate.isPreferred)) && (candidate.edit === void 0 || WorkspaceEdit.is(candidate.edit));
         }
         CodeAction2.is = is;
       })(CodeAction = exports2.CodeAction || (exports2.CodeAction = {}));
@@ -4572,7 +4572,7 @@ var require_main2 = __commonJS({
         InlayHint2.create = create;
         function is(value) {
           var candidate = value;
-          return Is.objectLiteral(candidate) && Position2.is(candidate.position) && (Is.string(candidate.label) || Is.typedArray(candidate.label, InlayHintLabelPart.is)) && (candidate.kind === void 0 || InlayHintKind.is(candidate.kind)) && candidate.textEdits === void 0 || Is.typedArray(candidate.textEdits, TextEdit.is) && (candidate.tooltip === void 0 || Is.string(candidate.tooltip) || MarkupContent.is(candidate.tooltip)) && (candidate.paddingLeft === void 0 || Is.boolean(candidate.paddingLeft)) && (candidate.paddingRight === void 0 || Is.boolean(candidate.paddingRight));
+          return Is.objectLiteral(candidate) && Position.is(candidate.position) && (Is.string(candidate.label) || Is.typedArray(candidate.label, InlayHintLabelPart.is)) && (candidate.kind === void 0 || InlayHintKind.is(candidate.kind)) && candidate.textEdits === void 0 || Is.typedArray(candidate.textEdits, TextEdit.is) && (candidate.tooltip === void 0 || Is.string(candidate.tooltip) || MarkupContent.is(candidate.tooltip)) && (candidate.paddingLeft === void 0 || Is.boolean(candidate.paddingLeft)) && (candidate.paddingRight === void 0 || Is.boolean(candidate.paddingRight));
         }
         InlayHint2.is = is;
       })(InlayHint = exports2.InlayHint || (exports2.InlayHint = {}));
@@ -4721,7 +4721,7 @@ var require_main2 = __commonJS({
             var lineOffsets = this.getLineOffsets();
             var low = 0, high = lineOffsets.length;
             if (high === 0) {
-              return Position2.create(0, offset);
+              return Position.create(0, offset);
             }
             while (low < high) {
               var mid = Math.floor((low + high) / 2);
@@ -4732,7 +4732,7 @@ var require_main2 = __commonJS({
               }
             }
             var line = low - 1;
-            return Position2.create(line, offset - lineOffsets[line]);
+            return Position.create(line, offset - lineOffsets[line]);
           };
           FullTextDocument2.prototype.offsetAt = function(position) {
             var lineOffsets = this.getLineOffsets();
@@ -8988,7 +8988,7 @@ function handleOnInitialize({ params, connection: connection2 }) {
   const capabilities = params.capabilities;
   hasConfigurationCapability = !!(capabilities.workspace != null && !!capabilities.workspace.configuration);
   hasWorkspaceFolderCapability = !!(capabilities.workspace != null && !!capabilities.workspace.workspaceFolders);
-  hasDiagnosticRelatedInformationCapability = !!(capabilities.textDocument && capabilities.textDocument.publishDiagnostics && capabilities.textDocument.publishDiagnostics.relatedInformation);
+  hasDiagnosticRelatedInformationCapability = !!(capabilities.textDocument?.publishDiagnostics && capabilities.textDocument.publishDiagnostics.relatedInformation);
   const result = {
     capabilities: {
       textDocumentSync: import_vscode_languageserver.TextDocumentSyncKind.Incremental,
@@ -9021,7 +9021,10 @@ function handleOnInitialize({ params, connection: connection2 }) {
   }
   return result;
 }
-function handleOnInitialized({ params, connection: connection2 }) {
+function handleOnInitialized({
+  params,
+  connection: connection2
+}) {
   connection2.console.log("Mlang Initialized correctly!");
   if (hasConfigurationCapability) {
     connection2.client.register(
@@ -9468,7 +9471,10 @@ function isNumber(str) {
 var import_vscode_languageserver_textdocument = __toESM(require_main5());
 
 // src/utils/getRowsAndColsInCursor.ts
-function getRowsAndColsInCursor({ text, characterPosition }) {
+function getRowsAndColsInCursor({
+  text,
+  characterPosition
+}) {
   const position = characterPosition > text.length ? text.length - 1 : characterPosition;
   const textUntilCurrentPosition = text.slice(0, position);
   const rows = textUntilCurrentPosition.split("\n");
@@ -9486,7 +9492,10 @@ function getWordRangeAtPosition(document, position) {
   while (match = wordRegex.exec(text)) {
     const startPos = match.index;
     const endPos = match.index + match[0].length;
-    const range = import_vscode_languageserver4.Range.create(document.positionAt(startPos), document.positionAt(endPos));
+    const range = import_vscode_languageserver4.Range.create(
+      document.positionAt(startPos),
+      document.positionAt(endPos)
+    );
     if (position.line === range.start.line && position.character >= range.start.character && position.character <= range.end.character) {
       return range;
     }
@@ -9522,11 +9531,10 @@ function handleReferences(document, position) {
   const locations = [];
   const uri = document.uri;
   const wordRange = getWordRangeAtPosition(document, position);
-  if (!wordRange) {
-    return null;
-  }
+  if (wordRange === void 0)
+    return [];
   const visitor = visitors.get(uri);
-  if (!visitor || !visitor?.definitions)
+  if (visitor?.definitions === void 0)
     return [];
   const { references } = visitor;
   const word = document.getText(wordRange);
@@ -9548,7 +9556,7 @@ function handleCompletion({
 }) {
   const items = completionKeywords;
   const visitor = visitors.get(params.textDocument.uri);
-  if (!visitor || !visitor?.definitions)
+  if (!visitor?.definitions)
     return items;
   const { definitions } = visitor;
   items.push(
@@ -9566,13 +9574,18 @@ function handleCompletion({
         insertTextFormat: import_vscode_languageserver5.InsertTextFormat.Snippet
       };
       return item;
-    }).filter((item, index, self) => index === self.findIndex((i) => i.label === item.label))
+    }).filter(
+      (item, index, self) => index === self.findIndex((i) => i.label === item.label)
+    )
   );
   return items;
 }
 
 // src/handlers/handleDefinitions.ts
-async function handleDefinitions({ params, documents: documents2 }) {
+async function handleDefinitions({
+  params,
+  documents: documents2
+}) {
   const uri = params.textDocument.uri;
   const position = params.position;
   const document = documents2.get(uri);
@@ -9611,6 +9624,18 @@ var ERROR_CODES = {
   TOO_MANY_NL: 60
 };
 
+// src/constants/cero_position.ts
+var CERO_POSITION = {
+  start: {
+    line: 1,
+    character: 1
+  },
+  end: {
+    line: 1,
+    character: 1
+  }
+};
+
 // src/parser/parser.ts
 var MAX_STATEMENTS = 5e3;
 var Parser = class {
@@ -9634,9 +9659,9 @@ var Parser = class {
     return this.contextDepth[this.contextDepth.length - 1];
   }
   /**
-  * Helper function to go deeper into a context
-  * @returns [previousContext, newContext]
-  */
+   * Helper function to go deeper into a context
+   * @returns [previousContext, newContext]
+   */
   getIntoNewContext() {
     const prevContext = this.getCurrentContext();
     const newContext = getRandomStringID();
@@ -9650,17 +9675,19 @@ var Parser = class {
   getBackOfContext() {
     const prevContext = this.getCurrentContext();
     const newContext = this.contextDepth.pop();
+    if (newContext === void 0)
+      throw new Error("Expected newContext to be defined");
     return [prevContext, newContext];
   }
   /*
-  *Helper function to get the current token
-  */
+   *Helper function to get the current token
+   */
   getCurrentToken() {
     return this.tokens[this.currentTokenIndex];
   }
   /*
-  * Helper function to advance to the next token
-  */
+   * Helper function to advance to the next token
+   */
   getNextToken() {
     if (this.currentTokenIndex >= this.tokens.length - 1) {
       return void 0;
@@ -9670,8 +9697,8 @@ var Parser = class {
     }
   }
   /*
-  * Helper function to advance to the next token
-  */
+   * Helper function to advance to the next token
+   */
   getPrevToken() {
     if (this.currentTokenIndex <= 0) {
       return void 0;
@@ -9689,7 +9716,7 @@ var Parser = class {
     }
     const currToken = this.getCurrentToken();
     const nextToken = this.getNextToken();
-    if (!nextToken)
+    if (nextToken === void 0)
       return null;
     if (currToken.content === "end" || currToken.content === "endfunction" || currToken.type === "EOF") {
       this.getPrevToken();
@@ -9723,7 +9750,7 @@ var Parser = class {
         LHE: {
           type: "IDENTIFIER",
           value: currToken.content,
-          position: currToken.position
+          position: this.getCurrentPosition(currToken)
         },
         RHE
       };
@@ -9732,20 +9759,22 @@ var Parser = class {
       if (vectorType === "COMMA" && vectorArgs.every((a) => a.type === "IDENTIFIER") && this.getCurrentToken().type === "EQUALS") {
         if (this.getCurrentToken().type !== "EQUALS") {
           this.errors.push({
-            message: `Unexpected token ${this.getCurrentToken().content}`,
-            range: this.getCurrentToken().position,
+            message: `Unexpected token ${this.stringifyTokenContent()}`,
+            range: this.getCurrentPosition(),
             code: ERROR_CODES.OUTPUT_VECTOR
           });
-          return;
+          return null;
         }
         const functionIdentifier = this.getNextToken();
+        if (functionIdentifier === void 0)
+          throw new Error("Unexpected undefined token. Code 50");
         if (functionIdentifier.type !== "IDENTIFIER" && functionIdentifier.type !== "KEYWORD") {
           this.errors.push({
-            message: `Expected a function call. Got ${this.getCurrentToken().content}`,
-            range: this.getCurrentToken().position,
+            message: `Expected a function call. Got ${this.stringifyTokenContent()}`,
+            range: this.getCurrentPosition(),
             code: ERROR_CODES.EXPECTED_FN_IDENT
           });
-          return;
+          return null;
         }
         this.getNextToken();
         const args = this.getFunctionArguments();
@@ -9770,12 +9799,13 @@ var Parser = class {
           }
         };
       }
-      return;
     } else if (currToken.type === "KEYWORD" && currToken.content === "function") {
       const nextToken2 = this.getCurrentToken();
       const next2Token = this.getNextToken();
       this.getPrevToken();
       this.getPrevToken();
+      if (next2Token === void 0)
+        throw new Error("Unexpected undefined token. Code 60");
       if (nextToken2.type === "IDENTIFIER" && next2Token.type === "EQUALS") {
         return this.getFunctionDefintionWithOutput(true);
       } else if (nextToken2.type === "LBRACKET") {
@@ -9789,17 +9819,24 @@ var Parser = class {
         this.getNextToken();
         counter++;
       }
-      this.logErrorMaxCallsReached(counter, "Could not parse function call", ERROR_CODES.FN_CALL_EXCEEDED_CALLS);
+      this.logErrorMaxCallsReached(
+        counter,
+        "Could not parse function call",
+        ERROR_CODES.FN_CALL_EXCEEDED_CALLS
+      );
       this.warnings.push({
         message: "Unadvised function call",
-        range: nextToken.position,
+        range: this.getCurrentPosition(nextToken),
         code: 7
       });
-      return;
     } else {
+      if (currToken === void 0)
+        throw new Error("Unexpected undefined token. Code 70");
       this.errors.push({
-        message: `Unexpected token. ${currToken ? ` Got: '${JSON.stringify(currToken.content)}'` : ""}`,
-        range: currToken?.position ? currToken.position : {
+        message: `Unexpected token. Got: "${this.stringifyTokenContent(
+          currToken
+        )}"`,
+        range: currToken?.position ?? {
           start: { line: 0, character: 0 },
           end: { line: 0, character: 0 }
         },
@@ -9807,6 +9844,7 @@ var Parser = class {
       });
       return null;
     }
+    return null;
   }
   /**
    * Helper that sends an error if the arguments of a funcion call are wrong
@@ -9816,7 +9854,7 @@ var Parser = class {
       if (arg.type === "DEFAULT_VALUE_ARGUMENT") {
         this.errors.push({
           message: "Unexpected default value argument in function call",
-          range: arg.position,
+          range: this.getCurrentPosition(arg),
           code: 23
         });
       }
@@ -9840,17 +9878,14 @@ var Parser = class {
     } else if (this.isTokenValidBasicDataType(this.getCurrentToken())) {
       tokens.push(this.getCurrentToken());
     }
-    const itsCommaSeparated = this.getNextToken().type === "COMMA";
+    const itsCommaSeparated = this.getNextToken()?.type === "COMMA";
     if (itsCommaSeparated) {
       tokens.push(...this.getVectorValuesCommaSeparated());
     } else {
       tokens.push(...this.getVectorValuesColonSeparated());
     }
     this.getNextToken();
-    return [
-      tokens,
-      itsCommaSeparated ? "COMMA" : "COLON"
-    ];
+    return [tokens, itsCommaSeparated ? "COMMA" : "COLON"];
   }
   /**
    * Helper that returns the value of a vector ':' separated
@@ -9859,6 +9894,8 @@ var Parser = class {
     const tokens = [];
     while (this.getCurrentToken().type === "COLON" && tokens.length < 2) {
       const nextValue = this.getNextToken();
+      if (nextValue === void 0)
+        throw new Error("Unexpected undefined token. Code 80");
       if (nextValue.type === "LBRACKET") {
         tokens.push(this.getVector(nextValue));
         this.getPrevToken();
@@ -9870,7 +9907,7 @@ var Parser = class {
     if (this.getCurrentToken().type !== "RBRACKET") {
       this.errors.push({
         message: "Unexpected vector value",
-        range: this.getCurrentToken().position,
+        range: this.getCurrentPosition(),
         code: 22
       });
     }
@@ -9880,14 +9917,17 @@ var Parser = class {
    * Helper that returns a vector once a bracket it's found
    */
   getVector(token) {
-    const [vectorArgs, _] = this.getVectorArgs();
-    const referenceToken = token ? token : this.getCurrentToken();
+    const [vectorArgs] = this.getVectorArgs();
+    const referenceToken = token ?? this.getCurrentToken();
+    if (referenceToken === void 0)
+      throw new Error("Unexpected undefined token. Code 130");
+    const referenceTokenPos = this.getCurrentPosition(referenceToken);
     return {
       type: "VECTOR",
       content: vectorArgs,
       position: {
-        start: referenceToken.position.start,
-        end: vectorArgs[vectorArgs.length - 1]?.position?.end ? vectorArgs[vectorArgs.length - 1]?.position?.end : referenceToken.position.end
+        start: referenceTokenPos.start,
+        end: vectorArgs[vectorArgs.length - 1]?.position?.end ?? referenceTokenPos.end
       }
     };
   }
@@ -9899,6 +9939,8 @@ var Parser = class {
     const tokens = [];
     while (this.getCurrentToken().type === "COMMA") {
       const nextValue = this.getNextToken();
+      if (nextValue === void 0)
+        throw new Error("Unexpected undefined token. Code 120");
       if (nextValue.type === "LBRACKET") {
         tokens.push(this.getVector(nextValue));
         this.getPrevToken();
@@ -9912,7 +9954,7 @@ var Parser = class {
     if (this.getCurrentToken().type !== "RBRACKET") {
       this.errors.push({
         message: "Unexpected vector value",
-        range: this.getCurrentToken().position,
+        range: this.getCurrentPosition(),
         code: 21
       });
     }
@@ -9926,26 +9968,31 @@ var Parser = class {
     const [prevContext, newContext] = this.getIntoNewContext();
     let description = this.getFunctionDefinitionDescription(true);
     let output;
-    let outputs;
+    const outputs = [];
     if (isSingleOutput) {
       output = this.getNextToken();
       this.getNextToken();
     } else {
       this.getNextToken();
       this.getNextToken();
-      outputs = this.getVariableVector();
+      outputs.push(...this.getVariableVector());
     }
     const functionName = this.getNextToken();
+    if (functionName === void 0)
+      throw new Error("Unexpected undefined token. Code 110");
     if (functionName.type !== "IDENTIFIER") {
       this.errors.push({
-        message: `Expected IDENTIFIER. Got: ${functionName.content}`,
-        range: this.getCurrentToken().position,
+        message: `Expected IDENTIFIER. Got: ${this.stringifyTokenContent(
+          functionName
+        )}`,
+        range: this.getCurrentPosition(),
         code: 20
       });
-      return;
+      return null;
     }
     this.getNextToken();
     const args = this.getFunctionArguments();
+    this.checkValidFunctionDefinitionArguments(args);
     if (description === "") {
       description = this.getFunctionDefinitionDescription(false);
     }
@@ -9954,51 +10001,74 @@ var Parser = class {
     let maxCalls = 0;
     while (!this.isEndFunctionToken() && !this.isEOF() && maxCalls < MAX_STATEMENTS) {
       const statement = this.parseStatement();
-      if (statement)
+      if (statement !== null)
         statements.push(statement);
       maxCalls++;
     }
-    this.logErrorMaxCallsReached(maxCalls, "Could not find closing keyword 'end'", ERROR_CODES.FN_DEF_MISSING_END);
+    this.logErrorMaxCallsReached(
+      maxCalls,
+      "Could not find closing keyword 'end'",
+      ERROR_CODES.FN_DEF_MISSING_END
+    );
     const endToken = this.getCurrentToken();
     if (endToken.type === "EOF") {
       this.errors.push({
         message: "Expected closing function 'end' or 'endfunction'",
         range: {
-          start: functionName.position.start,
-          end: endToken.position.end
+          start: this.getCurrentPosition(functionName).start,
+          end: this.getCurrentPosition(functionName).end
         },
         code: 19
       });
-      return;
+      return null;
     }
     this.getNextToken();
     this.getBackOfContext();
+    const RHE = {
+      type: "FUNCTION_DEFINITION",
+      value: "function",
+      LHO: {
+        type: "IDENTIFIER",
+        value: functionName.content,
+        position: this.getCurrentPosition(functionName),
+        functionData: {
+          args,
+          description,
+          closingToken: endToken,
+          contextCreated: newContext
+        }
+      },
+      RHO: statements
+    };
     return {
       type: "ASSIGNMENT",
       supressOutput: true,
       context: prevContext,
       LHE: {
         type: isSingleOutput ? "IDENTIFIER" : "VARIABLE_VECTOR",
-        value: isSingleOutput ? output.content : outputs,
-        position: isSingleOutput ? output.position : null
+        value: isSingleOutput && output !== void 0 ? output.content : outputs,
+        position: isSingleOutput && output !== void 0 ? this.getCurrentPosition(output) : void 0
       },
-      RHE: {
-        type: "FUNCTION_DEFINITION",
-        value: "function",
-        LHO: {
-          type: "IDENTIFIER",
-          value: functionName.content,
-          position: functionName.position,
-          functionData: {
-            args,
-            description,
-            closingToken: endToken,
-            contextCreated: newContext
-          }
-        },
-        RHO: statements
-      }
+      RHE
     };
+  }
+  /**
+   * Helper that sends error if the arguments of a function defintion are not correct
+   * The arguments in a function definition should be IDENTIFIERs and default values (ASSIGNMENTs)
+   */
+  checkValidFunctionDefinitionArguments(args) {
+    let isValidFlag = true;
+    args.forEach((a) => {
+      if (a.type === "IDENTIFIER" || a.type === "DEFAULT_VALUE_ARGUMENT")
+        return;
+      isValidFlag = false;
+      this.errors.push({
+        message: "Invalid function definition argument",
+        range: this.getCurrentPosition(a),
+        code: 200
+      });
+    });
+    return isValidFlag;
   }
   /**
    * Helper that extracts the statement of a function definition without output
@@ -10007,16 +10077,21 @@ var Parser = class {
     const [prevContext, newContext] = this.getIntoNewContext();
     let description = this.getFunctionDefinitionDescription(true);
     const functionName = this.getNextToken();
+    if (functionName === void 0)
+      throw new Error("Unexpected undefined token. Code 100");
     if (functionName.type !== "IDENTIFIER") {
       this.errors.push({
-        message: `Expected IDENTIFIER. Got: ${functionName.content}`,
-        range: this.getCurrentToken().position,
+        message: `Expected IDENTIFIER. Got: ${this.stringifyTokenContent(
+          functionName
+        )}`,
+        range: this.getCurrentPosition(),
         code: 18
       });
-      return;
+      return null;
     }
     this.getNextToken();
     const args = this.getFunctionArguments();
+    this.checkValidFunctionDefinitionArguments(args);
     this.getNextToken();
     if (description === "") {
       this.getPrevToken();
@@ -10027,14 +10102,14 @@ var Parser = class {
     let maxCalls = 0;
     while (!this.isEndFunctionToken() && !this.isEOF() && maxCalls < MAX_STATEMENTS) {
       const statement = this.parseStatement();
-      if (statement)
+      if (statement !== null)
         statements.push(statement);
       maxCalls++;
     }
     if (maxCalls >= MAX_STATEMENTS) {
       this.errors.push({
         message: "Max calls for statements in a function definition",
-        range: this.getCurrentToken().position,
+        range: this.getCurrentPosition(),
         code: 16
       });
     }
@@ -10043,12 +10118,12 @@ var Parser = class {
       this.errors.push({
         message: "Expected closing function 'end' or 'endfunction'",
         range: {
-          start: functionName.position.start,
-          end: endToken.position.end
+          start: this.getCurrentPosition(functionName).start,
+          end: this.getCurrentPosition(functionName).end
         },
         code: 17
       });
-      return;
+      return null;
     }
     this.getNextToken();
     this.getBackOfContext();
@@ -10059,7 +10134,7 @@ var Parser = class {
       LHE: {
         type: "IDENTIFIER",
         value: functionName.content,
-        position: functionName.position,
+        position: this.getCurrentPosition(functionName),
         functionData: {
           args,
           description,
@@ -10083,6 +10158,8 @@ var Parser = class {
           break;
         }
         const prevToken = this.getPrevToken();
+        if (prevToken === void 0)
+          throw new Error("Unexpected undefined token. Code 10");
         if (prevToken.type === "COMMENT") {
           comments.push(prevToken);
         }
@@ -10091,6 +10168,8 @@ var Parser = class {
     } else {
       do {
         const nextToken = this.getNextToken();
+        if (nextToken === void 0)
+          throw new Error("Unexpected undefined token. Code 20");
         if (nextToken.type === "COMMENT") {
           comments.push(nextToken);
         }
@@ -10110,31 +10189,35 @@ var Parser = class {
     if (!isSupressed) {
       this.warnings.push({
         message: "Will output to the console",
-        range: this.getPrevToken().position,
+        range: this.getCurrentPosition(this.getPrevToken()),
         code: 15
       });
       this.getNextToken();
-      return;
+      return false;
     }
     this.getNextToken();
     return isSupressed;
   }
   /**
-   * Helper that returns a list of identifiers of a list of variables 
+   * Helper that returns a list of identifiers of a list of variables
    * i.e [a,b,c,d,...,N] = FUNCTION_CALL(), it returns a through N
    */
   getVariableVector() {
     const tokens = [];
     do {
       if (this.getCurrentToken().type !== "IDENTIFIER") {
-        return;
+        return [];
       }
       tokens.push(this.getCurrentToken());
-      const nextTokenType = this.getNextToken().type;
+      const nextTokenType = this.getNextToken()?.type;
+      if (nextTokenType === void 0)
+        throw new Error("Unexpected undefined token. Code 30");
       if (nextTokenType !== "COMMA" && nextTokenType !== "RBRACKET") {
         this.errors.push({
-          message: `Expected COMMA. Got: '${this.getCurrentToken().content}'`,
-          range: this.getCurrentToken().position,
+          message: `Expected COMMA. Got: '${this.stringifyTokenContent(
+            this.getCurrentToken()
+          )}'`,
+          range: this.getCurrentPosition(),
           code: 14
         });
         return tokens;
@@ -10147,12 +10230,12 @@ var Parser = class {
     return tokens;
   }
   /**
-  * Helper that parses an expression
-  * @throws error
-  */
+   * Helper that parses an expression
+   * @throws error
+   */
   parseExpression() {
     const currToken = this.getCurrentToken();
-    let lho = void 0;
+    let lho;
     let isValidBinary = true;
     switch (currToken.type) {
       case "STRING":
@@ -10182,7 +10265,7 @@ var Parser = class {
         return {
           type: "ANONYMOUS_FUNCTION_DEFINITION",
           value: "@",
-          position: currToken.position,
+          position: this.getCurrentPosition(currToken),
           functionData: {
             args
           },
@@ -10195,7 +10278,7 @@ var Parser = class {
         if (this.getCurrentToken().type !== "RPARENT") {
           this.errors.push({
             message: "Expected closing parenthesis ')'",
-            range: this.getCurrentToken().position,
+            range: this.getCurrentPosition(),
             code: 13
           });
           return;
@@ -10209,24 +10292,26 @@ var Parser = class {
       case "NL":
         this.errors.push({
           message: `Unexpected new line in expression.`,
-          range: this.getCurrentToken().position,
+          range: this.getCurrentPosition(),
           code: ERROR_CODES.UNEXPECTED_NL
         });
         return;
       default:
         this.errors.push({
-          message: `Unexpected token. ${currToken.content}`,
-          range: this.getCurrentToken().position,
+          message: `Unexpected token. ${this.stringifyTokenContent(currToken)}`,
+          range: this.getCurrentPosition(),
           code: 12
         });
         return;
     }
     const nextToken = this.getNextToken();
+    if (nextToken === void 0)
+      throw new Error("Unexpected undefined token. Code 40");
     if (isValidBinary && this.isBinaryOperator(nextToken.type)) {
       this.getNextToken();
       return {
         type: "BINARY_OPERATION",
-        value: nextToken.content,
+        value: nextToken?.content ?? "",
         RHO: this.parseExpression(),
         LHO: lho
       };
@@ -10243,8 +10328,8 @@ var Parser = class {
     const isValid = token.type === "IDENTIFIER" || token.type === "NUMBER" || token.type === "STRING";
     if (!isValid) {
       this.errors.push({
-        message: `Expected a valid data type. Got ${token.content}`,
-        range: this.getCurrentToken().position,
+        message: `Expected a valid data type. Got ${this.stringifyTokenContent()}`,
+        range: this.getCurrentPosition(),
         code: 11
       });
     }
@@ -10252,14 +10337,14 @@ var Parser = class {
   }
   parseFunctionCall() {
     const currToken = this.getCurrentToken();
-    if (this.getNextToken().type === "LPARENT") {
+    if (this.getNextToken()?.type === "LPARENT") {
       const args = this.getFunctionArguments();
       this.validateFnCallArgs(args);
       this.getNextToken();
       return {
         type: "FUNCTION_CALL",
         value: currToken.content,
-        position: currToken.position,
+        position: this.getCurrentPosition(currToken),
         functionData: {
           args
         }
@@ -10268,7 +10353,7 @@ var Parser = class {
       return {
         type: currToken.type,
         value: currToken.content,
-        position: currToken.position
+        position: this.getCurrentPosition(currToken)
       };
     }
   }
@@ -10282,7 +10367,7 @@ var Parser = class {
     if (this.getCurrentToken().type !== "LPARENT") {
       this.errors.push({
         message: `Expected '(' for function call. Got: ${this.getCurrentToken().type}`,
-        range: this.getCurrentToken().position,
+        range: this.getCurrentPosition(),
         code: 10
       });
       return tokens;
@@ -10296,8 +10381,10 @@ var Parser = class {
         const defaultValue = this.skipNL(true);
         if (!this.isTokenDataType(defaultValue)) {
           this.errors.push({
-            message: `Expected a valid default value. Got ${defaultValue.content}`,
-            range: defaultValue.position,
+            message: `Expected a valid default value. Got ${this.stringifyTokenContent(
+              defaultValue
+            )}`,
+            range: this.getCurrentPosition(defaultValue),
             code: 9
           });
         }
@@ -10323,20 +10410,22 @@ var Parser = class {
         this.getNextToken();
       } else {
         this.errors.push({
-          message: `Expected valid argument. Got ${arg}`,
-          range: this.getCurrentToken().position,
+          message: `Expected valid argument. Got ${this.stringifyTokenContent(
+            arg
+          )}`,
+          range: this.getCurrentPosition(),
           code: 8
         });
         return tokens;
       }
-      if (arg) {
+      if (arg !== null) {
         tokens.push(arg);
       }
       const commaOrRParen = this.skipNL();
       if (commaOrRParen.type !== "COMMA" && commaOrRParen.type !== "RPARENT") {
         this.errors.push({
           message: `Expected ',' or ')'. Got '${commaOrRParen.type}'`,
-          range: this.getCurrentToken().position,
+          range: this.getCurrentPosition(),
           code: ERROR_CODES.EXPECTED_COMMA_PAREN
         });
         return tokens;
@@ -10345,12 +10434,22 @@ var Parser = class {
     if (this.getCurrentToken().type === "EOF") {
       this.errors.push({
         message: "Expected closing parenthesis ')' for function call",
-        range: this.getCurrentToken().position,
+        range: this.getCurrentPosition(),
         code: ERROR_CODES.MISSING_PAREN
       });
       return tokens;
     }
     return tokens;
+  }
+  /**
+   * Helper that returns the content of a token as a string
+   */
+  stringifyTokenContent(token) {
+    if (token === void 0)
+      token = this.getCurrentToken();
+    if (Array.isArray(token.content))
+      return `[${token.content.map((t) => t.content).join(", ")}]`;
+    return token.content;
   }
   /**
    * Helper that advances to the next token that's not a NL (new line)
@@ -10366,12 +10465,18 @@ var Parser = class {
       tok = this.getNextToken();
       counter++;
     }
-    this.logErrorMaxCallsReached(counter, "Found too many new lines", ERROR_CODES.TOO_MANY_NL);
+    this.logErrorMaxCallsReached(
+      counter,
+      "Found too many new lines",
+      ERROR_CODES.TOO_MANY_NL
+    );
+    if (tok === void 0)
+      throw new Error("EOF was never found");
     return tok;
   }
   /**
-  * Helper that returns weather a token type is a BinaryOperator
-  */
+   * Helper that returns weather a token type is a BinaryOperator
+   */
   isBinaryOperator(type) {
     return type === "SUBTRACTION" || type === "DIVISION" || type === "ADDITION" || type === "MULTIPLICATION";
   }
@@ -10379,17 +10484,17 @@ var Parser = class {
    * Helper that returns weather the current Token it's an EOF or not
    */
   isEOF(token) {
-    if (token) {
+    if (token !== null && token !== void 0) {
       return token.type === "EOF";
     }
     return this.getCurrentToken().type === "EOF";
   }
   /**
-   * Helper that returns weather the current Token it's an 
+   * Helper that returns weather the current Token it's an
    * end or endfunction keyword
    */
   isEndFunctionToken(token) {
-    if (token) {
+    if (token !== null && token !== void 0) {
       return token.type === "KEYWORD" && (token.content === "end" || token.content === "endfunction");
     }
     return this.getCurrentToken().type === "KEYWORD" && (this.getCurrentToken().content === "end" || this.getCurrentToken().content === "endfunction");
@@ -10400,7 +10505,7 @@ var Parser = class {
    * TODO consider structs {}
    */
   isTokenDataType(token) {
-    if (token) {
+    if (token !== null && token !== void 0) {
       return token.type === "IDENTIFIER" || token.type === "VECTOR" || token.type === "STRING" || token.type === "NUMBER";
     }
     return this.getCurrentToken().type === "IDENTIFIER" || this.getCurrentToken().type === "VECTOR" || this.getCurrentToken().type === "STRING" || this.getCurrentToken().type === "NUMBER";
@@ -10412,7 +10517,7 @@ var Parser = class {
     if (counter >= MAX_STATEMENTS) {
       this.errors.push({
         message,
-        range: this.getCurrentToken().position,
+        range: this.getCurrentPosition(),
         code: errorCode
       });
     }
@@ -10424,14 +10529,14 @@ var Parser = class {
     return this.statements;
   }
   /**
-  * Makes the Abstract Syntax Tree with the given tokens.
-  * @returns Program - AST.
-  */
+   * Makes the Abstract Syntax Tree with the given tokens.
+   * @returns Program - AST.
+   */
   makeAST() {
     let statementsCounter = 0;
     do {
       const statement = this.parseStatement();
-      if (statement) {
+      if (statement !== null) {
         this.statements.push(statement);
       }
       statementsCounter++;
@@ -10439,7 +10544,7 @@ var Parser = class {
     if (statementsCounter >= MAX_STATEMENTS) {
       this.errors.push({
         message: "Maximum amount of statements reached.",
-        range: this.getCurrentToken().position,
+        range: this.getCurrentPosition(),
         code: ERROR_CODES.AST_MAX_STMNT_REACHED
       });
     }
@@ -10449,9 +10554,23 @@ var Parser = class {
     };
   }
   /**
+   * Helper that returns the current token position if it exists
+   */
+  getCurrentPosition(token) {
+    if (token?.position !== null && token?.position !== void 0)
+      return token.position;
+    if (this.getCurrentToken() !== void 0)
+      return this.getCurrentToken().position;
+    return CERO_POSITION;
+  }
+  /**
    * Returns the list of errors found during parsing.
    */
   getErrors() {
+    this.errors.forEach((e) => {
+      if (e?.range === void 0)
+        throw new Error("Unexpected undefined Range. " + JSON.stringify(e));
+    });
     return this.errors;
   }
   /**
@@ -10538,7 +10657,9 @@ var Tokenizer = class {
       this.readChar();
       return this.addToken({
         ...token,
-        position: this.getPosition(token.type !== "EOF" ? token.content : "")
+        position: this.getPosition(
+          token.type !== "EOF" ? token.content : ""
+        )
       });
     }
     if (this.currChar === "#" || this.currChar === "%") {
@@ -10652,10 +10773,10 @@ var Tokenizer = class {
     };
   }
   /**
-  * Returns the rows and columns corresponding to the current position in the text.
-  * TODO: fix possible problems
-  * @returns {[number, number]} An array containing the row and column.
-  */
+   * Returns the rows and columns corresponding to the current position in the text.
+   * TODO: fix possible problems
+   * @returns {[number, number]} An array containing the row and column.
+   */
   getRowsColsCursor(content) {
     const characterPosition = content ? this.currPos + content.length : this.currPos;
     return getRowsAndColsInCursor({ text: this.text, characterPosition });
@@ -10674,18 +10795,15 @@ var Tokenizer = class {
       this.nextChar = this.text[1];
       this.currPos = 1;
       this.nextPos = 2;
-      return;
     } else if (this.nextPos >= this.text.length) {
       this.currChar = this.nextChar;
       this.nextChar = " ";
       this.currPos = this.nextPos;
-      return;
     } else {
       this.currChar = this.nextChar;
       this.nextChar = this.text[this.nextPos];
       this.currPos = this.nextPos;
       this.nextPos++;
-      return;
     }
   }
   /**
@@ -10733,8 +10851,8 @@ var Visitor = class {
     this.definitions = [];
   }
   /**
-  * Entry point: it extracts all the references and definitions from a Program
-  */
+   * Entry point: it extracts all the references and definitions from a Program
+   */
   visitProgram(node) {
     for (const statement of node.body) {
       this.visitStatement(statement);
@@ -10745,6 +10863,8 @@ var Visitor = class {
       return;
     switch (node.type) {
       case "ASSIGNMENT":
+        if (node.LHE === void 0)
+          return;
         if (node.LHE.type === "FUNCTION_DEFINITION") {
           this.visitExpression(node.LHE, "ASSIGNMENT");
         } else {
@@ -10753,12 +10873,23 @@ var Visitor = class {
         }
         break;
       case "FUNCTION_DEFINITION":
+        if (node.LHE === void 0)
+          return;
         this.visitExpression(node.LHE, "FUNCTION_DEFINITION");
-        (node?.RHE).forEach((statement) => this.visitStatement(statement));
+        (node?.RHE).forEach((statement) => {
+          this.visitStatement(statement);
+        });
         break;
       case "MO_ASSIGNMENT":
+        if (node.LHE === void 0)
+          return;
         this.visitExpression(node.LHE, "MO_ASSIGNMENT");
         this.visitExpression(node.RHE, "MO_ASSIGNMENT", false);
+        break;
+      case "FUNCTION_CALL":
+        if (node.LHE === void 0)
+          return;
+        this.visitExpression(node.LHE, "FUNCTION_CALL");
         break;
     }
   }
@@ -10768,50 +10899,56 @@ var Visitor = class {
     switch (node.type) {
       case "IDENTIFIER":
         if ((parentType === "ASSIGNMENT" || parentType === "FUNCTION_DEFINITION") && isLHE) {
+          const args = parentType === "FUNCTION_DEFINITION" ? this.getNodeFunctionArgs(node).map((a) => {
+            return {
+              name: a.content,
+              type: a.type === "DEFAULT_VALUE_ARGUMENT" ? "DEFAULT_ARGUMENT" : "ARGUMENT",
+              content: a.type === "DEFAULT_VALUE_ARGUMENT" ? this.getDefaultValueContent(a) : "",
+              position: this.getTokenPosition(a),
+              documentation: ""
+              // TODO think if i should get the documentation
+            };
+          }) : [];
           this.definitions.push({
             name: node.value,
-            position: node.position,
+            position: node.position ?? CERO_POSITION,
             type: parentType === "ASSIGNMENT" ? "VARIABLE" : "FUNCTION",
             documentation: this.getDocumentationOrLineDefinition(node),
-            arguments: parentType === "FUNCTION_DEFINITION" ? node?.functionData?.args?.map((a) => {
-              return {
-                name: a.content,
-                type: a.type === "DEFAULT_VALUE_ARGUMENT" ? "DEFAULT_ARGUMENT" : "ARGUMENT",
-                content: a.type === "DEFAULT_VALUE_ARGUMENT" ? a.defaultValue.content : "",
-                position: a.position,
-                documentation: ""
-                // TODO think if i should get the documentation
-              };
-            }) : null
+            arguments: args
           });
         }
         this.references.push({
           name: node.value,
-          position: node.position,
+          position: this.getExpressionPosition(node),
           type: this.getReferenceTypeFromNode(node),
-          documentation: node?.functionData?.description ? node?.functionData?.description : ""
+          documentation: node?.functionData?.description ?? ""
         });
-        if (node?.functionData?.args) {
-          this.references.push(...node.functionData.args.map(
-            (arg) => {
-              return {
-                name: arg.content,
-                position: arg.position,
-                type: this.getReferenceTypeFromNode(node),
-                documentation: this.getDocumentationOrLineDefinition(node)
-              };
-            }
-          ));
+        if (node?.functionData?.args !== void 0) {
+          const ref = this.getArgumentIdentifiersList(node).map((arg) => {
+            return {
+              name: arg.content,
+              position: this.getTokenPosition(arg),
+              type: this.getReferenceTypeFromNode(node),
+              documentation: this.getDocumentationOrLineDefinition(node)
+            };
+          });
+          this.references.push(...ref);
         }
-        if (node?.RHO && Array.isArray(node.RHO)) {
-          node.RHO.forEach((stmnt) => this.visitStatement(stmnt));
+        if (node?.RHO !== null && Array.isArray(node.RHO)) {
+          node.RHO.forEach((stmnt) => {
+            this.visitStatement(stmnt);
+          });
         }
         break;
       case "BINARY_OPERATION":
+        if (node?.LHO === void 0)
+          return;
         this.visitExpression(node.LHO, null);
         this.visitExpression(node.RHO, null, false);
         break;
       case "FUNCTION_DEFINITION":
+        if (node?.LHO === void 0)
+          return;
         this.visitExpression(node.LHO, "FUNCTION_DEFINITION");
         if (Array.isArray(node.RHO)) {
           node.RHO.forEach((s) => {
@@ -10820,11 +10957,13 @@ var Visitor = class {
         }
         break;
       case "KEYWORD":
+        if (node?.LHO === void 0)
+          return;
         this.visitExpression(node.LHO, null);
         this.visitExpression(node.RHO, null, false);
         break;
       case "ANONYMOUS_FUNCTION_DEFINITION":
-        if (node?.LHO?.value && node?.LHO?.position) {
+        if (node?.LHO?.value !== void 0 && node?.LHO?.position !== void 0) {
           this.definitions.push({
             name: node.LHO.value,
             position: node.LHO.position,
@@ -10834,32 +10973,34 @@ var Visitor = class {
               return {
                 name: a.content,
                 type: "ARGUMENT",
-                position: a.position,
+                position: this.getTokenPosition(a),
                 documentation: ""
                 // TODO think if i should get the documentation
               };
-            })
+            }) ?? []
           });
         }
-        this.references.push(...node.functionData.args.map((arg) => {
-          return {
-            name: arg.content,
-            position: node.position,
-            type: this.getReferenceTypeFromNode(node),
-            documentation: node?.functionData?.description ? node?.functionData?.description : ""
-          };
-        }));
+        this.references.push(
+          ...node?.functionData?.args?.map((arg) => {
+            return {
+              name: arg.content,
+              position: this.getExpressionPosition(node),
+              type: this.getReferenceTypeFromNode(node),
+              documentation: node?.functionData?.description ?? ""
+            };
+          }) ?? []
+        );
         this.visitExpression(node.RHO, null, false);
         break;
       case "VARIABLE_VECTOR":
         if (!Array.isArray(node.value) || !(node?.value?.length > 1))
           return;
-        if (node?.value && Array.isArray(node.value)) {
+        if (node?.value !== void 0 && Array.isArray(node.value)) {
           node.value.forEach((val) => {
             this.definitions.push({
               name: val.content,
               type: "VARIABLE",
-              position: val.position,
+              position: this.getTokenPosition(val),
               documentation: this.getDocumentationOrLineDefinition(node)
             });
           });
@@ -10868,9 +11009,9 @@ var Visitor = class {
           if (token.type === "IDENTIFIER") {
             this.references.push({
               name: token.content,
-              position: token.position,
+              position: this.getTokenPosition(token),
               type: this.getReferenceTypeFromNode(node),
-              documentation: node?.functionData?.description ? node?.functionData?.description : ""
+              documentation: node?.functionData?.description ?? ""
             });
           }
         });
@@ -10878,28 +11019,99 @@ var Visitor = class {
       case "FUNCTION_CALL":
         this.references.push({
           name: node.value,
-          position: node.position,
+          position: this.getExpressionPosition(node),
           documentation: this.getDocumentationOrLineDefinition(node),
           type: "FUNCTION"
         });
+        if (node?.functionData?.args === void 0)
+          break;
+        this.references.push(
+          ...this.getArgumentIdentifiersList(node).map((arg) => {
+            return {
+              name: arg.content,
+              position: this.getTokenPosition(arg),
+              type: this.getReferenceTypeFromNode(node),
+              documentation: this.getDocumentationOrLineDefinition(node)
+            };
+          })
+        );
         break;
     }
+  }
+  /**
+   * Helper that returns a list of Tokens from the arguments of a function call or definition
+   */
+  getArgumentIdentifiersList(node) {
+    if (node?.functionData?.args === void 0)
+      return [];
+    return node.functionData.args.flatMap((arg) => {
+      return this.getTokenIdentifiers(arg);
+    });
+  }
+  /**
+   * Helper that returns the IDENTIFIERs from a Token.
+   */
+  getTokenIdentifiers(token) {
+    if (token.type === "VECTOR") {
+      return token.content.flatMap(
+        (t) => this.getTokenIdentifiers(t)
+      );
+    }
+    if (token.type === "IDENTIFIER")
+      return [token];
+    return [];
+  }
+  /**
+   * Helper that returns the positon property of a node expression
+   */
+  getExpressionPosition(node) {
+    if (node.position === void 0)
+      return CERO_POSITION;
+    return node.position;
+  }
+  /**
+   * Helper that returns the position of a Token
+   */
+  getTokenPosition(token) {
+    if (token.position === null)
+      return CERO_POSITION;
+    return token.position;
+  }
+  /**
+   * Helper that returns the content of a default value in a Token
+   */
+  getDefaultValueContent(token) {
+    if (token?.defaultValue?.content === void 0)
+      return "";
+    if (Array.isArray(token?.defaultValue?.content))
+      return "";
+    return token.defaultValue.content;
+  }
+  /**
+   * Helper that returns the arguments of the function data of a node
+   */
+  getNodeFunctionArgs(node) {
+    if (node?.functionData?.args === void 0)
+      return [];
+    return node.functionData.args;
   }
   /**
    * Helper that returns weather a node it's of assignment or not
    */
   isAssignment(node) {
-    return node && node.type === "ASSIGNMENT";
+    if (node === null || node === void 0)
+      return false;
+    return node.type === "ASSIGNMENT";
   }
   /**
-   * Helper that returns the documentation of the function 
+   * Helper that returns the documentation of the function
    * or the hole line content of the variable
    */
   getDocumentationOrLineDefinition(node) {
-    if (node?.functionData?.description) {
+    if (node?.functionData?.description !== void 0) {
       return node?.functionData?.description;
     }
-    if (!node?.RHO || Array.isArray(node.RHO))
+    if (node?.RHO === void 0 || Array.isArray(node.RHO))
       return "";
     return "";
     const expr = node?.RHO;
@@ -10917,8 +11129,8 @@ var Visitor = class {
     }
   }
   /**
-  * Helper that returns the type of a reference "CONSTANT" or "FUNCTION"
-  */
+   * Helper that returns the type of a reference "CONSTANT" or "FUNCTION"
+   */
   getReferenceTypeFromNode(node) {
     if (node.type === "FUNCTION_CALL" || node.type === "FUNCTION_DEFINITION" || node.type === "ANONYMOUS_FUNCTION_DEFINITION") {
       return "FUNCTION";
@@ -10938,11 +11150,17 @@ documents.onDidChangeContent((change) => {
   updateDocumentData(change.document.uri, change.document.getText());
 });
 connection.onInitialize((params) => handleOnInitialize({ params, connection }));
-connection.onInitialized((params) => handleOnInitialized({ params, connection }));
-connection.onDefinition((params) => handleDefinitions({ params, documents }));
+connection.onInitialized((params) => {
+  handleOnInitialized({ params, connection });
+});
+connection.onDefinition(
+  async (params) => await handleDefinitions({ params, documents })
+);
 connection.onReferences((params) => {
   const uri = params.textDocument.uri;
   const document = documents.get(uri);
+  if (document === void 0)
+    return [];
   return handleReferences(document, params.position);
 });
 documents.onDidClose((e) => {
@@ -10958,9 +11176,12 @@ function updateDocumentData(uri, text) {
   if (documentChanges.has(uri)) {
     clearTimeout(documentChanges.get(uri));
   }
-  documentChanges.set(uri, setTimeout(() => {
-    const document = documents.get(uri);
-    if (document) {
+  documentChanges.set(
+    uri,
+    setTimeout(() => {
+      const document = documents.get(uri);
+      if (document === null || document === void 0)
+        return;
       const tokenizer = new Tokenizer(text);
       const tokens = tokenizer.getAllTokens();
       const parser = new Parser(tokens);
@@ -10970,12 +11191,15 @@ function updateDocumentData(uri, text) {
       visitors.set(uri, visitor);
       const errors = parser.getErrors().map((err) => getDiagnosticFromLitingMessage(err, "error"));
       const warnings = parser.getWarnings().map((warn) => getDiagnosticFromLitingMessage(warn, "warn"));
+      const diagnostics = [...errors, ...warnings];
       connection.sendDiagnostics({
         uri,
-        diagnostics: [...errors, ...warnings]
+        diagnostics
+      }).catch((err) => {
+        throw new Error(err);
       });
-    }
-  }, DEBOUNCE_DELAY_MS));
+    }, DEBOUNCE_DELAY_MS)
+  );
 }
 // Annotate the CommonJS export names for ESM import in node:
 0 && (module.exports = {

@@ -1,5 +1,5 @@
 import type { Range } from 'vscode-languageserver';
-import { ERROR_CODES } from '../constants';
+import { CERO_POSITION, ERROR_CODES } from '../constants';
 import type {
   Expression,
   LintingError,
@@ -451,6 +451,7 @@ export class Parser {
     }
     this.getNextToken();
     const args = this.getFunctionArguments();
+    this.checkValidFunctionDefinitionArguments(args);
     if (description === '') {
       description = this.getFunctionDefinitionDescription(false);
     }
@@ -519,6 +520,28 @@ export class Parser {
   }
 
   /**
+   * Helper that sends error if the arguments of a function defintion are not correct
+   * The arguments in a function definition should be IDENTIFIERs and default values (ASSIGNMENTs)
+   */
+  private checkValidFunctionDefinitionArguments(args: Token[]): boolean {
+    let isValidFlag = true;
+
+    args.forEach((a) => {
+      if (a.type === 'IDENTIFIER' || a.type === 'DEFAULT_VALUE_ARGUMENT')
+        return;
+      isValidFlag = false;
+
+      this.errors.push({
+        message: 'Invalid function definition argument',
+        range: this.getCurrentPosition(a),
+        code: 200,
+      });
+    });
+
+    return isValidFlag;
+  }
+
+  /**
    * Helper that extracts the statement of a function definition without output
    */
   private getFunctionDefintionWithoutOutput(): Statement | null {
@@ -539,6 +562,7 @@ export class Parser {
     }
     this.getNextToken();
     const args = this.getFunctionArguments();
+    this.checkValidFunctionDefinitionArguments(args);
     this.getNextToken();
     if (description === '') {
       this.getPrevToken();
@@ -1081,25 +1105,21 @@ export class Parser {
    * Helper that returns the current token position if it exists
    */
   private getCurrentPosition(token?: Token): Range {
-    if (token !== null && token !== undefined) return token.position as Range;
+    if (token?.position !== null && token?.position !== undefined)
+      return token.position;
     if (this.getCurrentToken() !== undefined)
       return this.getCurrentToken().position as Range;
-    return {
-      start: {
-        line: 0,
-        character: 0,
-      },
-      end: {
-        line: 0,
-        character: 0,
-      },
-    };
+    return CERO_POSITION;
   }
 
   /**
    * Returns the list of errors found during parsing.
    */
   public getErrors(): LintingError[] {
+    this.errors.forEach((e) => {
+      if (e?.range === undefined)
+        throw new Error('Unexpected undefined Range. ' + JSON.stringify(e));
+    });
     return this.errors;
   }
 

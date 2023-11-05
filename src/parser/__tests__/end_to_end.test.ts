@@ -34,6 +34,8 @@ end
 func2(def = 20, "value 1", setting = "str 2");
 
 func1();
+
+vectorVariable = ["alskdjasldkj", 'm', 'd'];
 `;
 
   const tokenizer = new Tokenizer(fileContent);
@@ -85,8 +87,34 @@ func1();
     'func2',
     'func2',
     'func1',
+    'vectorVariable',
   ];
   const expectedDefinitions: string[] = [];
+  // const expectedDefinitions: string[] = [
+  //   'a',
+  //   'a',
+  //   'b',
+  //   'c',
+  //   'a',
+  //   'a',
+  //   'b',
+  //   'a',
+  //   'a',
+  //   'funcTest',
+  //   'b',
+  //   'c',
+  //   'a',
+  //   'abcd',
+  //   'abcd',
+  //   'a',
+  //   'b',
+  //   'c',
+  //   'func2',
+  //   'def',
+  //   'setting',
+  // ];
+
+  console.log('REFERENCES: ' + JSON.stringify(references));
 
   expect(errors.length === 0).toBe(true);
   expect(references.map((r) => r.name)).toEqual(expectedReferences);

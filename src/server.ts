@@ -111,10 +111,12 @@ function updateDocumentData(uri: string, text: string): void {
         .getWarnings()
         .map((warn) => getDiagnosticFromLitingMessage(warn, 'warn'));
 
+      const diagnostics: Diagnostic[] = [...errors, ...warnings];
+
       connection
         .sendDiagnostics({
           uri,
-          diagnostics: [...errors, ...warnings],
+          diagnostics,
         })
         .catch((err) => {
           throw new Error(err);
