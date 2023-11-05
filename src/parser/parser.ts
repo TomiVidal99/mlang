@@ -1,21 +1,29 @@
-import { ERROR_CODES } from "../constants";
-import { Expression, LintingError, LintingWarning, Program, Statement, Token, TokenType } from "../types";
-import { getRandomStringID } from "../utils";
+import type { Range } from 'vscode-languageserver';
+import { ERROR_CODES } from '../constants';
+import type {
+  Expression,
+  LintingError,
+  LintingWarning,
+  Program,
+  Statement,
+  Token,
+  TokenType,
+} from '../types';
+import { getRandomStringID } from '../utils';
 
-const MAX_STATEMENTS = 10 as const; // TODO: this should be an user setting
+const MAX_STATEMENTS = 5000 as const; // TODO: this should be an user setting
 
 /**
  * Takes in a list of Tokens and makes an AST
  */
 export class Parser {
   private currentTokenIndex = 0;
-  private statements: Statement[] = [];
+  private readonly statements: Statement[] = [];
   private errors: LintingError[] = [];
   private warnings: LintingWarning[] = [];
-  private contextDepth: string[] = ["0"];
+  private readonly contextDepth: string[] = ['0'];
 
-  constructor(private tokens: Token[]) {
-  }
+  constructor(private readonly tokens: Token[]) {}
 
   public clearLintingMessages(): void {
     this.errors = [];
@@ -30,9 +38,9 @@ export class Parser {
   }
 
   /**
-  * Helper function to go deeper into a context
-  * @returns [previousContext, newContext]
-  */
+   * Helper function to go deeper into a context
+   * @returns [previousContext, newContext]
+   */
   private getIntoNewContext(): [string, string] {
     const prevContext = this.getCurrentContext();
     const newContext = getRandomStringID();
@@ -47,19 +55,21 @@ export class Parser {
   private getBackOfContext(): [string, string] {
     const prevContext = this.getCurrentContext();
     const newContext = this.contextDepth.pop();
+    if (newContext === undefined)
+      throw new Error('Expected newContext to be defined');
     return [prevContext, newContext];
   }
 
   /*
-  *Helper function to get the current token
-  */
+   *Helper function to get the current token
+   */
   private getCurrentToken(): Token {
     return this.tokens[this.currentTokenIndex];
   }
 
   /*
-  * Helper function to advance to the next token
-  */
+   * Helper function to advance to the next token
+   */
   private getNextToken(): Token | undefined {
     if (this.currentTokenIndex >= this.tokens.length - 1) {
       return undefined;
@@ -70,8 +80,8 @@ export class Parser {
   }
 
   /*
-  * Helper function to advance to the next token
-  */
+   * Helper function to advance to the next token
+   */
   private getPrevToken(): Token | undefined {
     if (this.currentTokenIndex <= 0) {
       return undefined;
@@ -81,86 +91,102 @@ export class Parser {
     }
   }
 
-
   /**
    * Parses an statement
    */
   public parseStatement(): Statement | null {
     // ignore comments and jump lines
-    while (this.getCurrentToken().type === "COMMENT" || this.getCurrentToken().type === "NL") {
+    while (
+      this.getCurrentToken().type === 'COMMENT' ||
+      this.getCurrentToken().type === 'NL'
+    ) {
       this.getNextToken();
     }
 
     const currToken = this.getCurrentToken();
     const nextToken = this.getNextToken();
 
-    if (!nextToken) return null;
+    if (nextToken === undefined) return null;
 
     if (
-      currToken.content === "end" ||
-      currToken.content === "endfunction" ||
-      currToken.type === "EOF") {
+      currToken.content === 'end' ||
+      currToken.content === 'endfunction' ||
+      currToken.type === 'EOF'
+    ) {
       this.getPrevToken();
       return null;
     }
 
-    if ((currToken.type === "IDENTIFIER" || currToken.type === "NATIVE_FUNCTION") && nextToken.type === "LPARENT") {
+    if (
+      (currToken.type === 'IDENTIFIER' ||
+        currToken.type === 'NATIVE_FUNCTION') &&
+      nextToken.type === 'LPARENT'
+    ) {
       // JUST A FUNCTION CALL
       const args = this.getFunctionArguments();
       this.getNextToken();
       const supressOutput = this.isOutputSupressed();
       return {
-        type: "FUNCTION_CALL",
+        type: 'FUNCTION_CALL',
         supressOutput,
         context: this.getCurrentContext(),
         LHE: {
-          type: "IDENTIFIER",
+          type: 'IDENTIFIER',
           value: currToken.content,
           functionData: {
             args,
-          }
+          },
         },
       };
-    } else if (currToken.type === "IDENTIFIER" && nextToken.type === "EQUALS") {
+    } else if (currToken.type === 'IDENTIFIER' && nextToken.type === 'EQUALS') {
       // SINGLE OUTPUT ASSIGNMENT STATEMENT
       this.getNextToken();
       const RHE = this.parseExpression();
       const supressOutput = this.isOutputSupressed();
       return {
-        type: "ASSIGNMENT",
+        type: 'ASSIGNMENT',
         operator: nextToken.content as string,
         supressOutput,
         context: this.getCurrentContext(),
         LHE: {
-          type: "IDENTIFIER",
+          type: 'IDENTIFIER',
           value: currToken.content,
-          position: currToken.position,
+          position: this.getCurrentPosition(currToken),
         },
         RHE,
       };
-    } else if (currToken.type === "LBRACKET") {
+    } else if (currToken.type === 'LBRACKET') {
       // MULTIPLE OUTPUT ASSIGNMENT STATEMENT
       // OR OUTPUTTING A VECTOR DATA TO THE CONSOLE (not recommended)
       const [vectorArgs, vectorType] = this.getVectorArgs();
-      if (vectorType === "COMMA" && vectorArgs.every(a => a.type === "IDENTIFIER") && this.getCurrentToken().type === "EQUALS") {
+      if (
+        vectorType === 'COMMA' &&
+        vectorArgs.every((a) => a.type === 'IDENTIFIER') &&
+        this.getCurrentToken().type === 'EQUALS'
+      ) {
         // IT'S AN OUTPUT
-        if (this.getCurrentToken().type !== "EQUALS") {
+        if (this.getCurrentToken().type !== 'EQUALS') {
           // TODO: think how to do this better, because this it's not necessarly like this
           this.errors.push({
-            message: `Unexpected token ${this.getCurrentToken().content}`,
-            range: this.getCurrentToken().position,
+            message: `Unexpected token ${this.stringifyTokenContent()}`,
+            range: this.getCurrentPosition(),
             code: ERROR_CODES.OUTPUT_VECTOR,
           });
-          return;
+          return null;
         }
         const functionIdentifier = this.getNextToken();
-        if (functionIdentifier.type !== "IDENTIFIER" && functionIdentifier.type !== "KEYWORD") {
+        if (functionIdentifier === undefined)
+          throw new Error('Unexpected undefined token. Code 50'); // TODO: should throw here?
+        if (
+          functionIdentifier.type !== 'IDENTIFIER' &&
+          functionIdentifier.type !== 'KEYWORD'
+        ) {
           this.errors.push({
-            message: `Expected a function call. Got ${this.getCurrentToken().content}`,
-            range: this.getCurrentToken().position,
+            message: `Expected a function call. Got ${this.stringifyTokenContent()}`,
+            range: this.getCurrentPosition(),
             code: ERROR_CODES.EXPECTED_FN_IDENT,
           });
-          return;
+          return null;
         }
         this.getNextToken();
         const args = this.getFunctionArguments();
@@ -168,62 +194,83 @@ export class Parser {
         this.getNextToken();
         const supressOutput = this.isOutputSupressed();
         return {
-          type: "MO_ASSIGNMENT",
-          operator: "=",
+          type: 'MO_ASSIGNMENT',
+          operator: '=',
           supressOutput,
           context: this.getCurrentContext(),
           LHE: {
-            type: "VARIABLE_VECTOR",
+            type: 'VARIABLE_VECTOR',
             value: vectorArgs,
           },
           RHE: {
-            type: "FUNCTION_CALL",
+            type: 'FUNCTION_CALL',
             value: functionIdentifier.content,
             functionData: {
               args,
-            }
-          }
+            },
+          },
         };
       }
       // ELSE ITS A VALUE VECTOR
       // TODO: should do something here??
-      return;
-    } else if (currToken.type === "KEYWORD" && currToken.content === "function") {
+    } else if (
+      currToken.type === 'KEYWORD' &&
+      currToken.content === 'function'
+    ) {
       // FUNCTION DEFINITION STATEMENT
       const nextToken = this.getCurrentToken();
       const next2Token = this.getNextToken();
       this.getPrevToken();
       this.getPrevToken();
-      if (nextToken.type === "IDENTIFIER" && next2Token.type === "EQUALS") {
+      if (next2Token === undefined)
+        throw new Error('Unexpected undefined token. Code 60'); // TODO: better handle this
+      if (nextToken.type === 'IDENTIFIER' && next2Token.type === 'EQUALS') {
         return this.getFunctionDefintionWithOutput(true);
-      } else if (nextToken.type === "LBRACKET") {
+      } else if (nextToken.type === 'LBRACKET') {
         return this.getFunctionDefintionWithOutput(false);
       } else {
         return this.getFunctionDefintionWithoutOutput();
       }
-    } else if (currToken.type === "IDENTIFIER" && (nextToken.type === "EOF" || this.isTokenValidBasicDataType(nextToken))) {
+    } else if (
+      currToken.type === 'IDENTIFIER' &&
+      (nextToken.type === 'NL' ||
+        nextToken.type === 'EOF' ||
+        this.isTokenValidBasicDataType(nextToken))
+    ) {
       // FUNCTION CALL (NOT recommended way)
       // Printing outputs, single operations or function calls with arguments
       // TODO: make this a function call
       let counter = 0;
-      while (this.getCurrentToken().type !== "EOF" && this.isTokenValidBasicDataType(this.getCurrentToken()) && counter < MAX_STATEMENTS) {
+      while (
+        this.getCurrentToken().type !== 'NL' &&
+        this.getCurrentToken().type !== 'EOF' &&
+        this.isTokenValidBasicDataType(this.getCurrentToken()) &&
+        counter < MAX_STATEMENTS
+      ) {
         this.getNextToken();
         counter++;
       }
-      this.logErrorMaxCallsReached(counter, "Could not parse function call", ERROR_CODES.FN_CALL_EXCEEDED_CALLS);
+      this.logErrorMaxCallsReached(
+        counter,
+        'Could not parse function call',
+        ERROR_CODES.FN_CALL_EXCEEDED_CALLS,
+      );
       this.warnings.push({
-        message: "Unadvised function call",
-        range: nextToken.position,
+        message: 'Unadvised function call',
+        range: this.getCurrentPosition(nextToken),
         code: 7,
       });
-      return;
     } else {
       // console.log("prev token: ", this.tokens[this.currentTokenIndex - 1]);
       // console.log("currToken: ", this.getCurrentToken());
       // console.log("currToken: ", currToken);
+      if (currToken === undefined)
+        throw new Error('Unexpected undefined token. Code 70'); // TODO: definitly better handle this!
       this.errors.push({
-        message: `Expected a valid token for a statement. ${currToken ? ` Got: '${JSON.stringify(currToken.content)}'` : ""}`,
-        range: currToken?.position ? currToken.position : {
+        message: `Unexpected token. Got: "${this.stringifyTokenContent(
+          currToken,
+        )}"`,
+        range: currToken?.position ?? {
           start: { line: 0, character: 0 },
           end: { line: 0, character: 0 },
         },
@@ -232,6 +279,7 @@ export class Parser {
       return null;
     }
 
+    return null;
   }
 
   /**
@@ -239,10 +287,10 @@ export class Parser {
    */
   private validateFnCallArgs(args: Token[]): void {
     for (const arg of args) {
-      if (arg.type === "DEFAULT_VALUE_ARGUMENT") {
+      if (arg.type === 'DEFAULT_VALUE_ARGUMENT') {
         this.errors.push({
-          message: "Unexpected default value argument in function call",
-          range: arg.position,
+          message: 'Unexpected default value argument in function call',
+          range: this.getCurrentPosition(arg),
           code: 23,
         });
       }
@@ -253,22 +301,22 @@ export class Parser {
    * Returns the list of tokens that are contained in an vector
    * Also returns weather the vector it's declared with ':' or just ','
    */
-  private getVectorArgs(): [Token[], "COMMA" | "COLON"] {
+  private getVectorArgs(): [Token[], 'COMMA' | 'COLON'] {
     const tokens: Token[] = [];
 
-    if (this.getCurrentToken().type === "LBRACKET") this.getNextToken();
+    if (this.getCurrentToken().type === 'LBRACKET') this.getNextToken();
 
-    if (this.getCurrentToken().type === "RBRACKET") {
+    if (this.getCurrentToken().type === 'RBRACKET') {
       this.getNextToken();
-      return [[], "COMMA"];
+      return [[], 'COMMA'];
     }
-    if (this.getCurrentToken().type === "LBRACKET") {
+    if (this.getCurrentToken().type === 'LBRACKET') {
       tokens.push(this.getVector());
       this.getPrevToken();
     } else if (this.isTokenValidBasicDataType(this.getCurrentToken())) {
       tokens.push(this.getCurrentToken());
     }
-    const itsCommaSeparated = this.getNextToken().type === "COMMA";
+    const itsCommaSeparated = this.getNextToken()?.type === 'COMMA';
 
     if (itsCommaSeparated) {
       tokens.push(...this.getVectorValuesCommaSeparated());
@@ -278,10 +326,7 @@ export class Parser {
 
     this.getNextToken();
 
-    return [
-      tokens,
-      itsCommaSeparated ? "COMMA" : "COLON"
-    ];
+    return [tokens, itsCommaSeparated ? 'COMMA' : 'COLON'];
   }
 
   /**
@@ -290,10 +335,12 @@ export class Parser {
   private getVectorValuesColonSeparated(): Token[] {
     const tokens: Token[] = [];
 
-    while (this.getCurrentToken().type === "COLON" && tokens.length < 2) {
+    while (this.getCurrentToken().type === 'COLON' && tokens.length < 2) {
       const nextValue = this.getNextToken();
+      if (nextValue === undefined)
+        throw new Error('Unexpected undefined token. Code 80');
 
-      if (nextValue.type === "LBRACKET") {
+      if (nextValue.type === 'LBRACKET') {
         tokens.push(this.getVector(nextValue));
         this.getPrevToken();
       } else if (this.isTokenValidBasicDataType(nextValue)) {
@@ -303,10 +350,10 @@ export class Parser {
       this.getNextToken();
     }
 
-    if (this.getCurrentToken().type !== "RBRACKET") {
+    if (this.getCurrentToken().type !== 'RBRACKET') {
       this.errors.push({
-        message: "Unexpected vector value",
-        range: this.getCurrentToken().position,
+        message: 'Unexpected vector value',
+        range: this.getCurrentPosition(),
         code: 22,
       });
     }
@@ -320,14 +367,19 @@ export class Parser {
    * Helper that returns a vector once a bracket it's found
    */
   private getVector(token?: Token): Token {
-    const [vectorArgs, _] = this.getVectorArgs();
-    const referenceToken = token ? token : this.getCurrentToken();
+    const [vectorArgs] = this.getVectorArgs();
+    const referenceToken = token ?? this.getCurrentToken();
+    if (referenceToken === undefined)
+      throw new Error('Unexpected undefined token. Code 130');
+    const referenceTokenPos = this.getCurrentPosition(referenceToken);
     return {
-      type: "VECTOR",
+      type: 'VECTOR',
       content: vectorArgs,
       position: {
-        start: referenceToken.position.start,
-        end: vectorArgs[vectorArgs.length - 1]?.position?.end ? vectorArgs[vectorArgs.length - 1]?.position?.end : referenceToken.position.end,
+        start: referenceTokenPos.start,
+        end:
+          vectorArgs[vectorArgs.length - 1]?.position?.end ??
+          referenceTokenPos.end,
       },
     };
   }
@@ -339,9 +391,11 @@ export class Parser {
   private getVectorValuesCommaSeparated(): Token[] {
     const tokens: Token[] = [];
 
-    while (this.getCurrentToken().type === "COMMA") {
+    while (this.getCurrentToken().type === 'COMMA') {
       const nextValue = this.getNextToken();
-      if (nextValue.type === "LBRACKET") {
+      if (nextValue === undefined)
+        throw new Error('Unexpected undefined token. Code 120');
+      if (nextValue.type === 'LBRACKET') {
         tokens.push(this.getVector(nextValue));
         this.getPrevToken();
       } else if (!this.isTokenValidBasicDataType(nextValue)) {
@@ -352,10 +406,10 @@ export class Parser {
       this.getNextToken();
     }
 
-    if (this.getCurrentToken().type !== "RBRACKET") {
+    if (this.getCurrentToken().type !== 'RBRACKET') {
       this.errors.push({
-        message: "Unexpected vector value",
-        range: this.getCurrentToken().position,
+        message: 'Unexpected vector value',
+        range: this.getCurrentPosition(),
         code: 21,
       });
     }
@@ -367,149 +421,176 @@ export class Parser {
    * Helper that extracts the statement of a function definition with output/outputs
    * @args isSingleOutput - Weather the statement returns one or more outputs.
    */
-  private getFunctionDefintionWithOutput(isSingleOutput: boolean): Statement {
+  private getFunctionDefintionWithOutput(
+    isSingleOutput: boolean,
+  ): Statement | null {
     const [prevContext, newContext] = this.getIntoNewContext();
     let description = this.getFunctionDefinitionDescription(true);
-    let output: Token;
-    let outputs: Token[];
+    let output: Token | undefined;
+    const outputs: Token[] = [];
     if (isSingleOutput) {
       output = this.getNextToken();
       this.getNextToken();
     } else {
       this.getNextToken();
       this.getNextToken();
-      outputs = this.getVariableVector();
+      outputs.push(...this.getVariableVector());
     }
     const functionName = this.getNextToken();
-    if (functionName.type !== "IDENTIFIER") {
+    if (functionName === undefined)
+      throw new Error('Unexpected undefined token. Code 110');
+    if (functionName.type !== 'IDENTIFIER') {
       this.errors.push({
-        message: `Expected IDENTIFIER. Got: ${functionName.content}`,
-        range: this.getCurrentToken().position,
+        message: `Expected IDENTIFIER. Got: ${this.stringifyTokenContent(
+          functionName,
+        )}`,
+        range: this.getCurrentPosition(),
         code: 20,
       });
-      return;
+      return null;
     }
     this.getNextToken();
     const args = this.getFunctionArguments();
-    if (description === "") {
+    if (description === '') {
       description = this.getFunctionDefinitionDescription(false);
     }
     this.getNextToken();
     const statements: Statement[] = [];
     let maxCalls = 0;
-    while (!this.isEndFunctionToken() && !this.isEOF() && maxCalls < MAX_STATEMENTS) {
+    while (
+      !this.isEndFunctionToken() &&
+      !this.isEOF() &&
+      maxCalls < MAX_STATEMENTS
+    ) {
       const statement = this.parseStatement();
-      if (statement) statements.push(statement);
+      if (statement !== null) statements.push(statement);
       maxCalls++;
     }
-    this.logErrorMaxCallsReached(maxCalls, "Could not find closing keyword 'end'", ERROR_CODES.FN_DEF_MISSING_END);
+    this.logErrorMaxCallsReached(
+      maxCalls,
+      "Could not find closing keyword 'end'",
+      ERROR_CODES.FN_DEF_MISSING_END,
+    );
     const endToken = this.getCurrentToken();
-    if (endToken.type === "EOF") {
+    if (endToken.type === 'EOF') {
       this.errors.push({
         message: "Expected closing function 'end' or 'endfunction'",
         range: {
-          start: functionName.position.start,
-          end: endToken.position.end,
+          start: this.getCurrentPosition(functionName).start,
+          end: this.getCurrentPosition(functionName).end,
         },
         code: 19,
       });
-      return;
+      return null;
     }
     this.getNextToken();
     this.getBackOfContext();
+    const RHE: Expression = {
+      type: 'FUNCTION_DEFINITION',
+      value: 'function',
+      LHO: {
+        type: 'IDENTIFIER',
+        value: functionName.content,
+        position: this.getCurrentPosition(functionName),
+        functionData: {
+          args,
+          description,
+          closingToken: endToken,
+          contextCreated: newContext,
+        },
+      },
+      RHO: statements,
+    };
     return {
-      type: "ASSIGNMENT",
+      type: 'ASSIGNMENT',
       supressOutput: true,
       context: prevContext,
       LHE: {
-        type: isSingleOutput ? "IDENTIFIER" : "VARIABLE_VECTOR",
-        value: isSingleOutput ? output.content : outputs,
-        position: isSingleOutput ? output.position : null,
+        type: isSingleOutput ? 'IDENTIFIER' : 'VARIABLE_VECTOR',
+        value:
+          isSingleOutput && output !== undefined ? output.content : outputs,
+        position:
+          isSingleOutput && output !== undefined
+            ? this.getCurrentPosition(output)
+            : undefined,
       },
-      RHE: {
-        type: "FUNCTION_DEFINITION",
-        value: "function",
-        LHO: {
-          type: "IDENTIFIER",
-          value: functionName.content,
-          position: functionName.position,
-          functionData: {
-            args,
-            description,
-            closingToken: endToken,
-            contextCreated: newContext,
-          }
-        },
-        RHO: statements,
-      },
+      RHE,
     };
   }
 
   /**
    * Helper that extracts the statement of a function definition without output
    */
-  private getFunctionDefintionWithoutOutput(): Statement {
+  private getFunctionDefintionWithoutOutput(): Statement | null {
     const [prevContext, newContext] = this.getIntoNewContext();
     let description = this.getFunctionDefinitionDescription(true);
     const functionName = this.getNextToken();
-    if (functionName.type !== "IDENTIFIER") {
+    if (functionName === undefined)
+      throw new Error('Unexpected undefined token. Code 100');
+    if (functionName.type !== 'IDENTIFIER') {
       this.errors.push({
-        message: `Expected IDENTIFIER. Got: ${functionName.content}`,
-        range: this.getCurrentToken().position,
+        message: `Expected IDENTIFIER. Got: ${this.stringifyTokenContent(
+          functionName,
+        )}`,
+        range: this.getCurrentPosition(),
         code: 18,
       });
-      return;
+      return null;
     }
     this.getNextToken();
     const args = this.getFunctionArguments();
     this.getNextToken();
-    if (description === "") {
+    if (description === '') {
       this.getPrevToken();
       description = this.getFunctionDefinitionDescription(false);
       this.getNextToken();
     }
     const statements: Statement[] = [];
     let maxCalls = 0;
-    while (!this.isEndFunctionToken() && !this.isEOF() && maxCalls < MAX_STATEMENTS) {
+    while (
+      !this.isEndFunctionToken() &&
+      !this.isEOF() &&
+      maxCalls < MAX_STATEMENTS
+    ) {
       const statement = this.parseStatement();
-      if (statement) statements.push(statement);
+      if (statement !== null) statements.push(statement);
       maxCalls++;
     }
     if (maxCalls >= MAX_STATEMENTS) {
       this.errors.push({
-        message: "Max calls for statements in a function definition",
-        range: this.getCurrentToken().position,
+        message: 'Max calls for statements in a function definition',
+        range: this.getCurrentPosition(),
         code: 16,
       });
     }
     const endToken = this.getCurrentToken();
-    if (endToken.type === "EOF") {
+    if (endToken.type === 'EOF') {
       this.errors.push({
         message: "Expected closing function 'end' or 'endfunction'",
         range: {
-          start: functionName.position.start,
-          end: endToken.position.end,
+          start: this.getCurrentPosition(functionName).start,
+          end: this.getCurrentPosition(functionName).end,
         },
         code: 17,
       });
-      return;
+      return null;
     }
     this.getNextToken();
     this.getBackOfContext();
     return {
-      type: "FUNCTION_DEFINITION",
+      type: 'FUNCTION_DEFINITION',
       supressOutput: true,
       context: prevContext,
       LHE: {
-        type: "IDENTIFIER",
+        type: 'IDENTIFIER',
         value: functionName.content,
-        position: functionName.position,
+        position: this.getCurrentPosition(functionName),
         functionData: {
           args,
           description,
           closingToken: endToken,
           contextCreated: newContext,
-        }
+        },
       },
       RHE: statements,
     };
@@ -528,21 +609,25 @@ export class Parser {
           break;
         }
         const prevToken = this.getPrevToken();
-        if (prevToken.type === "COMMENT") {
+        if (prevToken === undefined)
+          throw new Error('Unexpected undefined token. Code 10');
+        if (prevToken.type === 'COMMENT') {
           comments.push(prevToken);
         }
-      } while (this.getCurrentToken().type === "COMMENT");
+      } while (this.getCurrentToken().type === 'COMMENT');
       comments.reverse();
     } else {
       do {
         const nextToken = this.getNextToken();
-        if (nextToken.type === "COMMENT") {
+        if (nextToken === undefined)
+          throw new Error('Unexpected undefined token. Code 20');
+        if (nextToken.type === 'COMMENT') {
           comments.push(nextToken);
         }
-      } while (this.getCurrentToken().type === "COMMENT");
+      } while (this.getCurrentToken().type === 'COMMENT');
     }
     this.currentTokenIndex = currentIndex;
-    const ret = comments.map(t => t.content).join("\n");
+    const ret = comments.map((t) => t.content).join('\n');
     return ret;
   }
 
@@ -552,131 +637,146 @@ export class Parser {
    * so the range it's better calculated
    */
   private isOutputSupressed(): boolean {
-    const isSupressed = this.getCurrentToken().type === "SEMICOLON";
+    const isSupressed = this.getCurrentToken().type === 'SEMICOLON';
     if (!isSupressed) {
       this.warnings.push({
-        message: "Will output to the console",
-        range: this.getPrevToken().position,
+        message: 'Will output to the console',
+        range: this.getCurrentPosition(this.getPrevToken()),
         code: 15,
       });
       this.getNextToken();
-      return;
+      return false;
     }
     this.getNextToken();
     return isSupressed;
   }
 
   /**
-   * Helper that returns a list of identifiers of a list of variables 
+   * Helper that returns a list of identifiers of a list of variables
    * i.e [a,b,c,d,...,N] = FUNCTION_CALL(), it returns a through N
    */
   private getVariableVector(): Token[] {
     const tokens: Token[] = [];
     do {
-      if (this.getCurrentToken().type !== "IDENTIFIER") {
+      if (this.getCurrentToken().type !== 'IDENTIFIER') {
         // TODO: this should be taken care
         // this.errors.push({
         //   message: `Expected IDENTIFIER. Got: ${this.getCurrentToken().content}`,
         //   range: this.getCurrentToken().position,
         // });
-        return;
+        return [];
       }
       tokens.push(this.getCurrentToken());
-      const nextTokenType = this.getNextToken().type;
-      if (nextTokenType !== "COMMA" && nextTokenType !== "RBRACKET") {
+      const nextTokenType = this.getNextToken()?.type;
+      if (nextTokenType === undefined)
+        throw new Error('Unexpected undefined token. Code 30'); // TODO: handle this better
+      if (nextTokenType !== 'COMMA' && nextTokenType !== 'RBRACKET') {
         this.errors.push({
-          message: `Expected COMMA. Got: '${this.getCurrentToken().content}'`,
-          range: this.getCurrentToken().position,
+          message: `Expected COMMA. Got: '${this.stringifyTokenContent(
+            this.getCurrentToken(),
+          )}'`,
+          range: this.getCurrentPosition(),
           code: 14,
         });
         return tokens;
       }
       this.getNextToken();
-      if (nextTokenType === "RBRACKET") {
+      if (nextTokenType === 'RBRACKET') {
         break;
       }
-    } while (tokens[tokens.length - 1].type !== "RBRACKET" && this.currentTokenIndex < this.tokens.length);
+    } while (
+      tokens[tokens.length - 1].type !== 'RBRACKET' &&
+      this.currentTokenIndex < this.tokens.length
+    );
     return tokens;
   }
 
   /**
-  * Helper that parses an expression
-  * @throws error
-  */
-  private parseExpression(): Expression {
+   * Helper that parses an expression
+   * @throws error
+   */
+  private parseExpression(): Expression | undefined {
     const currToken = this.getCurrentToken();
-    let lho: Expression | undefined = undefined;
+    let lho: Expression | undefined;
     let isValidBinary = true;
 
     switch (currToken.type) {
-      case "STRING":
-      case "VECTOR":
+      case 'STRING':
+      case 'VECTOR':
         isValidBinary = false;
         lho = {
           type: currToken.type,
           value: currToken.content,
         };
         break;
-      case "NUMBER":
+      case 'NUMBER':
         lho = {
           type: currToken.type,
           value: currToken.content,
         };
         break;
-      case "IDENTIFIER":
+      case 'IDENTIFIER':
         lho = this.parseFunctionCall();
         this.getPrevToken();
         break;
-      case "AT":
-        {
-          this.getNextToken();
-          const args = this.getFunctionArguments();
-          this.validateFnCallArgs(args);
-          this.getNextToken();
-          const expr = this.parseExpression();
-          return {
-            type: "ANONYMOUS_FUNCTION_DEFINITION",
-            value: "@",
-            position: currToken.position,
-            functionData: {
-              args,
-            },
-            RHO: expr,
-          };
-        }
-      case "LPARENT":
+      case 'AT': {
+        this.getNextToken();
+        const args = this.getFunctionArguments();
+        this.validateFnCallArgs(args);
+        this.getNextToken();
+        const expr = this.parseExpression();
+        return {
+          type: 'ANONYMOUS_FUNCTION_DEFINITION',
+          value: '@',
+          position: this.getCurrentPosition(currToken),
+          functionData: {
+            args,
+          },
+          RHO: expr,
+        };
+      }
+      case 'LPARENT':
         this.getNextToken();
         lho = this.parseExpression();
-        if (this.getCurrentToken().type !== "RPARENT") {
+        if (this.getCurrentToken().type !== 'RPARENT') {
           this.errors.push({
             message: "Expected closing parenthesis ')'",
-            range: this.getCurrentToken().position,
+            range: this.getCurrentPosition(),
             code: 13,
           });
           return;
         }
         break;
-      case "LBRACKET":
+      case 'LBRACKET':
         // VECTOR
         return {
-          type: "VARIABLE_VECTOR",
+          type: 'VARIABLE_VECTOR',
           value: this.getVectorArgs()[0],
         };
+      case 'NL':
+        this.errors.push({
+          message: `Unexpected new line in expression.`,
+          range: this.getCurrentPosition(),
+          code: ERROR_CODES.UNEXPECTED_NL,
+        });
+        return;
       default:
         this.errors.push({
-          message: `Unexpected token. ${currToken.content}`,
-          range: this.getCurrentToken().position,
+          message: `Unexpected token. ${this.stringifyTokenContent(currToken)}`,
+          range: this.getCurrentPosition(),
           code: 12,
         });
         return;
     }
 
     const nextToken = this.getNextToken();
+    if (nextToken === undefined)
+      throw new Error('Unexpected undefined token. Code 40'); // TODO: handle this error better
     if (isValidBinary && this.isBinaryOperator(nextToken.type)) {
       this.getNextToken();
       return {
-        type: "BINARY_OPERATION",
-        value: nextToken.content,
+        type: 'BINARY_OPERATION',
+        value: nextToken?.content ?? '',
         RHO: this.parseExpression(),
         LHO: lho,
       };
@@ -692,12 +792,15 @@ export class Parser {
    * @returns boolean
    */
   private isTokenValidBasicDataType(token: Token): boolean {
-    const isValid = token.type === "IDENTIFIER" || token.type === "NUMBER" || token.type === "STRING";
+    const isValid =
+      token.type === 'IDENTIFIER' ||
+      token.type === 'NUMBER' ||
+      token.type === 'STRING';
 
     if (!isValid) {
       this.errors.push({
-        message: `Expected a valid data type. Got ${token.content}`,
-        range: this.getCurrentToken().position,
+        message: `Expected a valid data type. Got ${this.stringifyTokenContent()}`,
+        range: this.getCurrentPosition(),
         code: 11,
       });
     }
@@ -707,14 +810,14 @@ export class Parser {
 
   private parseFunctionCall(): Expression {
     const currToken = this.getCurrentToken();
-    if (this.getNextToken().type === "LPARENT") {
+    if (this.getNextToken()?.type === 'LPARENT') {
       const args = this.getFunctionArguments();
       this.validateFnCallArgs(args);
       this.getNextToken();
       return {
-        type: "FUNCTION_CALL",
+        type: 'FUNCTION_CALL',
         value: currToken.content,
-        position: currToken.position,
+        position: this.getCurrentPosition(currToken),
         functionData: {
           args,
         },
@@ -723,7 +826,7 @@ export class Parser {
       return {
         type: currToken.type,
         value: currToken.content,
-        position: currToken.position,
+        position: this.getCurrentPosition(currToken),
       };
     }
   }
@@ -735,79 +838,88 @@ export class Parser {
    */
   private getFunctionArguments(): Token[] {
     const tokens: Token[] = [];
-    if (this.getCurrentToken().type !== "LPARENT") {
+    if (this.getCurrentToken().type !== 'LPARENT') {
       this.errors.push({
-        message: `Expected '(' for function call. Got: ${this.getCurrentToken().content}`,
-        range: this.getCurrentToken().position,
+        message: `Expected '(' for function call. Got: ${
+          this.getCurrentToken().type
+        }`,
+        range: this.getCurrentPosition(),
         code: 10,
       });
       return tokens;
     }
     do {
-      let arg = this.getNextToken();
-      const nextToken = this.getNextToken();
+      let arg: Token | null = this.skipNL(true);
+      const nextToken = this.skipNL(true);
       this.getPrevToken();
 
-      if (arg.type === "IDENTIFIER" && nextToken.type === "EQUALS") {
+      if (arg.type === 'IDENTIFIER' && nextToken.type === 'EQUALS') {
         // DEFAULT ARGUMENT
         this.getNextToken();
-        const defaultValue = this.getNextToken();
+        const defaultValue = this.skipNL(true);
         if (!this.isTokenDataType(defaultValue)) {
           this.errors.push({
-            message: `Expected a valid default value. Got ${defaultValue.content}`,
-            range: defaultValue.position,
+            message: `Expected a valid default value. Got ${this.stringifyTokenContent(
+              defaultValue,
+            )}`,
+            range: this.getCurrentPosition(defaultValue),
             code: 9,
           });
         }
         tokens.push({
-          type: "DEFAULT_VALUE_ARGUMENT",
+          type: 'DEFAULT_VALUE_ARGUMENT',
           content: arg.content,
           position: arg.position,
-          defaultValue: defaultValue,
+          defaultValue,
         });
         this.getNextToken();
         arg = null;
-      } else if (arg.type === "IDENTIFIER") {
-        if (this.getNextToken().type === "LPARENT") {
+      } else if (arg.type === 'IDENTIFIER') {
+        if (this.skipNL(true).type === 'LPARENT') {
           // TODO handle function composition
           const fnCallArgs = this.getFunctionArguments(); // just for now so it gets rid of the function call (advances the tokens)
           this.validateFnCallArgs(fnCallArgs);
         }
-      } else if (arg.type === "RPARENT") {
+      } else if (arg.type === 'RPARENT') {
         // When it's a call without any arguments
         return tokens;
-      } else if (arg.type === "LBRACKET") {
+      } else if (arg.type === 'LBRACKET') {
         tokens.push(this.getVector(arg));
         arg = null;
       } else if (this.isTokenValidBasicDataType(arg)) {
         this.getNextToken();
       } else {
         this.errors.push({
-          message: `Expected valid argument. Got ${arg}`,
-          range: this.getCurrentToken().position,
+          message: `Expected valid argument. Got ${this.stringifyTokenContent(
+            arg,
+          )}`,
+          range: this.getCurrentPosition(),
           code: 8,
         });
         return tokens;
       }
 
-      if (arg) {
+      if (arg !== null) {
         tokens.push(arg);
       }
 
-      const commaOrRParen = this.getCurrentToken();
-      if (commaOrRParen.type !== "COMMA" && commaOrRParen.type !== "RPARENT") {
+      const commaOrRParen = this.skipNL();
+      if (commaOrRParen.type !== 'COMMA' && commaOrRParen.type !== 'RPARENT') {
         this.errors.push({
-          message: `Expected ',' or ')'. Got '${commaOrRParen.content}'`,
-          range: this.getCurrentToken().position,
+          message: `Expected ',' or ')'. Got '${commaOrRParen.type}'`,
+          range: this.getCurrentPosition(),
           code: ERROR_CODES.EXPECTED_COMMA_PAREN,
         });
         return tokens;
       }
-    } while (this.getCurrentToken().type !== "RPARENT" && this.getCurrentToken().type !== "EOF");
-    if (this.getCurrentToken().type === "EOF") {
+    } while (
+      this.getCurrentToken().type !== 'RPARENT' &&
+      this.getCurrentToken().type !== 'EOF'
+    );
+    if (this.getCurrentToken().type === 'EOF') {
       this.errors.push({
         message: "Expected closing parenthesis ')' for function call",
-        range: this.getCurrentToken().position,
+        range: this.getCurrentPosition(),
         code: ERROR_CODES.MISSING_PAREN,
       });
       return tokens;
@@ -816,31 +928,75 @@ export class Parser {
   }
 
   /**
-  * Helper that returns weather a token type is a BinaryOperator
-  */
+   * Helper that returns the content of a token as a string
+   */
+  private stringifyTokenContent(token?: Token): string {
+    if (token === undefined) token = this.getCurrentToken();
+    if (Array.isArray(token.content))
+      return `[${token.content.map((t) => t.content).join(', ')}]`;
+    return token.content;
+  }
+
+  /**
+   * Helper that advances to the next token that's not a NL (new line)
+   * @param next if true it starts by grabbing the next token
+   * TODO: maybe have a separated constant for the max of the counter??
+   */
+  private skipNL(next = false): Token {
+    let counter = 0;
+    let tok: Token | undefined = this.getCurrentToken();
+    if (next) tok = this.getNextToken();
+    while (this.getCurrentToken().type === 'NL' && counter <= MAX_STATEMENTS) {
+      tok = this.getNextToken();
+      counter++;
+    }
+    this.logErrorMaxCallsReached(
+      counter,
+      'Found too many new lines',
+      ERROR_CODES.TOO_MANY_NL,
+    );
+    if (tok === undefined) throw new Error('EOF was never found'); // TODO: should throw here?????
+    return tok;
+  }
+
+  /**
+   * Helper that returns weather a token type is a BinaryOperator
+   */
   private isBinaryOperator(type: TokenType): boolean {
-    return type === "SUBTRACTION" || type === "DIVISION" || type === "ADDITION" || type === "MULTIPLICATION";
+    return (
+      type === 'SUBTRACTION' ||
+      type === 'DIVISION' ||
+      type === 'ADDITION' ||
+      type === 'MULTIPLICATION'
+    );
   }
 
   /**
    * Helper that returns weather the current Token it's an EOF or not
    */
   private isEOF(token?: Token): boolean {
-    if (token) {
-      return token.type === "EOF";
+    if (token !== null && token !== undefined) {
+      return token.type === 'EOF';
     }
-    return this.getCurrentToken().type === "EOF";
+    return this.getCurrentToken().type === 'EOF';
   }
 
   /**
-   * Helper that returns weather the current Token it's an 
+   * Helper that returns weather the current Token it's an
    * end or endfunction keyword
    */
   private isEndFunctionToken(token?: Token): boolean {
-    if (token) {
-      return token.type === "KEYWORD" && (token.content === "end" || token.content === "endfunction");
+    if (token !== null && token !== undefined) {
+      return (
+        token.type === 'KEYWORD' &&
+        (token.content === 'end' || token.content === 'endfunction')
+      );
     }
-    return this.getCurrentToken().type === "KEYWORD" && (this.getCurrentToken().content === "end" || this.getCurrentToken().content === "endfunction");
+    return (
+      this.getCurrentToken().type === 'KEYWORD' &&
+      (this.getCurrentToken().content === 'end' ||
+        this.getCurrentToken().content === 'endfunction')
+    );
   }
 
   /**
@@ -849,20 +1005,34 @@ export class Parser {
    * TODO consider structs {}
    */
   private isTokenDataType(token?: Token): boolean {
-    if (token) {
-      return token.type === "IDENTIFIER" || token.type === "VECTOR" || token.type === "STRING" || token.type === "NUMBER";
+    if (token !== null && token !== undefined) {
+      return (
+        token.type === 'IDENTIFIER' ||
+        token.type === 'VECTOR' ||
+        token.type === 'STRING' ||
+        token.type === 'NUMBER'
+      );
     }
-    return this.getCurrentToken().type === "IDENTIFIER" || this.getCurrentToken().type === "VECTOR" || this.getCurrentToken().type === "STRING" || this.getCurrentToken().type === "NUMBER";
+    return (
+      this.getCurrentToken().type === 'IDENTIFIER' ||
+      this.getCurrentToken().type === 'VECTOR' ||
+      this.getCurrentToken().type === 'STRING' ||
+      this.getCurrentToken().type === 'NUMBER'
+    );
   }
 
   /**
    * Helper that adds the error of max statements reached
    */
-  private logErrorMaxCallsReached(counter: number, message: string, errorCode): void {
+  private logErrorMaxCallsReached(
+    counter: number,
+    message: string,
+    errorCode: number,
+  ): void {
     if (counter >= MAX_STATEMENTS) {
       this.errors.push({
         message,
-        range: this.getCurrentToken().position,
+        range: this.getCurrentPosition(),
         code: errorCode,
       });
     }
@@ -876,31 +1046,53 @@ export class Parser {
   }
 
   /**
-  * Makes the Abstract Syntax Tree with the given tokens.
-  * @returns Program - AST.
-  */
+   * Makes the Abstract Syntax Tree with the given tokens.
+   * @returns Program - AST.
+   */
   public makeAST(): Program {
     let statementsCounter = 0;
     do {
       const statement = this.parseStatement();
-      if (statement) {
+      if (statement !== null && statement !== undefined) {
         this.statements.push(statement);
       }
       statementsCounter++;
-    } while (this.getCurrentToken().type !== "EOF" && statementsCounter < MAX_STATEMENTS);
+    } while (
+      this.getCurrentToken().type !== 'EOF' &&
+      statementsCounter < MAX_STATEMENTS
+    );
 
     if (statementsCounter >= MAX_STATEMENTS) {
       this.errors.push({
-        message: "Maximum amount of statements reached.",
-        range: this.getCurrentToken().position,
+        message: 'Maximum amount of statements reached.',
+        range: this.getCurrentPosition(),
         code: ERROR_CODES.AST_MAX_STMNT_REACHED,
       });
-      throw new Error("Maximum amount of statements reached.");
+      // throw new Error("Maximum amount of statements reached."); // TODO: should i throw???
     }
 
     return {
-      type: "Program",
+      type: 'Program',
       body: this.statements,
+    };
+  }
+
+  /**
+   * Helper that returns the current token position if it exists
+   */
+  private getCurrentPosition(token?: Token): Range {
+    if (token !== null && token !== undefined) return token.position as Range;
+    if (this.getCurrentToken() !== undefined)
+      return this.getCurrentToken().position as Range;
+    return {
+      start: {
+        line: 0,
+        character: 0,
+      },
+      end: {
+        line: 0,
+        character: 0,
+      },
     };
   }
 
@@ -917,5 +1109,4 @@ export class Parser {
   public getWarnings(): LintingWarning[] {
     return this.warnings;
   }
-
 }
