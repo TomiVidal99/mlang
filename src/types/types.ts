@@ -1,5 +1,5 @@
-import { Range } from "vscode-languageserver";
-import { Symbols } from ".";
+import { type Range } from 'vscode-languageserver';
+import { type Symbols } from '.';
 
 export interface LintingMessage {
   message: string;
@@ -15,11 +15,21 @@ export interface LintingWarning extends LintingMessage {
   opt?: any;
 }
 
-export type TokenType = keyof typeof Symbols | "NUMBER" | "ILLEGAL" | "IDENTIFIER" | "STRING" | "KEYWORD" | "VECTOR" | "COMMENT" | "DEFAULT_VALUE_ARGUMENT" | "NATIVE_FUNCTION";
+export type TokenType =
+  | keyof typeof Symbols
+  | 'NUMBER'
+  | 'ILLEGAL'
+  | 'IDENTIFIER'
+  | 'STRING'
+  | 'KEYWORD'
+  | 'VECTOR'
+  | 'COMMENT'
+  | 'DEFAULT_VALUE_ARGUMENT'
+  | 'NATIVE_FUNCTION';
 
-export type Token = {
-  content: string | Token[],
-  type: TokenType,
+export interface Token {
+  content: string | Token[];
+  type: TokenType;
   position: Range | null;
   defaultValue?: Token;
 }
@@ -32,7 +42,13 @@ export interface FunctionData {
 }
 
 export interface Expression {
-  type: TokenType | "BINARY_OPERATION" | "FUNCTION_CALL" | "VARIABLE_VECTOR" | "ANONYMOUS_FUNCTION_DEFINITION" | "FUNCTION_DEFINITION";
+  type:
+    | TokenType
+    | 'BINARY_OPERATION'
+    | 'FUNCTION_CALL'
+    | 'VARIABLE_VECTOR'
+    | 'ANONYMOUS_FUNCTION_DEFINITION'
+    | 'FUNCTION_DEFINITION';
   value: string | string[] | Token[];
   LHO?: Expression;
   RHO?: Expression | Statement[];
@@ -41,10 +57,15 @@ export interface Expression {
   position?: Range;
 }
 
-export type StatementType = "ASSIGNMENT" | "FUNCTION_CALL" | "MO_ASSIGNMENT" | "FUNCTION_DEFINITION" | "CONSOLE_OUTPUT";
+export type StatementType =
+  | 'ASSIGNMENT'
+  | 'FUNCTION_CALL'
+  | 'MO_ASSIGNMENT'
+  | 'FUNCTION_DEFINITION'
+  | 'CONSOLE_OUTPUT';
 
 export interface Statement {
-  type: StatementType
+  type: StatementType;
   supressOutput: boolean;
   context: string;
   operator?: string;
@@ -53,7 +74,7 @@ export interface Statement {
 }
 
 export interface Program {
-  type: "Program";
+  type: 'Program';
   body: Statement[];
 }
 
@@ -62,7 +83,12 @@ interface IDefinition {
   position: Range;
 }
 
-export type DefinitionType = "FUNCTION" | "VARIABLE" | "ARGUMENT" | "ANONYMOUS_FUNCTION" | "DEFAULT_ARGUMENT";
+export type DefinitionType =
+  | 'FUNCTION'
+  | 'VARIABLE'
+  | 'ARGUMENT'
+  | 'ANONYMOUS_FUNCTION'
+  | 'DEFAULT_ARGUMENT';
 
 export interface Definition extends IDefinition {
   type: DefinitionType;
@@ -71,7 +97,7 @@ export interface Definition extends IDefinition {
   content?: string;
 }
 
-export type ReferenceType = "FUNCTION" | "VARIABLE";
+export type ReferenceType = 'FUNCTION' | 'VARIABLE';
 
 export interface Reference extends IDefinition {
   type: ReferenceType;

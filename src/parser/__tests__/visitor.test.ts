@@ -1,9 +1,9 @@
-import { expect, test } from "bun:test";
-import { Tokenizer } from "../tokenizer";
-import { Parser } from "../parser";
-import { Visitor } from "../visitor";
+import { expect, test } from 'bun:test';
+import { Tokenizer } from '../tokenizer';
+import { Parser } from '../parser';
+import { Visitor } from '../visitor';
 
-test("Octave/Matlab Visitor, test references extraction", () => {
+test('Octave/Matlab Visitor, test references extraction', () => {
   const text = `
     a = "string";
     b =     1
@@ -17,12 +17,33 @@ test("Octave/Matlab Visitor, test references extraction", () => {
   `;
   // TODO: add other types of function definitions
 
-  const references: string[] = ["a", "b", "c", "a", "b", "test", "myVar", "m", "d", "w", "a", "w", "a", "b", "b", "a", "va1", "va2", "MO_FUNC", "arg1", "arg2" ];
+  const references: string[] = [
+    'a',
+    'b',
+    'c',
+    'a',
+    'b',
+    'test',
+    'myVar',
+    'm',
+    'd',
+    'w',
+    'a',
+    'w',
+    'a',
+    'b',
+    'b',
+    'a',
+    'va1',
+    'va2',
+    'MO_FUNC',
+    'arg1',
+    'arg2',
+  ];
 
   const tokenizer = new Tokenizer(text);
   const tokens = tokenizer.getAllTokens();
   const parser = new Parser(tokens);
-  const statements = parser.getStatements();
   const program = parser.makeAST();
   const visitor = new Visitor();
   visitor.visitProgram(program);

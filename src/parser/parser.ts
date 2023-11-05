@@ -1053,7 +1053,7 @@ export class Parser {
     let statementsCounter = 0;
     do {
       const statement = this.parseStatement();
-      if (statement !== null && statement !== undefined) {
+      if (statement !== null) {
         this.statements.push(statement);
       }
       statementsCounter++;

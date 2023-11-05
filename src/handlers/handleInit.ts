@@ -1,4 +1,11 @@
-import { DidChangeConfigurationNotification, InitializeParams, InitializeResult, InitializedParams, TextDocumentSyncKind, _Connection } from "vscode-languageserver";
+import {
+  DidChangeConfigurationNotification,
+  type InitializeParams,
+  type InitializeResult,
+  type InitializedParams,
+  TextDocumentSyncKind,
+  type _Connection,
+} from 'vscode-languageserver';
 
 export let hasConfigurationCapability = false;
 export let hasWorkspaceFolderCapability = false;
@@ -8,7 +15,7 @@ interface IOnInitializeProps {
   params: InitializeParams;
   connection: _Connection;
 }
-export function handleOnInitialize({params, connection }: IOnInitializeProps) {
+export function handleOnInitialize({ params, connection }: IOnInitializeProps) {
   const capabilities = params.capabilities;
 
   // Does the client support the `workspace/configuration` request?
@@ -20,26 +27,28 @@ export function handleOnInitialize({params, connection }: IOnInitializeProps) {
     capabilities.workspace != null && !!capabilities.workspace.workspaceFolders
   );
   hasDiagnosticRelatedInformationCapability = !!(
-    capabilities.textDocument &&
-    capabilities.textDocument.publishDiagnostics &&
+    capabilities.textDocument?.publishDiagnostics &&
     capabilities.textDocument.publishDiagnostics.relatedInformation
   );
 
   const result: InitializeResult = {
     capabilities: {
       textDocumentSync: TextDocumentSyncKind.Incremental,
-      completionProvider: { // allows completion
+      completionProvider: {
+        // allows completion
         workDoneProgress: true,
         resolveProvider: true,
         completionItem: {
           labelDetailsSupport: true,
         },
-        triggerCharacters: ["qwertyuiopasdfghjklñzxcvbnm"], // TODO: check if keep this, or make the user have a config for it
+        triggerCharacters: ['qwertyuiopasdfghjklñzxcvbnm'], // TODO: check if keep this, or make the user have a config for it
       },
-      definitionProvider: { // allows goToDefinition
+      definitionProvider: {
+        // allows goToDefinition
         workDoneProgress: true,
       },
-      referencesProvider: { // allows goToReference
+      referencesProvider: {
+        // allows goToReference
         workDoneProgress: true,
       },
     },
@@ -59,20 +68,22 @@ interface IOnInitializedProps {
   connection: _Connection;
   params: InitializedParams;
 }
-export function handleOnInitialized({ params, connection }: IOnInitializedProps) {
-  connection.console.log("Mlang Initialized correctly!");
+export function handleOnInitialized({
+  params,
+  connection,
+}: IOnInitializedProps) {
+  connection.console.log('Mlang Initialized correctly!');
 
   if (hasConfigurationCapability) {
     // Register for all configuration changes.
     connection.client.register(
       DidChangeConfigurationNotification.type,
-      undefined
+      undefined,
     );
   }
   if (hasWorkspaceFolderCapability) {
     connection.workspace.onDidChangeWorkspaceFolders((_event) => {
-      connection.console.log("Workspace folder change event received.");
+      connection.console.log('Workspace folder change event received.');
     });
   }
-
 }

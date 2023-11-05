@@ -1,15 +1,32 @@
-import { expect, test } from "bun:test";
-import { TokenType } from "../../types";
-import { Tokenizer } from "../tokenizer";
+import { expect, test } from 'bun:test';
+import { type TokenType } from '../../types';
+import { Tokenizer } from '../tokenizer';
 
-test("Octave/Matlab Tokenizer, testing Symbols", () => {
+test('Octave/Matlab Tokenizer, testing Symbols', () => {
   const text = `@:=\n-+*/1%^.;[]{}(),`;
 
   const symbols: TokenType[] = [
-    "AT", "COLON", "EQUALS", "NL", "SUBTRACTION", "ADDITION", "MULTIPLICATION",
-    "DIVISION", "NUMBER", "MODULUS", "EXPONENTIATION", "PERIOD",
-    "SEMICOLON", "LBRACKET", "RBRACKET", "LSQUIRLY", "RSQUIRLY",
-    "LPARENT", "RPARENT", "COMMA", "EOF"
+    'AT',
+    'COLON',
+    'EQUALS',
+    'NL',
+    'SUBTRACTION',
+    'ADDITION',
+    'MULTIPLICATION',
+    'DIVISION',
+    'NUMBER',
+    'MODULUS',
+    'EXPONENTIATION',
+    'PERIOD',
+    'SEMICOLON',
+    'LBRACKET',
+    'RBRACKET',
+    'LSQUIRLY',
+    'RSQUIRLY',
+    'LPARENT',
+    'RPARENT',
+    'COMMA',
+    'EOF',
   ];
 
   const tokenizer = new Tokenizer(text);
@@ -20,11 +37,15 @@ test("Octave/Matlab Tokenizer, testing Symbols", () => {
   }
 });
 
-test("Octave/Matlab Tokenizer, testing literals", function() {
-  const text = "abcde_10 adbdc 1000 1e-3";
+test('Octave/Matlab Tokenizer, testing literals', function () {
+  const text = 'abcde_10 adbdc 1000 1e-3';
 
   const symbols: TokenType[] = [
-    "IDENTIFIER", "IDENTIFIER", "NUMBER", "NUMBER", "EOF"
+    'IDENTIFIER',
+    'IDENTIFIER',
+    'NUMBER',
+    'NUMBER',
+    'EOF',
   ];
 
   const tokenizer = new Tokenizer(text);
@@ -35,7 +56,7 @@ test("Octave/Matlab Tokenizer, testing literals", function() {
   }
 });
 
-test("Octave/Matlab Tokenizer, complete test", function() {
+test('Octave/Matlab Tokenizer, complete test', function () {
   const text = `
     function [a,b] = my_Function(c,d, e)
       a = c + d + " test string ";
@@ -44,11 +65,41 @@ test("Octave/Matlab Tokenizer, complete test", function() {
   `;
 
   const symbols: TokenType[] = [
-    "NL", "KEYWORD", "LBRACKET", "IDENTIFIER", "COMMA", "IDENTIFIER", "RBRACKET", "EQUALS",
-    "IDENTIFIER", "LPARENT", "IDENTIFIER", "COMMA", "IDENTIFIER", "COMMA", "IDENTIFIER", "RPARENT", "NL",
-    "IDENTIFIER", "EQUALS", "IDENTIFIER", "ADDITION", "IDENTIFIER", "ADDITION", "STRING",
-    "SEMICOLON", "NL", "IDENTIFIER", "EQUALS", "IDENTIFIER",
-    "MULTIPLICATION", "NUMBER", "SEMICOLON", "NL", "KEYWORD", "NL",
+    'NL',
+    'KEYWORD',
+    'LBRACKET',
+    'IDENTIFIER',
+    'COMMA',
+    'IDENTIFIER',
+    'RBRACKET',
+    'EQUALS',
+    'IDENTIFIER',
+    'LPARENT',
+    'IDENTIFIER',
+    'COMMA',
+    'IDENTIFIER',
+    'COMMA',
+    'IDENTIFIER',
+    'RPARENT',
+    'NL',
+    'IDENTIFIER',
+    'EQUALS',
+    'IDENTIFIER',
+    'ADDITION',
+    'IDENTIFIER',
+    'ADDITION',
+    'STRING',
+    'SEMICOLON',
+    'NL',
+    'IDENTIFIER',
+    'EQUALS',
+    'IDENTIFIER',
+    'MULTIPLICATION',
+    'NUMBER',
+    'SEMICOLON',
+    'NL',
+    'KEYWORD',
+    'NL',
   ];
 
   const tokenizer = new Tokenizer(text);
@@ -59,7 +110,7 @@ test("Octave/Matlab Tokenizer, complete test", function() {
   }
 });
 
-test("Octave/Matlab Tokenizer, detect line comments", function() {
+test('Octave/Matlab Tokenizer, detect line comments', function () {
   const text = `
     # this is a comment
     % an this one is another comment
@@ -67,7 +118,16 @@ test("Octave/Matlab Tokenizer, detect line comments", function() {
   `;
 
   const symbols: TokenType[] = [
-    "NL", "COMMENT", "NL", "COMMENT", "NL", "IDENTIFIER", "EQUALS", "STRING", "SEMICOLON", "NL",
+    'NL',
+    'COMMENT',
+    'NL',
+    'COMMENT',
+    'NL',
+    'IDENTIFIER',
+    'EQUALS',
+    'STRING',
+    'SEMICOLON',
+    'NL',
   ];
 
   const tokenizer = new Tokenizer(text);

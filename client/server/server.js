@@ -9598,6 +9598,19 @@ async function handleDefinitions({ params, documents: documents2 }) {
   return locations.length > 0 ? locations : null;
 }
 
+// src/constants/errors_codes.ts
+var ERROR_CODES = {
+  OUTPUT_VECTOR: 1,
+  EXPECTED_FN_IDENT: 2,
+  AST_MAX_STMNT_REACHED: 3,
+  FN_CALL_EXCEEDED_CALLS: 4,
+  FN_DEF_MISSING_END: 5,
+  MISSING_PAREN: 6,
+  EXPECTED_COMMA_PAREN: 7,
+  UNEXPECTED_NL: 50,
+  TOO_MANY_NL: 60
+};
+
 // src/parser/parser.ts
 var MAX_STATEMENTS = 5e3;
 var Parser = class {
@@ -9671,12 +9684,14 @@ var Parser = class {
    * Parses an statement
    */
   parseStatement() {
-    while (this.getCurrentToken().type === "COMMENT") {
+    while (this.getCurrentToken().type === "COMMENT" || this.getCurrentToken().type === "NL") {
       this.getNextToken();
     }
     const currToken = this.getCurrentToken();
     const nextToken = this.getNextToken();
-    if (currToken.content === "end" || currToken.content === "endfunction" || currToken.type === "EOF" || !nextToken) {
+    if (!nextToken)
+      return null;
+    if (currToken.content === "end" || currToken.content === "endfunction" || currToken.type === "EOF") {
       this.getPrevToken();
       return null;
     }
@@ -9718,7 +9733,8 @@ var Parser = class {
         if (this.getCurrentToken().type !== "EQUALS") {
           this.errors.push({
             message: `Unexpected token ${this.getCurrentToken().content}`,
-            range: this.getCurrentToken().position
+            range: this.getCurrentToken().position,
+            code: ERROR_CODES.OUTPUT_VECTOR
           });
           return;
         }
@@ -9726,7 +9742,8 @@ var Parser = class {
         if (functionIdentifier.type !== "IDENTIFIER" && functionIdentifier.type !== "KEYWORD") {
           this.errors.push({
             message: `Expected a function call. Got ${this.getCurrentToken().content}`,
-            range: this.getCurrentToken().position
+            range: this.getCurrentToken().position,
+            code: ERROR_CODES.EXPECTED_FN_IDENT
           });
           return;
         }
@@ -9766,19 +9783,27 @@ var Parser = class {
       } else {
         return this.getFunctionDefintionWithoutOutput();
       }
-    } else if (currToken.type === "IDENTIFIER" && (nextToken.type === "IDENTIFIER" || nextToken.type === "EOF" || nextToken.type === "NUMBER" || nextToken.type === "STRING")) {
+    } else if (currToken.type === "IDENTIFIER" && (nextToken.type === "NL" || nextToken.type === "EOF" || this.isTokenValidBasicDataType(nextToken))) {
+      let counter = 0;
+      while (this.getCurrentToken().type !== "NL" && this.getCurrentToken().type !== "EOF" && this.isTokenValidBasicDataType(this.getCurrentToken()) && counter < MAX_STATEMENTS) {
+        this.getNextToken();
+        counter++;
+      }
+      this.logErrorMaxCallsReached(counter, "Could not parse function call", ERROR_CODES.FN_CALL_EXCEEDED_CALLS);
       this.warnings.push({
         message: "Unadvised function call",
-        range: nextToken.position
+        range: nextToken.position,
+        code: 7
       });
       return;
     } else {
       this.errors.push({
-        message: "Expected a valid token for a statement",
+        message: `Unexpected token. ${currToken ? ` Got: '${JSON.stringify(currToken.content)}'` : ""}`,
         range: currToken?.position ? currToken.position : {
           start: { line: 0, character: 0 },
           end: { line: 0, character: 0 }
-        }
+        },
+        code: 24
       });
       return null;
     }
@@ -9791,7 +9816,8 @@ var Parser = class {
       if (arg.type === "DEFAULT_VALUE_ARGUMENT") {
         this.errors.push({
           message: "Unexpected default value argument in function call",
-          range: arg.position
+          range: arg.position,
+          code: 23
         });
       }
     }
@@ -9844,7 +9870,8 @@ var Parser = class {
     if (this.getCurrentToken().type !== "RBRACKET") {
       this.errors.push({
         message: "Unexpected vector value",
-        range: this.getCurrentToken().position
+        range: this.getCurrentToken().position,
+        code: 22
       });
     }
     return tokens;
@@ -9885,7 +9912,8 @@ var Parser = class {
     if (this.getCurrentToken().type !== "RBRACKET") {
       this.errors.push({
         message: "Unexpected vector value",
-        range: this.getCurrentToken().position
+        range: this.getCurrentToken().position,
+        code: 21
       });
     }
     return tokens;
@@ -9911,7 +9939,8 @@ var Parser = class {
     if (functionName.type !== "IDENTIFIER") {
       this.errors.push({
         message: `Expected IDENTIFIER. Got: ${functionName.content}`,
-        range: this.getCurrentToken().position
+        range: this.getCurrentToken().position,
+        code: 20
       });
       return;
     }
@@ -9929,12 +9958,7 @@ var Parser = class {
         statements.push(statement);
       maxCalls++;
     }
-    if (maxCalls >= MAX_STATEMENTS) {
-      this.errors.push({
-        message: "Max calls for statements in a function definition",
-        range: this.getCurrentToken().position
-      });
-    }
+    this.logErrorMaxCallsReached(maxCalls, "Could not find closing keyword 'end'", ERROR_CODES.FN_DEF_MISSING_END);
     const endToken = this.getCurrentToken();
     if (endToken.type === "EOF") {
       this.errors.push({
@@ -9942,7 +9966,8 @@ var Parser = class {
         range: {
           start: functionName.position.start,
           end: endToken.position.end
-        }
+        },
+        code: 19
       });
       return;
     }
@@ -9985,7 +10010,8 @@ var Parser = class {
     if (functionName.type !== "IDENTIFIER") {
       this.errors.push({
         message: `Expected IDENTIFIER. Got: ${functionName.content}`,
-        range: this.getCurrentToken().position
+        range: this.getCurrentToken().position,
+        code: 18
       });
       return;
     }
@@ -10008,7 +10034,8 @@ var Parser = class {
     if (maxCalls >= MAX_STATEMENTS) {
       this.errors.push({
         message: "Max calls for statements in a function definition",
-        range: this.getCurrentToken().position
+        range: this.getCurrentToken().position,
+        code: 16
       });
     }
     const endToken = this.getCurrentToken();
@@ -10018,7 +10045,8 @@ var Parser = class {
         range: {
           start: functionName.position.start,
           end: endToken.position.end
-        }
+        },
+        code: 17
       });
       return;
     }
@@ -10082,7 +10110,8 @@ var Parser = class {
     if (!isSupressed) {
       this.warnings.push({
         message: "Will output to the console",
-        range: this.getPrevToken().position
+        range: this.getPrevToken().position,
+        code: 15
       });
       this.getNextToken();
       return;
@@ -10105,7 +10134,8 @@ var Parser = class {
       if (nextTokenType !== "COMMA" && nextTokenType !== "RBRACKET") {
         this.errors.push({
           message: `Expected COMMA. Got: '${this.getCurrentToken().content}'`,
-          range: this.getCurrentToken().position
+          range: this.getCurrentToken().position,
+          code: 14
         });
         return tokens;
       }
@@ -10165,7 +10195,8 @@ var Parser = class {
         if (this.getCurrentToken().type !== "RPARENT") {
           this.errors.push({
             message: "Expected closing parenthesis ')'",
-            range: this.getCurrentToken().position
+            range: this.getCurrentToken().position,
+            code: 13
           });
           return;
         }
@@ -10175,10 +10206,18 @@ var Parser = class {
           type: "VARIABLE_VECTOR",
           value: this.getVectorArgs()[0]
         };
+      case "NL":
+        this.errors.push({
+          message: `Unexpected new line in expression.`,
+          range: this.getCurrentToken().position,
+          code: ERROR_CODES.UNEXPECTED_NL
+        });
+        return;
       default:
         this.errors.push({
           message: `Unexpected token. ${currToken.content}`,
-          range: this.getCurrentToken().position
+          range: this.getCurrentToken().position,
+          code: 12
         });
         return;
     }
@@ -10205,7 +10244,8 @@ var Parser = class {
     if (!isValid) {
       this.errors.push({
         message: `Expected a valid data type. Got ${token.content}`,
-        range: this.getCurrentToken().position
+        range: this.getCurrentToken().position,
+        code: 11
       });
     }
     return isValid;
@@ -10241,22 +10281,24 @@ var Parser = class {
     const tokens = [];
     if (this.getCurrentToken().type !== "LPARENT") {
       this.errors.push({
-        message: `Expected '(' for function call. Got: ${this.getCurrentToken().content}`,
-        range: this.getCurrentToken().position
+        message: `Expected '(' for function call. Got: ${this.getCurrentToken().type}`,
+        range: this.getCurrentToken().position,
+        code: 10
       });
       return tokens;
     }
     do {
-      let arg = this.getNextToken();
-      const nextToken = this.getNextToken();
+      let arg = this.skipNL(true);
+      const nextToken = this.skipNL(true);
       this.getPrevToken();
       if (arg.type === "IDENTIFIER" && nextToken.type === "EQUALS") {
         this.getNextToken();
-        const defaultValue = this.getNextToken();
+        const defaultValue = this.skipNL(true);
         if (!this.isTokenDataType(defaultValue)) {
           this.errors.push({
             message: `Expected a valid default value. Got ${defaultValue.content}`,
-            range: defaultValue.position
+            range: defaultValue.position,
+            code: 9
           });
         }
         tokens.push({
@@ -10268,7 +10310,7 @@ var Parser = class {
         this.getNextToken();
         arg = null;
       } else if (arg.type === "IDENTIFIER") {
-        if (this.getNextToken().type === "LPARENT") {
+        if (this.skipNL(true).type === "LPARENT") {
           const fnCallArgs = this.getFunctionArguments();
           this.validateFnCallArgs(fnCallArgs);
         }
@@ -10282,18 +10324,20 @@ var Parser = class {
       } else {
         this.errors.push({
           message: `Expected valid argument. Got ${arg}`,
-          range: this.getCurrentToken().position
+          range: this.getCurrentToken().position,
+          code: 8
         });
         return tokens;
       }
       if (arg) {
         tokens.push(arg);
       }
-      const commaOrRParen = this.getCurrentToken();
+      const commaOrRParen = this.skipNL();
       if (commaOrRParen.type !== "COMMA" && commaOrRParen.type !== "RPARENT") {
         this.errors.push({
-          message: `Expected ',' or ')'. Got '${commaOrRParen.content}'`,
-          range: this.getCurrentToken().position
+          message: `Expected ',' or ')'. Got '${commaOrRParen.type}'`,
+          range: this.getCurrentToken().position,
+          code: ERROR_CODES.EXPECTED_COMMA_PAREN
         });
         return tokens;
       }
@@ -10301,11 +10345,29 @@ var Parser = class {
     if (this.getCurrentToken().type === "EOF") {
       this.errors.push({
         message: "Expected closing parenthesis ')' for function call",
-        range: this.getCurrentToken().position
+        range: this.getCurrentToken().position,
+        code: ERROR_CODES.MISSING_PAREN
       });
       return tokens;
     }
     return tokens;
+  }
+  /**
+   * Helper that advances to the next token that's not a NL (new line)
+   * @param next if true it starts by grabbing the next token
+   * TODO: maybe have a separated constant for the max of the counter??
+   */
+  skipNL(next = false) {
+    let counter = 0;
+    let tok = this.getCurrentToken();
+    if (next)
+      tok = this.getNextToken();
+    while (this.getCurrentToken().type === "NL" && counter <= MAX_STATEMENTS) {
+      tok = this.getNextToken();
+      counter++;
+    }
+    this.logErrorMaxCallsReached(counter, "Found too many new lines", ERROR_CODES.TOO_MANY_NL);
+    return tok;
   }
   /**
   * Helper that returns weather a token type is a BinaryOperator
@@ -10344,6 +10406,18 @@ var Parser = class {
     return this.getCurrentToken().type === "IDENTIFIER" || this.getCurrentToken().type === "VECTOR" || this.getCurrentToken().type === "STRING" || this.getCurrentToken().type === "NUMBER";
   }
   /**
+   * Helper that adds the error of max statements reached
+   */
+  logErrorMaxCallsReached(counter, message, errorCode) {
+    if (counter >= MAX_STATEMENTS) {
+      this.errors.push({
+        message,
+        range: this.getCurrentToken().position,
+        code: errorCode
+      });
+    }
+  }
+  /**
    * Returns the parsed statements in the provided text
    */
   getStatements() {
@@ -10363,10 +10437,10 @@ var Parser = class {
       statementsCounter++;
     } while (this.getCurrentToken().type !== "EOF" && statementsCounter < MAX_STATEMENTS);
     if (statementsCounter >= MAX_STATEMENTS) {
-      console.error("MAX STATEMENTS MET");
       this.errors.push({
         message: "Maximum amount of statements reached.",
-        range: this.getCurrentToken().position
+        range: this.getCurrentToken().position,
+        code: ERROR_CODES.AST_MAX_STMNT_REACHED
       });
     }
     return {
@@ -10390,6 +10464,7 @@ var Parser = class {
 
 // src/types/symbols.ts
 var Symbols = {
+  NL: "\n",
   EOF: "\0",
   AT: "@",
   COLON: ":",
@@ -10424,6 +10499,7 @@ function getTokenFromSymbols(char) {
 }
 
 // src/parser/tokenizer.ts
+var MAX_TOKENS_CALLS = 1e4;
 var Tokenizer = class {
   constructor(text) {
     this.text = text;
@@ -10440,16 +10516,21 @@ var Tokenizer = class {
    */
   getAllTokens() {
     const tokens = [];
+    let counter = 0;
     do {
       tokens.push(this.getNextToken());
-    } while (tokens[tokens.length - 1].type !== "EOF");
+      counter++;
+    } while (tokens[tokens.length - 1].type !== "EOF" && counter <= MAX_TOKENS_CALLS);
+    if (counter >= MAX_TOKENS_CALLS) {
+      throw new Error("Tokens calls exeeded");
+    }
     return tokens;
   }
   /**
    * Gets the next token
    */
   getNextToken() {
-    while (/\s/.test(this.currChar)) {
+    while (this.currChar === " ") {
       this.readChar();
     }
     const token = getTokenFromSymbols(this.currChar);
@@ -10639,7 +10720,7 @@ var Tokenizer = class {
     do {
       this.readChar();
       literal += this.currChar;
-    } while (this.currChar !== '"' && this.currChar !== "'" && this.currPos < this.text.length);
+    } while (this.currChar !== '"' && this.currChar !== "'" && this.currChar !== "\n" && this.currPos < this.text.length);
     this.readChar();
     return literal;
   }

@@ -7,4 +7,6 @@ export const ERROR_CODES = {
   FN_DEF_MISSING_END: 5,
   MISSING_PAREN: 6,
   EXPECTED_COMMA_PAREN: 7,
+  UNEXPECTED_NL: 50,
+  TOO_MANY_NL: 60,
 } as const;

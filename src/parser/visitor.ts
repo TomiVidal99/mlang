@@ -71,20 +71,20 @@ export class Visitor {
           const args: Definition[] =
             parentType === 'FUNCTION_DEFINITION'
               ? this.getNodeFunctionArgs(node).map((a) => {
-                return {
-                  name: a.content as string,
-                  type:
-                    a.type === 'DEFAULT_VALUE_ARGUMENT'
-                      ? 'DEFAULT_ARGUMENT'
-                      : 'ARGUMENT',
-                  content:
-                    a.type === 'DEFAULT_VALUE_ARGUMENT'
-                      ? this.getDefaultValueContent(a)
-                      : '',
-                  position: this.getTokenPosition(a),
-                  documentation: '', // TODO think if i should get the documentation
-                };
-              })
+                  return {
+                    name: a.content as string,
+                    type:
+                      a.type === 'DEFAULT_VALUE_ARGUMENT'
+                        ? 'DEFAULT_ARGUMENT'
+                        : 'ARGUMENT',
+                    content:
+                      a.type === 'DEFAULT_VALUE_ARGUMENT'
+                        ? this.getDefaultValueContent(a)
+                        : '',
+                    position: this.getTokenPosition(a),
+                    documentation: '', // TODO think if i should get the documentation
+                  };
+                })
               : [];
           this.definitions.push({
             name: node.value as string,
@@ -100,20 +100,16 @@ export class Visitor {
           type: this.getReferenceTypeFromNode(node),
           documentation: node?.functionData?.description ?? '',
         });
-        if (
-          node?.functionData?.args !== undefined &&
-          node?.functionData?.args !== null
-        ) {
-          this.references.push(
-            ...node.functionData.args.map((arg) => {
-              return {
-                name: arg.content as string,
-                position: this.getTokenPosition(arg),
-                type: this.getReferenceTypeFromNode(node),
-                documentation: this.getDocumentationOrLineDefinition(node),
-              };
-            }),
-          );
+        if (node?.functionData?.args !== undefined) {
+          const ref = this.getArgumentIdentifiersList(node).map((arg) => {
+            return {
+              name: arg.content as string,
+              position: this.getTokenPosition(arg),
+              type: this.getReferenceTypeFromNode(node),
+              documentation: this.getDocumentationOrLineDefinition(node),
+            };
+          });
+          this.references.push(...ref);
         }
         if (node?.RHO !== null && Array.isArray(node.RHO)) {
           node.RHO.forEach((stmnt) => {
@@ -205,8 +201,42 @@ export class Visitor {
           documentation: this.getDocumentationOrLineDefinition(node),
           type: 'FUNCTION',
         });
+        if (node?.functionData?.args === undefined) break;
+        this.references.push(
+          ...this.getArgumentIdentifiersList(node).map((arg) => {
+            return {
+              name: arg.content as string,
+              position: this.getTokenPosition(arg),
+              type: this.getReferenceTypeFromNode(node),
+              documentation: this.getDocumentationOrLineDefinition(node),
+            };
+          }),
+        );
         break;
     }
+  }
+
+  /**
+   * Helper that returns a list of Tokens from the arguments of a function call or definition
+   */
+  private getArgumentIdentifiersList(node: Expression): Token[] {
+    if (node?.functionData?.args === undefined) return [];
+    return node.functionData.args.flatMap((arg) => {
+      return this.getTokenIdentifiers(arg);
+    });
+  }
+
+  /**
+   * Helper that returns the IDENTIFIERs from a Token.
+   */
+  private getTokenIdentifiers(token: Token): Token[] {
+    if (token.type === 'VECTOR') {
+      return (token.content as Token[]).flatMap((t) =>
+        this.getTokenIdentifiers(t),
+      );
+    }
+    if (token.type === 'IDENTIFIER') return [token];
+    return [];
   }
 
   /**

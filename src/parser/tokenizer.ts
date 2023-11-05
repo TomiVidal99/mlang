@@ -1,6 +1,11 @@
-import { Token, getTokenFromSymbols } from "../types";
-import { getKeywordsFromCompletion, getRowsAndColsInCursor, isLetter, isNumber } from "../utils";
-import { Range } from "vscode-languageserver";
+import { type Token, getTokenFromSymbols } from '../types';
+import {
+  getKeywordsFromCompletion,
+  getRowsAndColsInCursor,
+  isLetter,
+  isNumber,
+} from '../utils';
+import { type Range } from 'vscode-languageserver';
 
 const MAX_TOKENS_CALLS = 10000 as const;
 
@@ -9,11 +14,11 @@ export class Tokenizer {
   private nextPos = 0;
   private currChar: string;
   private nextChar: string;
-  private tokens: Token[] = [];
-  private keywords = getKeywordsFromCompletion();
-  private nativeFunctions = getKeywordsFromCompletion();
+  private readonly tokens: Token[] = [];
+  private readonly keywords = getKeywordsFromCompletion();
+  private readonly nativeFunctions = getKeywordsFromCompletion();
 
-  constructor(private text: string) {
+  constructor(private readonly text: string) {
     this.readChar();
   }
 
@@ -27,10 +32,13 @@ export class Tokenizer {
     do {
       tokens.push(this.getNextToken());
       counter++;
-    } while (tokens[tokens.length - 1].type !== "EOF" && counter <= MAX_TOKENS_CALLS);
+    } while (
+      tokens[tokens.length - 1].type !== 'EOF' &&
+      counter <= MAX_TOKENS_CALLS
+    );
 
     if (counter >= MAX_TOKENS_CALLS) {
-      throw new Error("Tokens calls exeeded");
+      throw new Error('Tokens calls exeeded');
     }
 
     return tokens;
@@ -40,9 +48,8 @@ export class Tokenizer {
    * Gets the next token
    */
   public getNextToken(): Token {
-
     // ignore spaces and jump lines
-    while (this.currChar === " ") {
+    while (this.currChar === ' ') {
       this.readChar();
     }
 
@@ -51,14 +58,16 @@ export class Tokenizer {
       this.readChar();
       return this.addToken({
         ...token,
-        position: this.getPosition(token.type !== "EOF" ? token.content as string : ""),
+        position: this.getPosition(
+          token.type !== 'EOF' ? (token.content as string) : '',
+        ),
       });
     }
 
-    if (this.currChar === "#" || this.currChar === "%") {
+    if (this.currChar === '#' || this.currChar === '%') {
       const comment = this.readComment();
       return this.addToken({
-        type: "COMMENT",
+        type: 'COMMENT',
         content: comment,
         position: this.getPosition(comment),
       });
@@ -76,26 +85,25 @@ export class Tokenizer {
     } else if (isNumber(this.currChar)) {
       const number = this.readNumber();
       return this.addToken({
-        type: "NUMBER",
+        type: 'NUMBER',
         content: number,
         position: this.getPosition(number),
       });
     } else if (this.currChar === '"' || this.currChar === "'") {
       const str = this.readLiteralString();
       return this.addToken({
-        type: "STRING",
+        type: 'STRING',
         content: str,
         position: this.getPosition(str),
       });
     } else {
       this.readChar();
       return this.addToken({
-        type: "ILLEGAL",
-        content: "illegal",
+        type: 'ILLEGAL',
+        content: 'illegal',
         position: null,
       });
     }
-
   }
 
   /**
@@ -104,20 +112,23 @@ export class Tokenizer {
    * but: % this is a comment, '%' it's NOT a valid token.
    */
   private isValidStartingToken(token: Token): boolean {
-    if (token.type !== "MODULUS") return true;
+    if (token.type !== 'MODULUS') return true;
     const lastToken = this.tokens[this.tokens.length - 1];
-    return (lastToken && (lastToken.type === "IDENTIFIER" || lastToken.type === "NUMBER"));
+    return (
+      lastToken &&
+      (lastToken.type === 'IDENTIFIER' || lastToken.type === 'NUMBER')
+    );
   }
 
   /**
    * Helper that reads a comment and returns the content
    */
   private readComment(): string {
-    let comment = "";
+    let comment = '';
     do {
       comment += this.currChar;
       this.readChar();
-    } while (this.currChar !== "\n" && this.currPos < this.text.length);
+    } while (this.currChar !== '\n' && this.currPos < this.text.length);
     return comment;
   }
 
@@ -132,24 +143,23 @@ export class Tokenizer {
   private tokenFromLiteral(literal: string): Token {
     if (this.keywords.includes(literal)) {
       return {
-        type: "KEYWORD",
+        type: 'KEYWORD',
         content: literal,
         position: this.getPosition(literal),
       };
     } else if (this.nativeFunctions.includes(literal)) {
       return {
-        type: "NATIVE_FUNCTION",
+        type: 'NATIVE_FUNCTION',
         content: literal,
         position: this.getPosition(literal),
       };
     }
     return {
-      type: "IDENTIFIER",
+      type: 'IDENTIFIER',
       content: literal,
       position: this.getPosition(literal),
     };
   }
-
 
   /**
    * Helper that returns the Range position
@@ -168,17 +178,19 @@ export class Tokenizer {
       end: {
         line: lineEndPoint,
         character: characterEndPoint,
-      }
+      },
     };
   }
 
   /**
- * Returns the rows and columns corresponding to the current position in the text.
- * TODO: fix possible problems
- * @returns {[number, number]} An array containing the row and column.
- */
+   * Returns the rows and columns corresponding to the current position in the text.
+   * TODO: fix possible problems
+   * @returns {[number, number]} An array containing the row and column.
+   */
   private getRowsColsCursor(content?: string): [number, number] {
-    const characterPosition = content ? this.currPos + content.length : this.currPos;
+    const characterPosition = content
+      ? this.currPos + content.length
+      : this.currPos;
     return getRowsAndColsInCursor({ text: this.text, characterPosition });
   }
 
@@ -187,8 +199,8 @@ export class Tokenizer {
    */
   private readChar(): void {
     if (this.currPos >= this.text.length || this.text.length <= 3) {
-      this.currChar = "\0";
-      this.nextChar = "\0";
+      this.currChar = '\0';
+      this.nextChar = '\0';
       return;
     }
 
@@ -197,20 +209,16 @@ export class Tokenizer {
       this.nextChar = this.text[1];
       this.currPos = 1;
       this.nextPos = 2;
-      return;
     } else if (this.nextPos >= this.text.length) {
       this.currChar = this.nextChar;
-      this.nextChar = " ";
+      this.nextChar = ' ';
       this.currPos = this.nextPos;
-      return;
     } else {
       this.currChar = this.nextChar;
       this.nextChar = this.text[this.nextPos];
       this.currPos = this.nextPos;
       this.nextPos++;
-      return;
     }
-
   }
 
   /**
@@ -219,7 +227,10 @@ export class Tokenizer {
    */
   private readLiteral(): string {
     let literal = '';
-    while (/[a-zA-Z0-9_]/.test(this.currChar) && this.currPos < this.text.length) {
+    while (
+      /[a-zA-Z0-9_]/.test(this.currChar) &&
+      this.currPos < this.text.length
+    ) {
       literal += this.currChar;
       this.readChar();
     }
@@ -233,7 +244,8 @@ export class Tokenizer {
   private readNumber(): string {
     let literal = '';
 
-    while (/\d/.test(this.currChar) ||
+    while (
+      /\d/.test(this.currChar) ||
       /\.\d/.test(this.currChar + this.nextChar) ||
       /e\d/.test(this.currChar + this.nextChar) ||
       /e[++-]/.test(this.currChar + this.nextChar) ||
@@ -255,10 +267,14 @@ export class Tokenizer {
     do {
       this.readChar();
       literal += this.currChar;
-    } while (this.currChar !== '"' && this.currChar !== "'" && this.currChar !== "\n" && this.currPos < this.text.length);
+    } while (
+      this.currChar !== '"' &&
+      this.currChar !== "'" &&
+      this.currChar !== '\n' &&
+      this.currPos < this.text.length
+    );
     this.readChar();
 
     return literal;
   }
-
 }

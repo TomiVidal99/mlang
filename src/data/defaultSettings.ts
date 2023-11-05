@@ -1,4 +1,4 @@
-import * as os from "os";
+import * as os from 'os';
 
 // The example settings
 export interface ISettings {
@@ -9,10 +9,10 @@ export interface ISettings {
 }
 
 /**
-* Returns the default init file depending on the OS
-* for Linux: ~/.octaverc
-* on windows: 
-*/
+ * Returns the default init file depending on the OS
+ * for Linux: ~/.octaverc
+ * on windows:
+ */
 function getDefaultInitFile(): string {
   switch (os.platform()) {
     case 'linux':

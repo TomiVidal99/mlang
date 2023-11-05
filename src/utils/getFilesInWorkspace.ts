@@ -13,8 +13,8 @@ export function getFilesInWorkspace({
   const documents = files.map((file) => {
     const uri = pathToFileURL(path.resolve(file)).toString();
     console.log(`uri: ${uri}`);
-    const content = fs.readFileSync(file, "utf-8");
-    const document = TextDocument.create(uri, "octave", 1, content);
+    const content = fs.readFileSync(file, 'utf-8');
+    const document = TextDocument.create(uri, 'octave', 1, content);
     return document;
   });
 
