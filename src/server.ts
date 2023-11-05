@@ -15,6 +15,7 @@ import {
 import { type ISettings } from './data';
 import { Parser, Tokenizer, Visitor } from './parser';
 import { getDiagnosticFromLitingMessage } from './utils';
+import { CERO_POSITION } from './constants';
 
 // THIS IS THE TIME THAT IT WAITS BEFORE TRIGGERING A REFRESH
 // OF PARSING THE DOCUMENT WHEN THE USER IT'S TYPING

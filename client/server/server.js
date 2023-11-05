@@ -9505,9 +9505,36 @@ function getWordRangeAtPosition(document, position) {
 
 // src/utils/getDiagnosticFromLitingMessage.ts
 var import_node = __toESM(require_node3());
+
+// src/constants/errors_codes.ts
+var ERROR_CODES = {
+  OUTPUT_VECTOR: 1,
+  EXPECTED_FN_IDENT: 2,
+  AST_MAX_STMNT_REACHED: 3,
+  FN_CALL_EXCEEDED_CALLS: 4,
+  FN_DEF_MISSING_END: 5,
+  MISSING_PAREN: 6,
+  EXPECTED_COMMA_PAREN: 7,
+  UNEXPECTED_NL: 50,
+  TOO_MANY_NL: 60
+};
+
+// src/constants/cero_position.ts
+var CERO_POSITION = {
+  start: {
+    line: 1,
+    character: 1
+  },
+  end: {
+    line: 1,
+    character: 1
+  }
+};
+
+// src/utils/getDiagnosticFromLitingMessage.ts
 function getDiagnosticFromLitingMessage(lintingMessage, severity) {
   return {
-    range: lintingMessage.range,
+    range: lintingMessage?.range ?? CERO_POSITION,
     message: lintingMessage.message,
     severity: severity === "error" ? import_node.DiagnosticSeverity.Error : import_node.DiagnosticSeverity.Warning,
     source: "mlang"
@@ -9610,31 +9637,6 @@ async function handleDefinitions({
   );
   return locations.length > 0 ? locations : null;
 }
-
-// src/constants/errors_codes.ts
-var ERROR_CODES = {
-  OUTPUT_VECTOR: 1,
-  EXPECTED_FN_IDENT: 2,
-  AST_MAX_STMNT_REACHED: 3,
-  FN_CALL_EXCEEDED_CALLS: 4,
-  FN_DEF_MISSING_END: 5,
-  MISSING_PAREN: 6,
-  EXPECTED_COMMA_PAREN: 7,
-  UNEXPECTED_NL: 50,
-  TOO_MANY_NL: 60
-};
-
-// src/constants/cero_position.ts
-var CERO_POSITION = {
-  start: {
-    line: 1,
-    character: 1
-  },
-  end: {
-    line: 1,
-    character: 1
-  }
-};
 
 // src/parser/parser.ts
 var MAX_STATEMENTS = 5e3;
@@ -10653,7 +10655,7 @@ var Tokenizer = class {
       this.readChar();
     }
     const token = getTokenFromSymbols(this.currChar);
-    if (token && this.isValidStartingToken(token)) {
+    if (token !== void 0 && this.isValidStartingToken(token)) {
       this.readChar();
       return this.addToken({
         ...token,
@@ -10699,7 +10701,7 @@ var Tokenizer = class {
       return this.addToken({
         type: "ILLEGAL",
         content: "illegal",
-        position: null
+        position: this.getPosition(this.currChar)
       });
     }
   }
@@ -10712,7 +10714,7 @@ var Tokenizer = class {
     if (token.type !== "MODULUS")
       return true;
     const lastToken = this.tokens[this.tokens.length - 1];
-    return lastToken && (lastToken.type === "IDENTIFIER" || lastToken.type === "NUMBER");
+    return lastToken !== void 0 && (lastToken.type === "IDENTIFIER" || lastToken.type === "NUMBER");
   }
   /**
    * Helper that reads a comment and returns the content
@@ -10778,7 +10780,7 @@ var Tokenizer = class {
    * @returns {[number, number]} An array containing the row and column.
    */
   getRowsColsCursor(content) {
-    const characterPosition = content ? this.currPos + content.length : this.currPos;
+    const characterPosition = content !== void 0 ? this.currPos + content.length : this.currPos;
     return getRowsAndColsInCursor({ text: this.text, characterPosition });
   }
   /**

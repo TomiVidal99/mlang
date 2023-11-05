@@ -54,7 +54,7 @@ export class Tokenizer {
     }
 
     const token = getTokenFromSymbols(this.currChar);
-    if (token && this.isValidStartingToken(token)) {
+    if (token !== undefined && this.isValidStartingToken(token)) {
       this.readChar();
       return this.addToken({
         ...token,
@@ -101,7 +101,7 @@ export class Tokenizer {
       return this.addToken({
         type: 'ILLEGAL',
         content: 'illegal',
-        position: null,
+        position: this.getPosition(this.currChar),
       });
     }
   }
@@ -115,7 +115,7 @@ export class Tokenizer {
     if (token.type !== 'MODULUS') return true;
     const lastToken = this.tokens[this.tokens.length - 1];
     return (
-      lastToken &&
+      lastToken !== undefined &&
       (lastToken.type === 'IDENTIFIER' || lastToken.type === 'NUMBER')
     );
   }
@@ -188,9 +188,8 @@ export class Tokenizer {
    * @returns {[number, number]} An array containing the row and column.
    */
   private getRowsColsCursor(content?: string): [number, number] {
-    const characterPosition = content
-      ? this.currPos + content.length
-      : this.currPos;
+    const characterPosition =
+      content !== undefined ? this.currPos + content.length : this.currPos;
     return getRowsAndColsInCursor({ text: this.text, characterPosition });
   }
 
@@ -261,7 +260,7 @@ export class Tokenizer {
   /**
    * Gets a literal string from the text.
    */
-  private readLiteralString() {
+  private readLiteralString(): string {
     let literal = this.currChar;
 
     do {

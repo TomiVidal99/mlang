@@ -114,9 +114,10 @@ vectorVariable = ["alskdjasldkj", 'm', 'd'];
   //   'setting',
   // ];
 
-  console.log('REFERENCES: ' + JSON.stringify(references));
+  // console.log('REFERENCES: ' + JSON.stringify(references));
 
+  expect(errors.map((e) => e?.range !== undefined).some((e) => !e)).toBe(false);
   expect(errors.length === 0).toBe(true);
   expect(references.map((r) => r.name)).toEqual(expectedReferences);
-  expect([]).toEqual(expectedDefinitions);
+  // expect([]).toEqual(expectedDefinitions);
 });
