@@ -101,7 +101,8 @@ export class Visitor {
           documentation: node?.functionData?.description ?? '',
         });
         if (node?.functionData?.args !== undefined) {
-          const ref = this.getArgumentIdentifiersList(node).map((arg) => {
+          const tokenList = this.getArgumentIdentifiersList(node);
+          const ref = tokenList.map((arg) => {
             return {
               name: arg.content as string,
               position: this.getTokenPosition(arg),
@@ -235,7 +236,8 @@ export class Visitor {
         this.getTokenIdentifiers(t),
       );
     }
-    if (token.type === 'IDENTIFIER') return [token];
+    if (token.type === 'IDENTIFIER' || token.type === 'DEFAULT_VALUE_ARGUMENT')
+      return [token];
     return [];
   }
 
