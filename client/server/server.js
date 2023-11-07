@@ -9855,10 +9855,7 @@ var Parser = class {
       this.errors.push({
         message: `Unexpected token. Got: "${this.stringifyTokenContent(
           currToken
-        )}" (${currToken.type}). TOKENS: ${JSON.stringify(
-          this.tokens.map((t) => t.type).slice(0, 10)
-        )}
-${getKeywordsFromCompletion()}`,
+        )}"`,
         range: currToken?.position ?? {
           start: { line: 0, character: 0 },
           end: { line: 0, character: 0 }
@@ -10570,6 +10567,11 @@ ${getKeywordsFromCompletion()}`,
    * @returns Program - AST.
    */
   makeAST() {
+    if (this.tokens.length < 4)
+      return {
+        type: "Program",
+        body: this.statements
+      };
     let statementsCounter = 0;
     do {
       const statement = this.parseStatement();
@@ -10681,7 +10683,9 @@ var Tokenizer = class {
       counter++;
     } while (tokens[tokens.length - 1].type !== "EOF" && counter <= MAX_TOKENS_CALLS);
     if (counter >= MAX_TOKENS_CALLS) {
-      throw new Error("Tokens calls exeeded");
+      throw new Error(
+        "Tokens calls exeeded. " + JSON.stringify(this.text) + " -> " + JSON.stringify(this.tokens.map((t) => t.type))
+      );
     }
     return tokens;
   }
@@ -10710,15 +10714,19 @@ var Tokenizer = class {
         position: this.getPosition(comment)
       });
     } else if (isLetter(this.currChar)) {
+      console.error(
+        "ENTERING WITH: " + JSON.stringify(this.currChar) + ", pos: " + this.currPos.toString()
+      );
       const intialPos = this.currPos;
       const literal = this.readLiteral();
       const postPos = this.currPos;
       this.currPos = intialPos - 1;
-      const position = this.getPosition(literal);
+      const prevPos = this.getPosition(literal);
       this.currPos = postPos;
+      console.error("pos after: " + this.currPos.toString());
       return this.addToken({
         ...this.tokenFromLiteral(literal),
-        position
+        position: prevPos
       });
     } else if (isNumber(this.currChar)) {
       const number = this.readNumber();
@@ -10837,7 +10845,7 @@ var Tokenizer = class {
       this.nextPos = 2;
     } else if (this.nextPos >= this.text.length) {
       this.currChar = this.nextChar;
-      this.nextChar = " ";
+      this.nextChar = "\0";
       this.currPos = this.nextPos;
     } else {
       this.currChar = this.nextChar;
@@ -10852,7 +10860,7 @@ var Tokenizer = class {
    */
   readLiteral() {
     let literal = "";
-    while (/[a-zA-Z0-9_]/.test(this.currChar) && this.currPos < this.text.length) {
+    while (/[a-zA-Z0-9_]/.test(this.currChar) && this.currPos <= this.text.length) {
       literal += this.currChar;
       this.readChar();
     }

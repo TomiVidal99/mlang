@@ -1107,6 +1107,11 @@ export class Parser {
    * @returns Program - AST.
    */
   public makeAST(): Program {
+    if (this.tokens.length < 4)
+      return {
+        type: 'Program',
+        body: this.statements,
+      };
     let statementsCounter = 0;
     do {
       const statement = this.parseStatement();
