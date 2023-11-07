@@ -10714,16 +10714,12 @@ var Tokenizer = class {
         position: this.getPosition(comment)
       });
     } else if (isLetter(this.currChar)) {
-      console.error(
-        "ENTERING WITH: " + JSON.stringify(this.currChar) + ", pos: " + this.currPos.toString()
-      );
       const intialPos = this.currPos;
       const literal = this.readLiteral();
       const postPos = this.currPos;
       this.currPos = intialPos - 1;
       const prevPos = this.getPosition(literal);
       this.currPos = postPos;
-      console.error("pos after: " + this.currPos.toString());
       return this.addToken({
         ...this.tokenFromLiteral(literal),
         position: prevPos
@@ -10948,15 +10944,23 @@ var Visitor = class {
       case "IDENTIFIER":
         if ((parentType === "ASSIGNMENT" || parentType === "FUNCTION_DEFINITION") && isLHE) {
           const args = parentType === "FUNCTION_DEFINITION" ? this.getNodeFunctionArgs(node).map((a) => {
-            return {
+            if (a.type !== "IDENTIFIER" && a.type !== "DEFAULT_VALUE_ARGUMENT") {
+              return null;
+            }
+            const type = a.type === "DEFAULT_VALUE_ARGUMENT" ? "DEFAULT_ARGUMENT" : "ARGUMENT";
+            const content = a.type === "DEFAULT_VALUE_ARGUMENT" ? this.getDefaultValueContent(a) : "";
+            const position = this.getTokenPosition(a);
+            const def = {
               name: a.content,
-              type: a.type === "DEFAULT_VALUE_ARGUMENT" ? "DEFAULT_ARGUMENT" : "ARGUMENT",
-              content: a.type === "DEFAULT_VALUE_ARGUMENT" ? this.getDefaultValueContent(a) : "",
-              position: this.getTokenPosition(a),
+              type,
+              content,
+              position,
               documentation: ""
               // TODO think if i should get the documentation
             };
-          }) : [];
+            this.definitions.push(def);
+            return def;
+          }).filter((d) => d !== null) : [];
           this.definitions.push({
             name: node.value,
             position: node.position ?? CERO_POSITION,
@@ -10972,7 +10976,8 @@ var Visitor = class {
           documentation: node?.functionData?.description ?? ""
         });
         if (node?.functionData?.args !== void 0) {
-          const ref = this.getArgumentIdentifiersList(node).map((arg) => {
+          const tokenList = this.getArgumentIdentifiersList(node);
+          const ref = tokenList.map((arg) => {
             return {
               name: arg.content,
               position: this.getTokenPosition(arg),
@@ -11105,7 +11110,7 @@ var Visitor = class {
         (t) => this.getTokenIdentifiers(t)
       );
     }
-    if (token.type === "IDENTIFIER")
+    if (token.type === "IDENTIFIER" || token.type === "DEFAULT_VALUE_ARGUMENT")
       return [token];
     return [];
   }

@@ -70,21 +70,34 @@ export class Visitor {
         ) {
           const args: Definition[] =
             parentType === 'FUNCTION_DEFINITION'
-              ? this.getNodeFunctionArgs(node).map((a) => {
-                  return {
-                    name: a.content as string,
-                    type:
+              ? (this.getNodeFunctionArgs(node)
+                  .map((a) => {
+                    if (
+                      a.type !== 'IDENTIFIER' &&
+                      a.type !== 'DEFAULT_VALUE_ARGUMENT'
+                    ) {
+                      return null;
+                    }
+                    const type =
                       a.type === 'DEFAULT_VALUE_ARGUMENT'
                         ? 'DEFAULT_ARGUMENT'
-                        : 'ARGUMENT',
-                    content:
+                        : 'ARGUMENT';
+                    const content =
                       a.type === 'DEFAULT_VALUE_ARGUMENT'
                         ? this.getDefaultValueContent(a)
-                        : '',
-                    position: this.getTokenPosition(a),
-                    documentation: '', // TODO think if i should get the documentation
-                  };
-                })
+                        : '';
+                    const position = this.getTokenPosition(a);
+                    const def: Definition = {
+                      name: a.content as string,
+                      type,
+                      content,
+                      position,
+                      documentation: '', // TODO think if i should get the documentation
+                    };
+                    this.definitions.push(def);
+                    return def;
+                  })
+                  .filter((d) => d !== null) as Definition[])
               : [];
           this.definitions.push({
             name: node.value as string,

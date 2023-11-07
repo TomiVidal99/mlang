@@ -78,19 +78,12 @@ export class Tokenizer {
         position: this.getPosition(comment),
       });
     } else if (isLetter(this.currChar)) {
-      console.error(
-        'ENTERING WITH: ' +
-          JSON.stringify(this.currChar) +
-          ', pos: ' +
-          this.currPos.toString(),
-      );
       const intialPos = this.currPos;
       const literal = this.readLiteral();
       const postPos = this.currPos;
       this.currPos = intialPos - 1;
       const prevPos = this.getPosition(literal);
       this.currPos = postPos;
-      console.error('pos after: ' + this.currPos.toString());
       return this.addToken({
         ...this.tokenFromLiteral(literal),
         position: prevPos,
