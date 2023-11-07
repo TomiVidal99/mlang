@@ -47,6 +47,8 @@ vectorVariable = ["alskdjasldkj", 'm', 'd'];
   const { references, definitions } = visitor;
   const errors = parser.getErrors();
 
+  console.log('TOKENS: ' + JSON.stringify(tokens));
+
   if (errors.length > 0) {
     console.log('ERRORS: ' + JSON.stringify(errors));
   }

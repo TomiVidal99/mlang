@@ -1,6 +1,7 @@
 import { type Token, getTokenFromSymbols } from '../types';
 import {
   getKeywordsFromCompletion,
+  getNataiveFunctionsList,
   getRowsAndColsInCursor,
   isLetter,
   isNumber,
@@ -16,7 +17,7 @@ export class Tokenizer {
   private nextChar: string;
   private readonly tokens: Token[] = [];
   private readonly keywords = getKeywordsFromCompletion();
-  private readonly nativeFunctions = getKeywordsFromCompletion();
+  private readonly nativeFunctions = getNataiveFunctionsList();
 
   constructor(private readonly text: string) {
     this.readChar();

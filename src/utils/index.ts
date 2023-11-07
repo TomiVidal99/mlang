@@ -7,3 +7,4 @@ export * from './getRowsAndColsInCursor';
 export * from './getWordRangeAtPosition';
 export * from './getDiagnosticFromLitingMessage';
 export * from './getRandomStringID';
+export * from './getNativeFunctionsList';

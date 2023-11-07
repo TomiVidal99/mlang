@@ -213,6 +213,7 @@ export class Parser {
       }
       // ELSE ITS A VALUE VECTOR
       // TODO: should do something here??
+      return null;
     } else if (
       currToken.type === 'KEYWORD' &&
       currToken.content === 'function'
@@ -266,6 +267,18 @@ export class Parser {
       // console.log("currToken: ", currToken);
       if (currToken === undefined)
         throw new Error('Unexpected undefined token. Code 70'); // TODO: definitly better handle this!
+      // this.errors.push({
+      //   message: `Unexpected token. Got: "${this.stringifyTokenContent(
+      //     currToken,
+      //   )}" (${currToken.type}). TOKENS: ${JSON.stringify(
+      //     this.tokens.map((t) => t.type).slice(0, 10),
+      //   )}\n${JSON.stringify(getKeywordsFromCompletion())}`,
+      //   range: currToken?.position ?? {
+      //     start: { line: 0, character: 0 },
+      //     end: { line: 0, character: 0 },
+      //   },
+      //   code: 24,
+      // });
       this.errors.push({
         message: `Unexpected token. Got: "${this.stringifyTokenContent(
           currToken,
@@ -628,7 +641,9 @@ export class Parser {
     const comments: Token[] = [];
     const currentIndex = this.currentTokenIndex;
     if (beforeFunction) {
+      let maxIterations = 0;
       do {
+        maxIterations++;
         if (this.currentTokenIndex === 0) {
           break;
         }
@@ -638,17 +653,35 @@ export class Parser {
         if (prevToken.type === 'COMMENT') {
           comments.push(prevToken);
         }
-      } while (this.getCurrentToken().type === 'COMMENT');
+      } while (
+        this.getCurrentToken().type === 'COMMENT' &&
+        maxIterations <= MAX_STATEMENTS
+      );
+      this.logErrorMaxCallsReached(
+        maxIterations,
+        'Iterations exceeded trying to find function comments',
+        ERROR_CODES.MAX_ITERATION_COMMENTS_BEFORE,
+      );
       comments.reverse();
     } else {
+      let maxIterations = 0;
       do {
+        maxIterations++;
         const nextToken = this.getNextToken();
         if (nextToken === undefined)
           throw new Error('Unexpected undefined token. Code 20');
         if (nextToken.type === 'COMMENT') {
           comments.push(nextToken);
         }
-      } while (this.getCurrentToken().type === 'COMMENT');
+      } while (
+        this.getCurrentToken().type === 'COMMENT' &&
+        maxIterations <= MAX_STATEMENTS
+      );
+      this.logErrorMaxCallsReached(
+        maxIterations,
+        'Iterations exceeded trying to find function comments',
+        ERROR_CODES.MAX_ITERATION_COMMENTS_AFTER,
+      );
     }
     this.currentTokenIndex = currentIndex;
     const ret = comments.map((t) => t.content).join('\n');
@@ -1105,10 +1138,13 @@ export class Parser {
    * Helper that returns the current token position if it exists
    */
   private getCurrentPosition(token?: Token): Range {
-    if (token?.position !== null && token?.position !== undefined)
-      return token.position;
-    if (this.getCurrentToken() !== undefined)
+    if (token === undefined && this.getCurrentToken() !== undefined) {
       return this.getCurrentToken().position as Range;
+    } else if (token === undefined && this.getCurrentToken() === undefined) {
+      return CERO_POSITION;
+    } else if (token?.position !== null && token?.position !== undefined) {
+      return token.position;
+    }
     return CERO_POSITION;
   }
 

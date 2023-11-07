@@ -1,3 +1,3 @@
-export * from './completionKeywords';
+export * from './getCompletionKeywords';
 export * from './completionNativeFunctions';
 export * from './defaultSettings';

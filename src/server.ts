@@ -15,7 +15,6 @@ import {
 import { type ISettings } from './data';
 import { Parser, Tokenizer, Visitor } from './parser';
 import { getDiagnosticFromLitingMessage } from './utils';
-import { CERO_POSITION } from './constants';
 
 // THIS IS THE TIME THAT IT WAITS BEFORE TRIGGERING A REFRESH
 // OF PARSING THE DOCUMENT WHEN THE USER IT'S TYPING
@@ -79,6 +78,17 @@ connection.onCompletionResolve((item) => {
 documents.listen(connection);
 // Listen on the connection
 connection.listen();
+
+// CLEAN UP Handler
+connection.onExit(() => {
+  // Iterate through the scheduled updates and cancel them
+  documentChanges.forEach((docChanges) => {
+    clearTimeout(docChanges);
+  });
+
+  // Clear the documentChanges map
+  documentChanges.clear();
+});
 
 /**
  * Updates the references, definitions and diagnostics

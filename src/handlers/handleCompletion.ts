@@ -4,7 +4,7 @@ import {
   type TextDocumentPositionParams,
   InsertTextFormat,
 } from 'vscode-languageserver';
-import { completionKeywords } from '../data';
+import { getCompletionKeywords } from '../data';
 import { visitors } from '../server';
 
 export function handleCompletion({
@@ -12,10 +12,10 @@ export function handleCompletion({
 }: {
   params: TextDocumentPositionParams;
 }): CompletionItem[] {
-  const items: CompletionItem[] = completionKeywords;
+  const items: CompletionItem[] = getCompletionKeywords();
 
   const visitor = visitors.get(params.textDocument.uri);
-  if (!visitor?.definitions) return items;
+  if (visitor?.definitions === undefined) return items;
 
   const { definitions } = visitor;
 
@@ -24,7 +24,7 @@ export function handleCompletion({
       .map((def) => {
         // TODO: think how to consider the completion based on the current cursor position
         const args =
-          def?.arguments?.length > 0
+          def?.arguments?.length !== undefined && def?.arguments?.length > 0
             ? def.arguments.map((d, i) => {
                 return (
                   `${i !== 0 ? ' ' : ''}` +
@@ -37,7 +37,11 @@ export function handleCompletion({
               })
             : '';
         const insertText =
-          def.type !== 'FUNCTION' ? def.name : `${def.name}(${args});`;
+          def.type !== 'FUNCTION'
+            ? def.name
+            : `${def.name}(${
+                (Array.isArray(args) ? args.map((a) => a) : args) as string
+              });`;
         const item: CompletionItem = {
           label: def.name,
           kind:
