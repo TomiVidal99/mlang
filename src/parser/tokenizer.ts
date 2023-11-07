@@ -39,7 +39,12 @@ export class Tokenizer {
     );
 
     if (counter >= MAX_TOKENS_CALLS) {
-      throw new Error('Tokens calls exeeded');
+      throw new Error(
+        'Tokens calls exeeded. ' +
+          JSON.stringify(this.text) +
+          ' -> ' +
+          JSON.stringify(this.tokens.map((t) => t.type)),
+      );
     }
 
     return tokens;
@@ -73,15 +78,22 @@ export class Tokenizer {
         position: this.getPosition(comment),
       });
     } else if (isLetter(this.currChar)) {
+      console.error(
+        'ENTERING WITH: ' +
+          JSON.stringify(this.currChar) +
+          ', pos: ' +
+          this.currPos.toString(),
+      );
       const intialPos = this.currPos;
       const literal = this.readLiteral();
       const postPos = this.currPos;
       this.currPos = intialPos - 1;
-      const position = this.getPosition(literal);
+      const prevPos = this.getPosition(literal);
       this.currPos = postPos;
+      console.error('pos after: ' + this.currPos.toString());
       return this.addToken({
         ...this.tokenFromLiteral(literal),
-        position,
+        position: prevPos,
       });
     } else if (isNumber(this.currChar)) {
       const number = this.readNumber();
@@ -211,7 +223,7 @@ export class Tokenizer {
       this.nextPos = 2;
     } else if (this.nextPos >= this.text.length) {
       this.currChar = this.nextChar;
-      this.nextChar = ' ';
+      this.nextChar = '\0';
       this.currPos = this.nextPos;
     } else {
       this.currChar = this.nextChar;
@@ -229,7 +241,7 @@ export class Tokenizer {
     let literal = '';
     while (
       /[a-zA-Z0-9_]/.test(this.currChar) &&
-      this.currPos < this.text.length
+      this.currPos <= this.text.length
     ) {
       literal += this.currChar;
       this.readChar();
