@@ -123,6 +123,7 @@ export class Parser {
       nextToken.type === 'LPARENT'
     ) {
       // JUST A FUNCTION CALL
+      // TODO: or it could be a vector. Think how to improve this
       const args = this.getFunctionArguments();
       this.getNextToken();
       const supressOutput = this.isOutputSupressed();
@@ -293,6 +294,80 @@ export class Parser {
     }
 
     return null;
+  }
+
+  /**
+   * Helper that returns a 'struct' Token if the grammar it's correct
+   * else it returns null
+   * WARN: assumes that the first token it's 'LSQUIRLY'
+   * WARN: Leaves the current token to the next after the '}'
+   */
+  private parseStruct(): Token | null {
+    const args: Token[] = [];
+    const initPos =
+      this.getCurrentToken().position?.start ?? CERO_POSITION.start;
+    let counter = 0;
+    do {
+      const arg = this.skipNL(true);
+      if (arg !== undefined && this.isValidStructType(arg)) {
+        args.push(arg);
+      } else {
+        return null;
+      }
+      const comma = this.skipNL(true);
+      if (
+        comma === undefined ||
+        (comma.type !== 'COMMA' && comma.type !== 'RSQUIRLY')
+      ) {
+        this.errors.push({
+          message: `Unexpected struct value. Got "${
+            comma?.type ?? 'UNDEFINED'
+          }". Code ${ERROR_CODES.STRUCT_BAD_COMMA.toString()}`,
+          code: ERROR_CODES.STRUCT_BAD_ARGS,
+          range: this.getCurrentPosition(),
+        });
+      }
+      counter++;
+    } while (
+      this.getCurrentToken().type !== 'RSQUIRLY' &&
+      this.getCurrentToken().type !== 'EOF' &&
+      this.currentTokenIndex < this.tokens.length &&
+      counter < MAX_STATEMENTS // TODO: this should be some other CONST
+    );
+
+    this.getNextToken();
+
+    return {
+      type: 'STRUCT',
+      content: args,
+      position: {
+        start: initPos,
+        end: this.getCurrentPosition().end,
+      },
+    };
+  }
+
+  /**
+   * Helper that returns weather the current Token it's
+   * a valid struct argument or not.
+   * WARN: COMMAs don't count
+   */
+  private isValidStructType(token: Token): boolean {
+    if (
+      !this.isTokenValidBasicDataType(token) &&
+      token.type !== 'VECTOR' &&
+      token.type !== 'STRUCT'
+    ) {
+      this.errors.push({
+        message: `Unexpected struct value. Got "${
+          token.type
+        }". Code ${ERROR_CODES.STRUCT_BAD_ARGS.toString()}`,
+        code: ERROR_CODES.STRUCT_BAD_ARGS,
+        range: this.getCurrentPosition(),
+      });
+      return false;
+    }
+    return true;
   }
 
   /**
@@ -810,6 +885,15 @@ export class Parser {
           type: 'VARIABLE_VECTOR',
           value: this.getVectorArgs()[0],
         };
+      case 'LSQUIRLY': {
+        // STRUCT
+        const struct = this.parseStruct();
+        if (struct === null) return;
+        return {
+          type: 'STRUCT',
+          value: struct?.content,
+        };
+      }
       case 'NL':
         this.errors.push({
           message: `Unexpected new line in expression.`,
@@ -941,8 +1025,15 @@ export class Parser {
         // When it's a call without any arguments
         return tokens;
       } else if (arg.type === 'LBRACKET') {
+        // VECTOR
         tokens.push(this.getVector(arg));
         arg = null;
+      } else if (arg.type === 'LSQUIRLY') {
+        // STRUCT
+        const struct = this.parseStruct();
+        arg = null;
+        if (struct === null) return tokens;
+        tokens.push(struct);
       } else if (this.isTokenValidBasicDataType(arg)) {
         this.getNextToken();
       } else {
@@ -1067,13 +1158,15 @@ export class Parser {
         token.type === 'IDENTIFIER' ||
         token.type === 'VECTOR' ||
         token.type === 'STRING' ||
-        token.type === 'NUMBER'
+        token.type === 'NUMBER' ||
+        token.type === 'STRUCT'
       );
     }
     return (
       this.getCurrentToken().type === 'IDENTIFIER' ||
       this.getCurrentToken().type === 'VECTOR' ||
       this.getCurrentToken().type === 'STRING' ||
+      this.getCurrentToken().type === 'STRUCT' ||
       this.getCurrentToken().type === 'NUMBER'
     );
   }

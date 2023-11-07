@@ -24,6 +24,7 @@ export type TokenType =
   | 'KEYWORD'
   | 'VECTOR'
   | 'COMMENT'
+  | 'STRUCT'
   | 'DEFAULT_VALUE_ARGUMENT'
   | 'NATIVE_FUNCTION';
 
