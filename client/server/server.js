@@ -11147,6 +11147,18 @@ var Visitor = class {
           return;
         if (node?.value !== void 0 && Array.isArray(node.value)) {
           node.value.forEach((val) => {
+            if (val.type === "VECTOR") {
+              this.getTokenIdentifiers(val).forEach((t) => {
+                this.references.push({
+                  name: t.content,
+                  type: "VARIABLE",
+                  position: this.getTokenPosition(t),
+                  documentation: ""
+                  // TODO: check how to add documentation here?
+                });
+              });
+              return;
+            }
             if (val.type !== "IDENTIFIER")
               return;
             this.definitions.push({
@@ -11248,14 +11260,6 @@ var Visitor = class {
     return node.functionData.args;
   }
   /**
-   * Helper that returns weather a node it's of assignment or not
-   */
-  isAssignment(node) {
-    if (node === null || node === void 0)
-      return false;
-    return node.type === "ASSIGNMENT";
-  }
-  /**
    * Helper that returns the documentation of the function
    * or the hole line content of the variable
    */
@@ -11266,19 +11270,6 @@ var Visitor = class {
     if (node?.RHO === void 0 || Array.isArray(node.RHO))
       return "";
     return "";
-    const expr = node?.RHO;
-    switch (expr.type) {
-      case "STRING":
-      case "NUMBER":
-      case "IDENTIFIER":
-      case "FUNCTION_CALL":
-      case "ANONYMOUS_FUNCTION_DEFINITION":
-        return expr.value;
-      case "BINARY_OPERATION":
-        return node.LHO.value + this.getDocumentationOrLineDefinition(node.RHO);
-      default:
-        return "";
-    }
   }
   /**
    * Helper that returns the type of a reference "CONSTANT" or "FUNCTION"

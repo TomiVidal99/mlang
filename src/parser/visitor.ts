@@ -189,7 +189,18 @@ export class Visitor {
         if (!Array.isArray(node.value) || !(node?.value?.length > 1)) return;
         if (node?.value !== undefined && Array.isArray(node.value)) {
           (node.value as Token[]).forEach((val) => {
-            if (val.type !== 'IDENTIFIER') return; // TODO: handle VECTORS
+            if (val.type === 'VECTOR') {
+              this.getTokenIdentifiers(val).forEach((t) => {
+                this.references.push({
+                  name: t.content as string,
+                  type: 'VARIABLE',
+                  position: this.getTokenPosition(t),
+                  documentation: '', // TODO: check how to add documentation here?
+                });
+              });
+              return;
+            }
+            if (val.type !== 'IDENTIFIER') return;
             this.definitions.push({
               name: val.content as string,
               type: 'VARIABLE',
@@ -289,14 +300,6 @@ export class Visitor {
   }
 
   /**
-   * Helper that returns weather a node it's of assignment or not
-   */
-  private isAssignment(node: Statement | null | undefined): boolean {
-    if (node === null || node === undefined) return false;
-    return node.type === 'ASSIGNMENT';
-  }
-
-  /**
    * Helper that returns the documentation of the function
    * or the hole line content of the variable
    */
@@ -309,22 +312,22 @@ export class Visitor {
 
     // TODO: complete this
     return '';
-    const expr = node?.RHO as Expression;
-    switch (expr.type) {
-      case 'STRING':
-      case 'NUMBER':
-      case 'IDENTIFIER':
-      case 'FUNCTION_CALL':
-      case 'ANONYMOUS_FUNCTION_DEFINITION':
-        return expr.value as string;
-      case 'BINARY_OPERATION':
-        return (
-          (node.LHO.value as string) +
-          this.getDocumentationOrLineDefinition(node.RHO as Expression)
-        );
-      default:
-        return '';
-    }
+    // const expr = node?.RHO as Expression;
+    // switch (expr.type) {
+    //   case 'STRING':
+    //   case 'NUMBER':
+    //   case 'IDENTIFIER':
+    //   case 'FUNCTION_CALL':
+    //   case 'ANONYMOUS_FUNCTION_DEFINITION':
+    //     return expr.value as string;
+    //   case 'BINARY_OPERATION':
+    //     return (
+    //       (node.LHO.value as string) +
+    //       this.getDocumentationOrLineDefinition(node.RHO as Expression)
+    //     );
+    //   default:
+    //     return '';
+    // }
   }
 
   /**

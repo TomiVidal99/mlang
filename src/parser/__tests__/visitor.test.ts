@@ -53,3 +53,29 @@ test('Octave/Matlab Visitor, test references extraction', () => {
 
   expect(calculatedReferenceNames).toStrictEqual(references);
 });
+
+test('Octave/Matlab Visitor, test references extraction', () => {
+  const text = `
+    myNestedVector = [[a,b,c], ["str1", "str2", otherReference]];
+  `;
+
+  const references: string[] = [
+    'myNestedVector',
+    'a',
+    'b',
+    'c',
+    'otherReference',
+  ];
+
+  const tokenizer = new Tokenizer(text);
+  const tokens = tokenizer.getAllTokens();
+  const parser = new Parser(tokens);
+  const program = parser.makeAST();
+  const visitor = new Visitor();
+  visitor.visitProgram(program);
+  const calculatedReferences = visitor.references;
+
+  const calculatedReferenceNames = calculatedReferences.map((ref) => ref.name);
+
+  expect(calculatedReferenceNames).toStrictEqual(references);
+});
