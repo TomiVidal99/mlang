@@ -189,6 +189,7 @@ export class Visitor {
         if (!Array.isArray(node.value) || !(node?.value?.length > 1)) return;
         if (node?.value !== undefined && Array.isArray(node.value)) {
           (node.value as Token[]).forEach((val) => {
+            if (val.type !== 'IDENTIFIER') return; // TODO: handle VECTORS
             this.definitions.push({
               name: val.content as string,
               type: 'VARIABLE',

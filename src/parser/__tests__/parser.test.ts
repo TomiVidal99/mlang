@@ -161,8 +161,8 @@ test('Octave/Matlab Parser, should parse structs in arguments', function () {
 
   const errors = parser.getErrors();
 
-  console.log('TOKENS: ' + JSON.stringify(tokens));
-  console.log('STATEMENTS: ' + JSON.stringify(program.body));
+  // console.log('TOKENS: ' + JSON.stringify(tokens));
+  // console.log('STATEMENTS: ' + JSON.stringify(program.body));
 
   if (errors.length > 0) {
     console.log('ERRORS: ' + JSON.stringify(errors));

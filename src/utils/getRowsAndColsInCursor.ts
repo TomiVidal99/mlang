@@ -1,3 +1,5 @@
+// const NL_REGEX = /"(?:[^"\\]|\\.)*"|'(?:[^'\\]|\\.)*'|\n/g;
+
 /**
  * Returns the number of line and number of character
  * corresponding to a position in a string.

@@ -11,6 +11,7 @@ import { type Range } from 'vscode-languageserver';
 const MAX_TOKENS_CALLS = 10000 as const;
 
 export class Tokenizer {
+  private text: string;
   private currPos = 0;
   private nextPos = 0;
   private currChar: string;
@@ -19,7 +20,26 @@ export class Tokenizer {
   private readonly keywords = getKeywordsFromCompletion();
   private readonly nativeFunctions = getNataiveFunctionsList();
 
-  constructor(private readonly text: string) {
+  constructor(text = '') {
+    this.text = text;
+    this.readChar();
+  }
+
+  private setInitialConditions(): void {
+    this.currPos = 0;
+    this.nextPos = 0;
+    this.currChar = '';
+    this.nextChar = '';
+    this.tokens.length = 0;
+    this.setRows();
+  }
+
+  /**
+   * Updates the current text to the provided one.
+   */
+  public updateText(text: string): void {
+    this.text = text;
+    this.setInitialConditions();
     this.readChar();
   }
 

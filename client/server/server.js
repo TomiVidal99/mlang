@@ -10743,13 +10743,29 @@ function getTokenFromSymbols(char) {
 // src/parser/tokenizer.ts
 var MAX_TOKENS_CALLS = 1e4;
 var Tokenizer = class {
-  constructor(text) {
-    this.text = text;
+  constructor(text = "") {
     this.currPos = 0;
     this.nextPos = 0;
     this.tokens = [];
     this.keywords = getKeywordsFromCompletion();
     this.nativeFunctions = getNataiveFunctionsList();
+    this.text = text;
+    this.readChar();
+  }
+  setInitialConditions() {
+    this.currPos = 0;
+    this.nextPos = 0;
+    this.currChar = "";
+    this.nextChar = "";
+    this.tokens.length = 0;
+    this.setRows();
+  }
+  /**
+   * Updates the current text to the provided one.
+   */
+  updateText(text) {
+    this.text = text;
+    this.setInitialConditions();
     this.readChar();
   }
   /**
@@ -11131,6 +11147,8 @@ var Visitor = class {
           return;
         if (node?.value !== void 0 && Array.isArray(node.value)) {
           node.value.forEach((val) => {
+            if (val.type !== "IDENTIFIER")
+              return;
             this.definitions.push({
               name: val.content,
               type: "VARIABLE",
