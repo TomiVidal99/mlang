@@ -9044,6 +9044,17 @@ var import_vscode_languageserver2 = __toESM(require_main4());
 function getCompletionKeywords() {
   return [
     {
+      label: "struct",
+      // eslint-disable-next-line no-template-curly-in-string
+      insertText: "struct(${1:var});",
+      insertTextFormat: import_vscode_languageserver2.InsertTextFormat.Snippet,
+      kind: import_vscode_languageserver2.CompletionItemKind.Keyword,
+      documentation: {
+        kind: import_vscode_languageserver2.MarkupKind.Markdown,
+        value: "[creating structures](https://docs.octave.org/v4.2.1/Creating-Structures.html#Creating-Structures)"
+      }
+    },
+    {
       label: "for",
       // eslint-disable-next-line no-template-curly-in-string
       insertText: "for (${1:var} = ${2})\n	${3}\n\nend",
@@ -9155,7 +9166,7 @@ function getCompletionKeywords() {
       label: "function",
       kind: import_vscode_languageserver2.CompletionItemKind.Keyword,
       // eslint-disable-next-line no-template-curly-in-string
-      insertText: "function ${1}()\n\nend",
+      insertText: "function ${1:funcName}(${2:funcArgs})\n${3:funcBody}\nend",
       insertTextFormat: import_vscode_languageserver2.InsertTextFormat.Snippet,
       documentation: {
         kind: import_vscode_languageserver2.MarkupKind.Markdown,
@@ -9526,6 +9537,8 @@ var ERROR_CODES = {
   EXPECTED_COMMA_PAREN: 7,
   UNEXPECTED_NL: 50,
   TOO_MANY_NL: 60,
+  STRUCT_BAD_ARGS: 140,
+  STRUCT_BAD_COMMA: 141,
   MAX_ITERATION_COMMENTS_BEFORE: 2e3,
   MAX_ITERATION_COMMENTS_AFTER: 2001
 };
@@ -9865,6 +9878,59 @@ var Parser = class {
       return null;
     }
     return null;
+  }
+  /**
+   * Helper that returns a 'struct' Token if the grammar it's correct
+   * else it returns null
+   * WARN: assumes that the first token it's 'LSQUIRLY'
+   * WARN: Leaves the current token to the next after the '}'
+   */
+  parseStruct() {
+    const args = [];
+    const initPos = this.getCurrentToken().position?.start ?? CERO_POSITION.start;
+    let counter = 0;
+    do {
+      const arg = this.skipNL(true);
+      if (arg !== void 0 && this.isValidStructType(arg)) {
+        args.push(arg);
+      } else {
+        return null;
+      }
+      const comma = this.skipNL(true);
+      if (comma === void 0 || comma.type !== "COMMA" && comma.type !== "RSQUIRLY") {
+        this.errors.push({
+          message: `Unexpected struct value. Got "${comma?.type ?? "UNDEFINED"}". Code ${ERROR_CODES.STRUCT_BAD_COMMA.toString()}`,
+          code: ERROR_CODES.STRUCT_BAD_ARGS,
+          range: this.getCurrentPosition()
+        });
+      }
+      counter++;
+    } while (this.getCurrentToken().type !== "RSQUIRLY" && this.getCurrentToken().type !== "EOF" && this.currentTokenIndex < this.tokens.length && counter < MAX_STATEMENTS);
+    this.getNextToken();
+    return {
+      type: "STRUCT",
+      content: args,
+      position: {
+        start: initPos,
+        end: this.getCurrentPosition().end
+      }
+    };
+  }
+  /**
+   * Helper that returns weather the current Token it's
+   * a valid struct argument or not.
+   * WARN: COMMAs don't count
+   */
+  isValidStructType(token) {
+    if (!this.isTokenValidBasicDataType(token) && token.type !== "VECTOR" && token.type !== "STRUCT") {
+      this.errors.push({
+        message: `Unexpected struct value. Got "${token.type}". Code ${ERROR_CODES.STRUCT_BAD_ARGS.toString()}`,
+        code: ERROR_CODES.STRUCT_BAD_ARGS,
+        range: this.getCurrentPosition()
+      });
+      return false;
+    }
+    return true;
   }
   /**
    * Helper that sends an error if the arguments of a funcion call are wrong
@@ -10323,6 +10389,15 @@ var Parser = class {
           type: "VARIABLE_VECTOR",
           value: this.getVectorArgs()[0]
         };
+      case "LSQUIRLY": {
+        const struct = this.parseStruct();
+        if (struct === null)
+          return;
+        return {
+          type: "STRUCT",
+          value: struct?.content
+        };
+      }
       case "NL":
         this.errors.push({
           message: `Unexpected new line in expression.`,
@@ -10440,6 +10515,12 @@ var Parser = class {
       } else if (arg.type === "LBRACKET") {
         tokens.push(this.getVector(arg));
         arg = null;
+      } else if (arg.type === "LSQUIRLY") {
+        const struct = this.parseStruct();
+        arg = null;
+        if (struct === null)
+          return tokens;
+        tokens.push(struct);
       } else if (this.isTokenValidBasicDataType(arg)) {
         this.getNextToken();
       } else {
@@ -10540,9 +10621,9 @@ var Parser = class {
    */
   isTokenDataType(token) {
     if (token !== null && token !== void 0) {
-      return token.type === "IDENTIFIER" || token.type === "VECTOR" || token.type === "STRING" || token.type === "NUMBER";
+      return token.type === "IDENTIFIER" || token.type === "VECTOR" || token.type === "STRING" || token.type === "NUMBER" || token.type === "STRUCT";
     }
-    return this.getCurrentToken().type === "IDENTIFIER" || this.getCurrentToken().type === "VECTOR" || this.getCurrentToken().type === "STRING" || this.getCurrentToken().type === "NUMBER";
+    return this.getCurrentToken().type === "IDENTIFIER" || this.getCurrentToken().type === "VECTOR" || this.getCurrentToken().type === "STRING" || this.getCurrentToken().type === "STRUCT" || this.getCurrentToken().type === "NUMBER";
   }
   /**
    * Helper that adds the error of max statements reached

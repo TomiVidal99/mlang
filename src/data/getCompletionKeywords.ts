@@ -8,6 +8,18 @@ import {
 export function getCompletionKeywords(): CompletionItem[] {
   return [
     {
+      label: 'struct',
+      // eslint-disable-next-line no-template-curly-in-string
+      insertText: 'struct(${1:var});',
+      insertTextFormat: InsertTextFormat.Snippet,
+      kind: CompletionItemKind.Keyword,
+      documentation: {
+        kind: MarkupKind.Markdown,
+        value:
+          '[creating structures](https://docs.octave.org/v4.2.1/Creating-Structures.html#Creating-Structures)',
+      },
+    },
+    {
       label: 'for',
       // eslint-disable-next-line no-template-curly-in-string
       insertText: 'for (${1:var} = ${2})\n\t${3}\n\nend',
@@ -129,7 +141,7 @@ export function getCompletionKeywords(): CompletionItem[] {
       label: 'function',
       kind: CompletionItemKind.Keyword,
       // eslint-disable-next-line no-template-curly-in-string
-      insertText: 'function ${1}()\n\nend',
+      insertText: 'function ${1:funcName}(${2:funcArgs})\n${3:funcBody}\nend',
       insertTextFormat: InsertTextFormat.Snippet,
       documentation: {
         kind: MarkupKind.Markdown,
