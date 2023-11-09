@@ -30,9 +30,17 @@ describe('getRowsAndColsInCursor', () => {
 
   it('should handle a character position beyond the text length', () => {
     const text = 'This is a sample text.';
-
     expect(getRowsAndColsInCursor({ text, characterPosition: 100 })).toEqual([
       0, 21,
+    ]);
+  });
+
+  it('should handle multi lines text', () => {
+    const text = `
+# comment
+`;
+    expect(getRowsAndColsInCursor({ text, characterPosition: 3 })).toEqual([
+      1, 2,
     ]);
   });
 });

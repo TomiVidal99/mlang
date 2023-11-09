@@ -620,7 +620,7 @@ export class Parser {
       isValidFlag = false;
 
       this.errors.push({
-        message: 'Invalid function definition argument',
+        message: 'Invalid function definition argument. ',
         range: this.getCurrentPosition(a),
         code: 200,
       });

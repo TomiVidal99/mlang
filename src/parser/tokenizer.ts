@@ -23,6 +23,7 @@ export class Tokenizer {
   constructor(text = '') {
     this.text = text;
     this.readChar();
+    console.log(`text length: ${this.text.length.toString()}`);
   }
 
   private setInitialConditions(): void {
@@ -31,7 +32,6 @@ export class Tokenizer {
     this.currChar = '';
     this.nextChar = '';
     this.tokens.length = 0;
-    this.setRows();
   }
 
   /**
@@ -216,7 +216,20 @@ export class Tokenizer {
   private getRowsColsCursor(content?: string): [number, number] {
     const characterPosition =
       content !== undefined ? this.currPos + content.length : this.currPos;
-    return getRowsAndColsInCursor({ text: this.text, characterPosition });
+    const currPos = this.currPos;
+    const [r, c] = getRowsAndColsInCursor({
+      text: this.text,
+      characterPosition,
+    });
+    console.log(
+      `char: "${content}". ${JSON.stringify({
+        r,
+        c,
+        characterPosition,
+        currPos,
+      })}`,
+    );
+    return [r, c];
   }
 
   /**

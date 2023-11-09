@@ -1,5 +1,5 @@
 import { expect, test } from 'bun:test';
-import { type TokenType } from '../../types';
+import { type Token, type TokenType } from '../../types';
 import { Tokenizer } from '../tokenizer';
 
 test('Octave/Matlab Tokenizer, testing Symbols', () => {
@@ -135,5 +135,63 @@ test('Octave/Matlab Tokenizer, detect line comments', function () {
   for (const symbol of symbols) {
     const token = tokenizer.getNextToken();
     expect(token.type).toBe(symbol);
+  }
+});
+
+test('Octave/Matlab Tokenizer, test position', function () {
+  const text = `
+    # this is a comment
+  `;
+
+  const tokens: Token[] = [
+    {
+      type: 'NL',
+      content: '\n',
+      position: {
+        start: {
+          line: 1,
+          character: 1,
+        },
+        end: {
+          line: 1,
+          character: 2,
+        },
+      },
+    },
+    {
+      type: 'COMMENT',
+      content: '# this is a comment',
+      position: {
+        start: {
+          line: 1,
+          character: 4,
+        },
+        end: {
+          line: 1,
+          character: 22,
+        },
+      },
+    },
+    {
+      type: 'NL',
+      content: '\n',
+      position: {
+        start: {
+          line: 1,
+          character: 4,
+        },
+        end: {
+          line: 1,
+          character: 22,
+        },
+      },
+    },
+  ];
+
+  const tokenizer = new Tokenizer(text);
+
+  for (const tok of tokens) {
+    const token = tokenizer.getNextToken();
+    expect(token).toStrictEqual(tok);
   }
 });

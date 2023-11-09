@@ -2,6 +2,7 @@
  * Returns the number of line and number of character
  * corresponding to a position in a string.
  * TODO: can have an error if the character '\n' it's consider part of a text string.
+ * @returns Array - [[ROWS, COLUMNS]]
  */
 export function getRowsAndColsInCursor({
   text,
@@ -14,6 +15,10 @@ export function getRowsAndColsInCursor({
   let currentColumn = 0;
   let insideSingleQuotes = false;
   let insideDoubleQuotes = false;
+
+  if (characterPosition > text.length) {
+    return [0, text.length - 1];
+  }
 
   for (let i = 0; i < characterPosition; i++) {
     const char = text[i];
