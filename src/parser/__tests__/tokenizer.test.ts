@@ -150,7 +150,7 @@ test('Octave/Matlab Tokenizer, test position', function () {
       position: {
         start: {
           line: 1,
-          character: 1,
+          character: 0,
         },
         end: {
           line: 1,
@@ -164,11 +164,11 @@ test('Octave/Matlab Tokenizer, test position', function () {
       position: {
         start: {
           line: 1,
-          character: 4,
+          character: 5,
         },
         end: {
-          line: 1,
-          character: 22,
+          line: 2,
+          character: 1,
         },
       },
     },
@@ -177,12 +177,12 @@ test('Octave/Matlab Tokenizer, test position', function () {
       content: '\n',
       position: {
         start: {
-          line: 1,
-          character: 4,
+          line: 2,
+          character: 0,
         },
         end: {
-          line: 1,
-          character: 22,
+          line: 2,
+          character: 2,
         },
       },
     },

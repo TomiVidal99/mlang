@@ -23,7 +23,6 @@ export class Tokenizer {
   constructor(text = '') {
     this.text = text;
     this.readChar();
-    console.log(`text length: ${this.text.length.toString()}`);
   }
 
   private setInitialConditions(): void {
@@ -84,7 +83,7 @@ export class Tokenizer {
       this.readChar();
       return this.addToken({
         ...token,
-        position: this.getPosition(
+        position: this.getPositionAfterCursor(
           token.type !== 'EOF' ? (token.content as string) : '',
         ),
       });
@@ -95,41 +94,65 @@ export class Tokenizer {
       return this.addToken({
         type: 'COMMENT',
         content: comment,
-        position: this.getPosition(comment),
+        position: this.getPositionAfterCursor(comment),
       });
     } else if (isLetter(this.currChar)) {
-      const intialPos = this.currPos;
+      // const initialPos = this.currPos;
       const literal = this.readLiteral();
-      const postPos = this.currPos;
-      this.currPos = intialPos - 1;
-      const prevPos = this.getPosition(literal);
-      this.currPos = postPos;
+      // const postPos = this.currPos;
+      // this.currPos = initialPos - 1;
+      // const prevPos = this.getPosition(literal);
+      // this.currPos = postPos;
       return this.addToken({
         ...this.tokenFromLiteral(literal),
-        position: prevPos,
+        position: this.getPositionAfterCursor(literal),
       });
     } else if (isNumber(this.currChar)) {
       const number = this.readNumber();
       return this.addToken({
         type: 'NUMBER',
         content: number,
-        position: this.getPosition(number),
+        position: this.getPositionAfterCursor(number),
       });
     } else if (this.currChar === '"' || this.currChar === "'") {
       const str = this.readLiteralString();
       return this.addToken({
         type: 'STRING',
         content: str,
-        position: this.getPosition(str),
+        position: this.getPositionAfterCursor(str),
       });
     } else {
       this.readChar();
       return this.addToken({
         type: 'ILLEGAL',
         content: 'illegal',
-        position: this.getPosition(this.currChar),
+        position: this.getPositionAfterCursor(this.currChar),
       });
     }
+  }
+
+  /**
+   * Returns the Range of a character in the text
+   * considering that it starts after the token content has been read
+   */
+  private getPositionAfterCursor(content: string): Range {
+    const initialPosition = this.currPos - content.length;
+    const finalPosition = this.currPos;
+    this.currPos = initialPosition;
+    const [line, character] = this.getRowsColsCursor();
+    const [lineEndPoint, characterEndPoint] = this.getRowsColsCursor(content);
+    const range: Range = {
+      start: {
+        line,
+        character,
+      },
+      end: {
+        line: lineEndPoint,
+        character: characterEndPoint,
+      },
+    };
+    this.currPos = finalPosition;
+    return range;
   }
 
   /**
@@ -211,25 +234,15 @@ export class Tokenizer {
   /**
    * Returns the rows and columns corresponding to the current position in the text.
    * TODO: fix possible problems
-   * @returns {[number, number]} An array containing the row and column.
+   * @returns {[number, number]} An array containing the row and column [[ROW, COL]].
    */
-  private getRowsColsCursor(content?: string): [number, number] {
+  private getRowsColsCursor(content: string | null = null): [number, number] {
     const characterPosition =
-      content !== undefined ? this.currPos + content.length : this.currPos;
-    const currPos = this.currPos;
-    const [r, c] = getRowsAndColsInCursor({
+      content !== null ? this.currPos + content.length + 1 : this.currPos;
+    return getRowsAndColsInCursor({
       text: this.text,
       characterPosition,
     });
-    console.log(
-      `char: "${content}". ${JSON.stringify({
-        r,
-        c,
-        characterPosition,
-        currPos,
-      })}`,
-    );
-    return [r, c];
   }
 
   /**

@@ -50,7 +50,6 @@ end
 
 ## TODO
 
-- [ ] FIX: position of tokens.
 - [ ] MAYBE: instead of creating new instances of Tokenizer, Parser and Visitor, reuse the same.
 - [ ] FIX: 'x(1)' it's not just a function call, it could be a vector (eventually add checking that the element accessed it's valid).
 - [ ] FIX: structs can be accessed inside vector outputs: '[a.x] = myFunc()'.
