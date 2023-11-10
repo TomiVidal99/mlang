@@ -1,7 +1,7 @@
 {
   "name": "mlang",
   "description": "LSP implementation for octave programming language",
-  "version": "2.2.0",
+  "version": "2.3.0",
   "author": "Tomás Vidal",
   "license": "MIT",
   "publisher": "mlang",

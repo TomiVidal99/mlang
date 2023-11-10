@@ -79,3 +79,32 @@ test('Octave/Matlab Visitor, test references extraction', () => {
 
   expect(calculatedReferenceNames).toStrictEqual(references);
 });
+
+test('Octave/Matlab Visitor, should get documentation of function definitions', () => {
+  const text = `
+    % doc before func def
+    function myFunctionDefBefore()
+
+    end
+
+    function myFunctionDefAfter()
+      % doc after func def
+
+    end
+  `;
+
+  const tokenizer = new Tokenizer(text);
+  const tokens = tokenizer.getAllTokens();
+  const parser = new Parser(tokens);
+  const program = parser.makeAST();
+  const visitor = new Visitor();
+  visitor.visitProgram(program);
+  const { definitions } = visitor;
+
+  console.log('GOT: ' + JSON.stringify(definitions));
+  console.log('TOKENS: ' + JSON.stringify(tokens.map((t) => t.type)));
+
+  for (const def of definitions) {
+    expect(def.documentation !== '').toBe(true);
+  }
+});

@@ -23,7 +23,7 @@ export class Parser {
   private warnings: LintingWarning[] = [];
   private readonly contextDepth: string[] = ['0'];
 
-  constructor(private readonly tokens: Token[]) {}
+  constructor(private readonly tokens: Token[]) { }
 
   public clearLintingMessages(): void {
     this.errors = [];
@@ -320,9 +320,8 @@ export class Parser {
         (comma.type !== 'COMMA' && comma.type !== 'RSQUIRLY')
       ) {
         this.errors.push({
-          message: `Unexpected struct value. Got "${
-            comma?.type ?? 'UNDEFINED'
-          }". Code ${ERROR_CODES.STRUCT_BAD_COMMA.toString()}`,
+          message: `Unexpected struct value. Got "${comma?.type ?? 'UNDEFINED'
+            }". Code ${ERROR_CODES.STRUCT_BAD_COMMA.toString()}`,
           code: ERROR_CODES.STRUCT_BAD_ARGS,
           range: this.getCurrentPosition(),
         });
@@ -359,9 +358,8 @@ export class Parser {
       token.type !== 'STRUCT'
     ) {
       this.errors.push({
-        message: `Unexpected struct value. Got "${
-          token.type
-        }". Code ${ERROR_CODES.STRUCT_BAD_ARGS.toString()}`,
+        message: `Unexpected struct value. Got "${token.type
+          }". Code ${ERROR_CODES.STRUCT_BAD_ARGS.toString()}`,
         code: ERROR_CODES.STRUCT_BAD_ARGS,
         range: this.getCurrentPosition(),
       });
@@ -722,7 +720,7 @@ export class Parser {
         if (this.currentTokenIndex === 0) {
           break;
         }
-        const prevToken = this.getPrevToken();
+        const prevToken = this.getPrevTokenSkipNL();
         if (prevToken === undefined)
           throw new Error('Unexpected undefined token. Code 10');
         if (prevToken.type === 'COMMENT') {
@@ -761,6 +759,26 @@ export class Parser {
     this.currentTokenIndex = currentIndex;
     const ret = comments.map((t) => t.content).join('\n');
     return ret;
+  }
+
+  /**
+   * Helper that returns the previous Token skipping new lines tokens
+   */
+  private getPrevTokenSkipNL(): Token | undefined {
+    let token: Token | undefined;
+    let counter = 0;
+    do {
+      token = this.getPrevToken();
+      counter++;
+    } while (token?.type === 'NL' && counter < MAX_STATEMENTS);
+
+    this.logErrorMaxCallsReached(
+      counter,
+      'Max statement parsing reached while parsing comment',
+      ERROR_CODES.MAX_ITERATION_PARSING_COMMENT_BEFORE,
+    );
+
+    return token;
   }
 
   /**
@@ -981,9 +999,8 @@ export class Parser {
     const tokens: Token[] = [];
     if (this.getCurrentToken().type !== 'LPARENT') {
       this.errors.push({
-        message: `Expected '(' for function call. Got: ${
-          this.getCurrentToken().type
-        }`,
+        message: `Expected '(' for function call. Got: ${this.getCurrentToken().type
+          }`,
         range: this.getCurrentPosition(),
         code: 10,
       });

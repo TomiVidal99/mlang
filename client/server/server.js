@@ -9555,7 +9555,8 @@ var ERROR_CODES = {
   STRUCT_BAD_ARGS: 140,
   STRUCT_BAD_COMMA: 141,
   MAX_ITERATION_COMMENTS_BEFORE: 2e3,
-  MAX_ITERATION_COMMENTS_AFTER: 2001
+  MAX_ITERATION_COMMENTS_AFTER: 2001,
+  MAX_ITERATION_PARSING_COMMENT_BEFORE: 3001
 };
 
 // src/constants/cero_position.ts
@@ -10260,7 +10261,7 @@ var Parser = class {
         if (this.currentTokenIndex === 0) {
           break;
         }
-        const prevToken = this.getPrevToken();
+        const prevToken = this.getPrevTokenSkipNL();
         if (prevToken === void 0)
           throw new Error("Unexpected undefined token. Code 10");
         if (prevToken.type === "COMMENT") {
@@ -10293,6 +10294,23 @@ var Parser = class {
     this.currentTokenIndex = currentIndex;
     const ret = comments.map((t) => t.content).join("\n");
     return ret;
+  }
+  /**
+   * Helper that returns the previous Token skipping new lines tokens
+   */
+  getPrevTokenSkipNL() {
+    let token;
+    let counter = 0;
+    do {
+      token = this.getPrevToken();
+      counter++;
+    } while (token?.type === "NL" && counter < MAX_STATEMENTS);
+    this.logErrorMaxCallsReached(
+      counter,
+      "Max statement parsing reached while parsing comment",
+      ERROR_CODES.MAX_ITERATION_PARSING_COMMENT_BEFORE
+    );
+    return token;
   }
   /**
    * Helper that checks if the last token of the current statement it's a SEMICOLON
@@ -10766,7 +10784,6 @@ var Tokenizer = class {
     this.nativeFunctions = getNataiveFunctionsList();
     this.text = text;
     this.readChar();
-    console.log(`text length: ${this.text.length.toString()}`);
   }
   setInitialConditions() {
     this.currPos = 0;
@@ -10813,7 +10830,7 @@ var Tokenizer = class {
       this.readChar();
       return this.addToken({
         ...token,
-        position: this.getPosition(
+        position: this.getPositionAfterCursor(
           token.type !== "EOF" ? token.content : ""
         )
       });
@@ -10953,20 +10970,10 @@ var Tokenizer = class {
    */
   getRowsColsCursor(content = null) {
     const characterPosition = content !== null ? this.currPos + content.length + 1 : this.currPos;
-    const currPos = this.currPos;
-    const [r, c] = getRowsAndColsInCursor({
+    return getRowsAndColsInCursor({
       text: this.text,
       characterPosition
     });
-    console.log(
-      `char: "${content}". ${JSON.stringify({
-        r,
-        c,
-        characterPosition,
-        currPos
-      })}`
-    );
-    return [r, c];
   }
   /**
    * Reads the next character

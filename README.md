@@ -50,14 +50,12 @@ end
 
 ## TODO
 
+- [ ] FIX: documentation not showing for function definitions.
 - [ ] MAYBE: instead of creating new instances of Tokenizer, Parser and Visitor, reuse the same.
 - [ ] FIX: 'x(1)' it's not just a function call, it could be a vector (eventually add checking that the element accessed it's valid).
 - [ ] FIX: structs can be accessed inside vector outputs: '[a.x] = myFunc()'.
 - [ ] FIX: add more keywords like: 'global'.
-- [ ] FIX: multiple calls freezes the server.
-- [ ] FIX: KEYWORDS are not native functions.
 - [ ] FIX: functions with no parenthesis are not getting recognized.
-- [ ] FIX: '\n' inside strings breaks the getRowsAndCols function.
 - [ ] ADD: diagnostics for: redefined functions, missing imports.
 - [ ] ADD: references to files.
 - [ ] ADD: block comments.
