@@ -10262,9 +10262,7 @@ var Parser = class {
           break;
         }
         const prevToken = this.getPrevTokenSkipNL();
-        if (prevToken === void 0)
-          throw new Error("Unexpected undefined token. Code 10");
-        if (prevToken.type === "COMMENT") {
+        if (prevToken?.type === "COMMENT") {
           comments.push(prevToken);
         }
       } while (this.getCurrentToken().type === "COMMENT" && maxIterations <= MAX_STATEMENTS);
@@ -10278,9 +10276,7 @@ var Parser = class {
       let maxIterations = 0;
       do {
         maxIterations++;
-        const nextToken = this.getNextToken();
-        if (nextToken === void 0)
-          throw new Error("Unexpected undefined token. Code 20");
+        const nextToken = this.skipNL(true);
         if (nextToken.type === "COMMENT") {
           comments.push(nextToken);
         }

@@ -23,6 +23,7 @@ export function handleCompletion({
     ...definitions
       .map((def) => {
         // TODO: think how to consider the completion based on the current cursor position
+        // console.log('def: ' + JSON.stringify(def));
         const args =
           def?.arguments?.length !== undefined && def?.arguments?.length > 0
             ? def.arguments.map((d, i) => {

@@ -82,13 +82,17 @@ test('Octave/Matlab Visitor, test references extraction', () => {
 
 test('Octave/Matlab Visitor, should get documentation of function definitions', () => {
   const text = `
+    a = "aklsjdlakdj"
     % doc before func def
     function myFunctionDefBefore()
-
+      b = 10 + c;
     end
 
+    variable2 = 1e3
+
     function myFunctionDefAfter()
-      % doc after func def
+
+          % doc after func def
 
     end
   `;
@@ -101,10 +105,17 @@ test('Octave/Matlab Visitor, should get documentation of function definitions', 
   visitor.visitProgram(program);
   const { definitions } = visitor;
 
-  console.log('GOT: ' + JSON.stringify(definitions));
-  console.log('TOKENS: ' + JSON.stringify(tokens.map((t) => t.type)));
+  // console.log('GOT: ' + JSON.stringify(definitions));
+  // console.log('TOKENS: ' + JSON.stringify(tokens.map((t) => t.type)));
 
   for (const def of definitions) {
-    expect(def.documentation !== '').toBe(true);
+    switch (def.name) {
+      case 'myFunctionDefBefore':
+        expect(def.documentation !== '').toBe(true);
+        break;
+      case 'myFunctionDefAfter':
+        expect(def.documentation !== '').toBe(true);
+        break;
+    }
   }
 });
