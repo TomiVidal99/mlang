@@ -50,6 +50,7 @@ end
 
 ## TODO
 
+- [ ] FIX: statements can have expression within the conditions. if (3+1 == 4) etc.
 - [ ] FIX: use INFO instead of WARN in ';' missing message.
 - [ ] FIX: documentation not showing for function definitions.
 - [ ] MAYBE: instead of creating new instances of Tokenizer, Parser and Visitor, reuse the same.
