@@ -124,6 +124,9 @@ export class Parser {
     ) {
       // JUST A FUNCTION CALL
       // TODO: or it could be a vector. Think how to improve this
+      this.getPrevToken();
+      const position = this.getCurrentPosition();
+      this.getNextToken();
       const args = this.getFunctionArguments();
       this.getNextToken();
       const supressOutput = this.isOutputSupressed();
@@ -134,6 +137,7 @@ export class Parser {
         LHE: {
           type: 'IDENTIFIER',
           value: currToken.content,
+          position,
           functionData: {
             args,
           },
@@ -205,6 +209,7 @@ export class Parser {
           },
           RHE: {
             type: 'FUNCTION_CALL',
+            position: this.getCurrentPosition(functionIdentifier),
             value: functionIdentifier.content,
             functionData: {
               args,

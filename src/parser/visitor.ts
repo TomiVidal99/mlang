@@ -113,6 +113,11 @@ export class Visitor {
             documentation: node?.functionData?.description ?? '',
           });
         } else if (parentType === 'FUNCTION_CALL') {
+          console.log(
+            `LOG: undefined position (${node.value as string}): ${
+              node?.position === undefined ? 'undefined' : 'DEFINED'
+            }`,
+          );
           this.references.push({
             name: node.value as string,
             position: this.getExpressionPosition(node),
@@ -285,7 +290,9 @@ export class Visitor {
    * Helper that returns the positon property of a node expression
    */
   private getExpressionPosition(node: Expression): Range {
-    if (node.position === undefined) return CERO_POSITION;
+    if (node.position === undefined) {
+      return CERO_POSITION;
+    }
     return node.position;
   }
 

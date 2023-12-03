@@ -2409,7 +2409,7 @@ ${JSON.stringify(message, null, 4)}`);
         }
         return result;
       }
-      const connection2 = {
+      const connection3 = {
         sendNotification: (type, ...args) => {
           throwIfClosedOrDisposed();
           let method;
@@ -2491,7 +2491,7 @@ ${JSON.stringify(message, null, 4)}`);
           };
         },
         sendProgress: (_type, token, value) => {
-          return connection2.sendNotification(ProgressNotification.type, { token, value });
+          return connection3.sendNotification(ProgressNotification.type, { token, value });
         },
         onUnhandledProgress: unhandledProgressEmitter.event,
         sendRequest: (type, ...args) => {
@@ -2541,7 +2541,7 @@ ${JSON.stringify(message, null, 4)}`);
           let disposable;
           if (token) {
             disposable = token.onCancellationRequested(() => {
-              const p = cancellationStrategy.sender.sendCancellation(connection2, id);
+              const p = cancellationStrategy.sender.sendCancellation(connection3, id);
               if (p === void 0) {
                 logger.log(`Received no promise from cancellation strategy when cancelling id ${id}`);
                 return Promise.resolve();
@@ -2637,7 +2637,7 @@ ${JSON.stringify(message, null, 4)}`);
             tracer = _tracer;
           }
           if (_sendNotification && !isClosed() && !isDisposed()) {
-            await connection2.sendNotification(SetTraceNotification.type, { value: Trace.toString(_value) });
+            await connection3.sendNotification(SetTraceNotification.type, { value: Trace.toString(_value) });
           }
         },
         onError: errorEmitter.event,
@@ -2678,14 +2678,14 @@ ${JSON.stringify(message, null, 4)}`);
           (0, ral_1.default)().console.log("inspect");
         }
       };
-      connection2.onNotification(LogTraceNotification.type, (params) => {
+      connection3.onNotification(LogTraceNotification.type, (params) => {
         if (trace === Trace.Off || !tracer) {
           return;
         }
         const verbose = trace === Trace.Verbose || trace === Trace.Compact;
         tracer.log(params.message, verbose ? params.verbose : void 0);
       });
-      connection2.onNotification(ProgressNotification.type, (params) => {
+      connection3.onNotification(ProgressNotification.type, (params) => {
         const handler = progressHandlers.get(params.token);
         if (handler) {
           handler(params.value);
@@ -2693,7 +2693,7 @@ ${JSON.stringify(message, null, 4)}`);
           unhandledProgressEmitter.fire(params);
         }
       });
-      return connection2;
+      return connection3;
     }
     exports.createMessageConnection = createMessageConnection;
   }
@@ -6425,8 +6425,8 @@ var require_progress = __commonJS({
     };
     WorkDoneProgressReporterImpl.Instances = /* @__PURE__ */ new Map();
     var WorkDoneProgressServerReporterImpl = class extends WorkDoneProgressReporterImpl {
-      constructor(connection2, token) {
-        super(connection2, token);
+      constructor(connection3, token) {
+        super(connection3, token);
         this._source = new vscode_languageserver_protocol_1.CancellationTokenSource();
       }
       get token() {
@@ -6465,13 +6465,13 @@ var require_progress = __commonJS({
         this._source.cancel();
       }
     };
-    function attachWorkDone(connection2, params) {
+    function attachWorkDone(connection3, params) {
       if (params === void 0 || params.workDoneToken === void 0) {
         return new NullProgressReporter();
       }
       const token = params.workDoneToken;
       delete params.workDoneToken;
-      return new WorkDoneProgressReporterImpl(connection2, token);
+      return new WorkDoneProgressReporterImpl(connection3, token);
     }
     exports.attachWorkDone = attachWorkDone;
     var ProgressFeature = (Base) => {
@@ -6526,13 +6526,13 @@ var require_progress = __commonJS({
         this._connection.sendProgress(ResultProgress.type, this._token, data);
       }
     };
-    function attachPartialResult(connection2, params) {
+    function attachPartialResult(connection3, params) {
       if (params === void 0 || params.partialResultToken === void 0) {
         return void 0;
       }
       const token = params.partialResultToken;
       delete params.partialResultToken;
-      return new ResultProgressReporterImpl(connection2, token);
+      return new ResultProgressReporterImpl(connection3, token);
     }
     exports.attachPartialResult = attachPartialResult;
   }
@@ -7116,10 +7116,10 @@ var require_textDocuments = __commonJS({
        *
        * @param connection The connection to listen on.
        */
-      listen(connection2) {
-        connection2.__textDocumentSync = vscode_languageserver_protocol_1.TextDocumentSyncKind.Incremental;
+      listen(connection3) {
+        connection3.__textDocumentSync = vscode_languageserver_protocol_1.TextDocumentSyncKind.Incremental;
         const disposables = [];
-        disposables.push(connection2.onDidOpenTextDocument((event) => {
+        disposables.push(connection3.onDidOpenTextDocument((event) => {
           const td = event.textDocument;
           const document = this._configuration.create(td.uri, td.languageId, td.version, td.text);
           this._syncedDocuments.set(td.uri, document);
@@ -7127,7 +7127,7 @@ var require_textDocuments = __commonJS({
           this._onDidOpen.fire(toFire);
           this._onDidChangeContent.fire(toFire);
         }));
-        disposables.push(connection2.onDidChangeTextDocument((event) => {
+        disposables.push(connection3.onDidChangeTextDocument((event) => {
           const td = event.textDocument;
           const changes = event.contentChanges;
           if (changes.length === 0) {
@@ -7144,20 +7144,20 @@ var require_textDocuments = __commonJS({
             this._onDidChangeContent.fire(Object.freeze({ document: syncedDocument }));
           }
         }));
-        disposables.push(connection2.onDidCloseTextDocument((event) => {
+        disposables.push(connection3.onDidCloseTextDocument((event) => {
           let syncedDocument = this._syncedDocuments.get(event.textDocument.uri);
           if (syncedDocument !== void 0) {
             this._syncedDocuments.delete(event.textDocument.uri);
             this._onDidClose.fire(Object.freeze({ document: syncedDocument }));
           }
         }));
-        disposables.push(connection2.onWillSaveTextDocument((event) => {
+        disposables.push(connection3.onWillSaveTextDocument((event) => {
           let syncedDocument = this._syncedDocuments.get(event.textDocument.uri);
           if (syncedDocument !== void 0) {
             this._onWillSave.fire(Object.freeze({ document: syncedDocument, reason: event.reason }));
           }
         }));
-        disposables.push(connection2.onWillSaveTextDocumentWaitUntil((event, token) => {
+        disposables.push(connection3.onWillSaveTextDocumentWaitUntil((event, token) => {
           let syncedDocument = this._syncedDocuments.get(event.textDocument.uri);
           if (syncedDocument !== void 0 && this._willSaveWaitUntil) {
             return this._willSaveWaitUntil(Object.freeze({ document: syncedDocument, reason: event.reason }), token);
@@ -7165,7 +7165,7 @@ var require_textDocuments = __commonJS({
             return [];
           }
         }));
-        disposables.push(connection2.onDidSaveTextDocument((event) => {
+        disposables.push(connection3.onDidSaveTextDocument((event) => {
           let syncedDocument = this._syncedDocuments.get(event.textDocument.uri);
           if (syncedDocument !== void 0) {
             this._onDidSave.fire(Object.freeze({ document: syncedDocument }));
@@ -7312,11 +7312,11 @@ var require_notebook = __commonJS({
        *
        * @param connection The connection to listen on.
        */
-      listen(connection2) {
+      listen(connection3) {
         const cellTextDocumentConnection = new CellTextDocumentConnection();
         const disposables = [];
         disposables.push(this.cellTextDocuments.listen(cellTextDocumentConnection));
-        disposables.push(connection2.notebooks.synchronization.onDidOpenNotebookDocument((params) => {
+        disposables.push(connection3.notebooks.synchronization.onDidOpenNotebookDocument((params) => {
           this.notebookDocuments.set(params.notebookDocument.uri, params.notebookDocument);
           for (const cellTextDocument of params.cellTextDocuments) {
             cellTextDocumentConnection.openTextDocument({ textDocument: cellTextDocument });
@@ -7324,7 +7324,7 @@ var require_notebook = __commonJS({
           this.updateCellMap(params.notebookDocument);
           this._onDidOpen.fire(params.notebookDocument);
         }));
-        disposables.push(connection2.notebooks.synchronization.onDidChangeNotebookDocument((params) => {
+        disposables.push(connection3.notebooks.synchronization.onDidChangeNotebookDocument((params) => {
           const notebookDocument = this.notebookDocuments.get(params.notebookDocument.uri);
           if (notebookDocument === void 0) {
             return;
@@ -7404,14 +7404,14 @@ var require_notebook = __commonJS({
             this._onDidChange.fire(changeEvent);
           }
         }));
-        disposables.push(connection2.notebooks.synchronization.onDidSaveNotebookDocument((params) => {
+        disposables.push(connection3.notebooks.synchronization.onDidSaveNotebookDocument((params) => {
           const notebookDocument = this.notebookDocuments.get(params.notebookDocument.uri);
           if (notebookDocument === void 0) {
             return;
           }
           this._onDidSave.fire(notebookDocument);
         }));
-        disposables.push(connection2.notebooks.synchronization.onDidCloseNotebookDocument((params) => {
+        disposables.push(connection3.notebooks.synchronization.onDidCloseNotebookDocument((params) => {
           const notebookDocument = this.notebookDocuments.get(params.notebookDocument.uri);
           if (notebookDocument === void 0) {
             return;
@@ -7515,9 +7515,9 @@ var require_server = __commonJS({
        *
        * @param connection The connection established between client and server.
        */
-      sendErrors(connection2) {
+      sendErrors(connection3) {
         Object.keys(this._messages).forEach((message) => {
-          connection2.window.showErrorMessage(message);
+          connection3.window.showErrorMessage(message);
         });
       }
     };
@@ -7525,11 +7525,11 @@ var require_server = __commonJS({
     var RemoteConsoleImpl = class {
       constructor() {
       }
-      rawAttach(connection2) {
-        this._rawConnection = connection2;
+      rawAttach(connection3) {
+        this._rawConnection = connection3;
       }
-      attach(connection2) {
-        this._connection = connection2;
+      attach(connection3) {
+        this._connection = connection3;
       }
       get connection() {
         if (!this._connection) {
@@ -7564,8 +7564,8 @@ var require_server = __commonJS({
     var _RemoteWindowImpl = class {
       constructor() {
       }
-      attach(connection2) {
-        this._connection = connection2;
+      attach(connection3) {
+        this._connection = connection3;
       }
       get connection() {
         if (!this._connection) {
@@ -7640,8 +7640,8 @@ var require_server = __commonJS({
       get isAttached() {
         return !!this._connection;
       }
-      attach(connection2) {
-        this._connection = connection2;
+      attach(connection3) {
+        this._connection = connection3;
       }
       add(unregistration) {
         this._unregistrations.set(unregistration.method, unregistration);
@@ -7676,8 +7676,8 @@ var require_server = __commonJS({
       }
     };
     var RemoteClientImpl = class {
-      attach(connection2) {
-        this._connection = connection2;
+      attach(connection3) {
+        this._connection = connection3;
       }
       get connection() {
         if (!this._connection) {
@@ -7755,8 +7755,8 @@ var require_server = __commonJS({
     var _RemoteWorkspaceImpl = class {
       constructor() {
       }
-      attach(connection2) {
-        this._connection = connection2;
+      attach(connection3) {
+        this._connection = connection3;
       }
       get connection() {
         if (!this._connection) {
@@ -7781,8 +7781,8 @@ var require_server = __commonJS({
       constructor() {
         this._trace = vscode_languageserver_protocol_1.Trace.Off;
       }
-      attach(connection2) {
-        this._connection = connection2;
+      attach(connection3) {
+        this._connection = connection3;
       }
       get connection() {
         if (!this._connection) {
@@ -7811,8 +7811,8 @@ var require_server = __commonJS({
     var TelemetryImpl = class {
       constructor() {
       }
-      attach(connection2) {
-        this._connection = connection2;
+      attach(connection3) {
+        this._connection = connection3;
       }
       get connection() {
         if (!this._connection) {
@@ -7833,8 +7833,8 @@ var require_server = __commonJS({
     var _LanguagesImpl = class {
       constructor() {
       }
-      attach(connection2) {
-        this._connection = connection2;
+      attach(connection3) {
+        this._connection = connection3;
       }
       get connection() {
         if (!this._connection) {
@@ -7858,8 +7858,8 @@ var require_server = __commonJS({
     var _NotebooksImpl = class {
       constructor() {
       }
-      attach(connection2) {
-        this._connection = connection2;
+      attach(connection3) {
+        this._connection = connection3;
       }
       get connection() {
         if (!this._connection) {
@@ -7954,8 +7954,8 @@ var require_server = __commonJS({
     exports.combineFeatures = combineFeatures;
     function createConnection2(connectionFactory, watchDog, factories) {
       const logger = factories && factories.console ? new (factories.console(RemoteConsoleImpl))() : new RemoteConsoleImpl();
-      const connection2 = connectionFactory(logger);
-      logger.rawAttach(connection2);
+      const connection3 = connectionFactory(logger);
+      logger.rawAttach(connection3);
       const tracer = factories && factories.tracer ? new (factories.tracer(TracerImpl))() : new TracerImpl();
       const telemetry = factories && factories.telemetry ? new (factories.telemetry(TelemetryImpl))() : new TelemetryImpl();
       const client = factories && factories.client ? new (factories.client(RemoteClientImpl))() : new RemoteClientImpl();
@@ -7979,20 +7979,20 @@ var require_server = __commonJS({
       let initializeHandler = void 0;
       let exitHandler = void 0;
       let protocolConnection = {
-        listen: () => connection2.listen(),
-        sendRequest: (type, ...params) => connection2.sendRequest(Is.string(type) ? type : type.method, ...params),
-        onRequest: (type, handler) => connection2.onRequest(type, handler),
+        listen: () => connection3.listen(),
+        sendRequest: (type, ...params) => connection3.sendRequest(Is.string(type) ? type : type.method, ...params),
+        onRequest: (type, handler) => connection3.onRequest(type, handler),
         sendNotification: (type, param) => {
           const method = Is.string(type) ? type : type.method;
           if (arguments.length === 1) {
-            return connection2.sendNotification(method);
+            return connection3.sendNotification(method);
           } else {
-            return connection2.sendNotification(method, param);
+            return connection3.sendNotification(method, param);
           }
         },
-        onNotification: (type, handler) => connection2.onNotification(type, handler),
-        onProgress: connection2.onProgress,
-        sendProgress: connection2.sendProgress,
+        onNotification: (type, handler) => connection3.onNotification(type, handler),
+        onProgress: connection3.onProgress,
+        sendProgress: connection3.sendProgress,
         onInitialize: (handler) => {
           initializeHandler = handler;
           return {
@@ -8001,7 +8001,7 @@ var require_server = __commonJS({
             }
           };
         },
-        onInitialized: (handler) => connection2.onNotification(vscode_languageserver_protocol_1.InitializedNotification.type, handler),
+        onInitialized: (handler) => connection3.onNotification(vscode_languageserver_protocol_1.InitializedNotification.type, handler),
         onShutdown: (handler) => {
           shutdownHandler = handler;
           return {
@@ -8042,105 +8042,105 @@ var require_server = __commonJS({
         get notebooks() {
           return notebooks;
         },
-        onDidChangeConfiguration: (handler) => connection2.onNotification(vscode_languageserver_protocol_1.DidChangeConfigurationNotification.type, handler),
-        onDidChangeWatchedFiles: (handler) => connection2.onNotification(vscode_languageserver_protocol_1.DidChangeWatchedFilesNotification.type, handler),
+        onDidChangeConfiguration: (handler) => connection3.onNotification(vscode_languageserver_protocol_1.DidChangeConfigurationNotification.type, handler),
+        onDidChangeWatchedFiles: (handler) => connection3.onNotification(vscode_languageserver_protocol_1.DidChangeWatchedFilesNotification.type, handler),
         __textDocumentSync: void 0,
-        onDidOpenTextDocument: (handler) => connection2.onNotification(vscode_languageserver_protocol_1.DidOpenTextDocumentNotification.type, handler),
-        onDidChangeTextDocument: (handler) => connection2.onNotification(vscode_languageserver_protocol_1.DidChangeTextDocumentNotification.type, handler),
-        onDidCloseTextDocument: (handler) => connection2.onNotification(vscode_languageserver_protocol_1.DidCloseTextDocumentNotification.type, handler),
-        onWillSaveTextDocument: (handler) => connection2.onNotification(vscode_languageserver_protocol_1.WillSaveTextDocumentNotification.type, handler),
-        onWillSaveTextDocumentWaitUntil: (handler) => connection2.onRequest(vscode_languageserver_protocol_1.WillSaveTextDocumentWaitUntilRequest.type, handler),
-        onDidSaveTextDocument: (handler) => connection2.onNotification(vscode_languageserver_protocol_1.DidSaveTextDocumentNotification.type, handler),
-        sendDiagnostics: (params) => connection2.sendNotification(vscode_languageserver_protocol_1.PublishDiagnosticsNotification.type, params),
-        onHover: (handler) => connection2.onRequest(vscode_languageserver_protocol_1.HoverRequest.type, (params, cancel) => {
-          return handler(params, cancel, (0, progress_1.attachWorkDone)(connection2, params), void 0);
+        onDidOpenTextDocument: (handler) => connection3.onNotification(vscode_languageserver_protocol_1.DidOpenTextDocumentNotification.type, handler),
+        onDidChangeTextDocument: (handler) => connection3.onNotification(vscode_languageserver_protocol_1.DidChangeTextDocumentNotification.type, handler),
+        onDidCloseTextDocument: (handler) => connection3.onNotification(vscode_languageserver_protocol_1.DidCloseTextDocumentNotification.type, handler),
+        onWillSaveTextDocument: (handler) => connection3.onNotification(vscode_languageserver_protocol_1.WillSaveTextDocumentNotification.type, handler),
+        onWillSaveTextDocumentWaitUntil: (handler) => connection3.onRequest(vscode_languageserver_protocol_1.WillSaveTextDocumentWaitUntilRequest.type, handler),
+        onDidSaveTextDocument: (handler) => connection3.onNotification(vscode_languageserver_protocol_1.DidSaveTextDocumentNotification.type, handler),
+        sendDiagnostics: (params) => connection3.sendNotification(vscode_languageserver_protocol_1.PublishDiagnosticsNotification.type, params),
+        onHover: (handler) => connection3.onRequest(vscode_languageserver_protocol_1.HoverRequest.type, (params, cancel) => {
+          return handler(params, cancel, (0, progress_1.attachWorkDone)(connection3, params), void 0);
         }),
-        onCompletion: (handler) => connection2.onRequest(vscode_languageserver_protocol_1.CompletionRequest.type, (params, cancel) => {
-          return handler(params, cancel, (0, progress_1.attachWorkDone)(connection2, params), (0, progress_1.attachPartialResult)(connection2, params));
+        onCompletion: (handler) => connection3.onRequest(vscode_languageserver_protocol_1.CompletionRequest.type, (params, cancel) => {
+          return handler(params, cancel, (0, progress_1.attachWorkDone)(connection3, params), (0, progress_1.attachPartialResult)(connection3, params));
         }),
-        onCompletionResolve: (handler) => connection2.onRequest(vscode_languageserver_protocol_1.CompletionResolveRequest.type, handler),
-        onSignatureHelp: (handler) => connection2.onRequest(vscode_languageserver_protocol_1.SignatureHelpRequest.type, (params, cancel) => {
-          return handler(params, cancel, (0, progress_1.attachWorkDone)(connection2, params), void 0);
+        onCompletionResolve: (handler) => connection3.onRequest(vscode_languageserver_protocol_1.CompletionResolveRequest.type, handler),
+        onSignatureHelp: (handler) => connection3.onRequest(vscode_languageserver_protocol_1.SignatureHelpRequest.type, (params, cancel) => {
+          return handler(params, cancel, (0, progress_1.attachWorkDone)(connection3, params), void 0);
         }),
-        onDeclaration: (handler) => connection2.onRequest(vscode_languageserver_protocol_1.DeclarationRequest.type, (params, cancel) => {
-          return handler(params, cancel, (0, progress_1.attachWorkDone)(connection2, params), (0, progress_1.attachPartialResult)(connection2, params));
+        onDeclaration: (handler) => connection3.onRequest(vscode_languageserver_protocol_1.DeclarationRequest.type, (params, cancel) => {
+          return handler(params, cancel, (0, progress_1.attachWorkDone)(connection3, params), (0, progress_1.attachPartialResult)(connection3, params));
         }),
-        onDefinition: (handler) => connection2.onRequest(vscode_languageserver_protocol_1.DefinitionRequest.type, (params, cancel) => {
-          return handler(params, cancel, (0, progress_1.attachWorkDone)(connection2, params), (0, progress_1.attachPartialResult)(connection2, params));
+        onDefinition: (handler) => connection3.onRequest(vscode_languageserver_protocol_1.DefinitionRequest.type, (params, cancel) => {
+          return handler(params, cancel, (0, progress_1.attachWorkDone)(connection3, params), (0, progress_1.attachPartialResult)(connection3, params));
         }),
-        onTypeDefinition: (handler) => connection2.onRequest(vscode_languageserver_protocol_1.TypeDefinitionRequest.type, (params, cancel) => {
-          return handler(params, cancel, (0, progress_1.attachWorkDone)(connection2, params), (0, progress_1.attachPartialResult)(connection2, params));
+        onTypeDefinition: (handler) => connection3.onRequest(vscode_languageserver_protocol_1.TypeDefinitionRequest.type, (params, cancel) => {
+          return handler(params, cancel, (0, progress_1.attachWorkDone)(connection3, params), (0, progress_1.attachPartialResult)(connection3, params));
         }),
-        onImplementation: (handler) => connection2.onRequest(vscode_languageserver_protocol_1.ImplementationRequest.type, (params, cancel) => {
-          return handler(params, cancel, (0, progress_1.attachWorkDone)(connection2, params), (0, progress_1.attachPartialResult)(connection2, params));
+        onImplementation: (handler) => connection3.onRequest(vscode_languageserver_protocol_1.ImplementationRequest.type, (params, cancel) => {
+          return handler(params, cancel, (0, progress_1.attachWorkDone)(connection3, params), (0, progress_1.attachPartialResult)(connection3, params));
         }),
-        onReferences: (handler) => connection2.onRequest(vscode_languageserver_protocol_1.ReferencesRequest.type, (params, cancel) => {
-          return handler(params, cancel, (0, progress_1.attachWorkDone)(connection2, params), (0, progress_1.attachPartialResult)(connection2, params));
+        onReferences: (handler) => connection3.onRequest(vscode_languageserver_protocol_1.ReferencesRequest.type, (params, cancel) => {
+          return handler(params, cancel, (0, progress_1.attachWorkDone)(connection3, params), (0, progress_1.attachPartialResult)(connection3, params));
         }),
-        onDocumentHighlight: (handler) => connection2.onRequest(vscode_languageserver_protocol_1.DocumentHighlightRequest.type, (params, cancel) => {
-          return handler(params, cancel, (0, progress_1.attachWorkDone)(connection2, params), (0, progress_1.attachPartialResult)(connection2, params));
+        onDocumentHighlight: (handler) => connection3.onRequest(vscode_languageserver_protocol_1.DocumentHighlightRequest.type, (params, cancel) => {
+          return handler(params, cancel, (0, progress_1.attachWorkDone)(connection3, params), (0, progress_1.attachPartialResult)(connection3, params));
         }),
-        onDocumentSymbol: (handler) => connection2.onRequest(vscode_languageserver_protocol_1.DocumentSymbolRequest.type, (params, cancel) => {
-          return handler(params, cancel, (0, progress_1.attachWorkDone)(connection2, params), (0, progress_1.attachPartialResult)(connection2, params));
+        onDocumentSymbol: (handler) => connection3.onRequest(vscode_languageserver_protocol_1.DocumentSymbolRequest.type, (params, cancel) => {
+          return handler(params, cancel, (0, progress_1.attachWorkDone)(connection3, params), (0, progress_1.attachPartialResult)(connection3, params));
         }),
-        onWorkspaceSymbol: (handler) => connection2.onRequest(vscode_languageserver_protocol_1.WorkspaceSymbolRequest.type, (params, cancel) => {
-          return handler(params, cancel, (0, progress_1.attachWorkDone)(connection2, params), (0, progress_1.attachPartialResult)(connection2, params));
+        onWorkspaceSymbol: (handler) => connection3.onRequest(vscode_languageserver_protocol_1.WorkspaceSymbolRequest.type, (params, cancel) => {
+          return handler(params, cancel, (0, progress_1.attachWorkDone)(connection3, params), (0, progress_1.attachPartialResult)(connection3, params));
         }),
-        onWorkspaceSymbolResolve: (handler) => connection2.onRequest(vscode_languageserver_protocol_1.WorkspaceSymbolResolveRequest.type, handler),
-        onCodeAction: (handler) => connection2.onRequest(vscode_languageserver_protocol_1.CodeActionRequest.type, (params, cancel) => {
-          return handler(params, cancel, (0, progress_1.attachWorkDone)(connection2, params), (0, progress_1.attachPartialResult)(connection2, params));
+        onWorkspaceSymbolResolve: (handler) => connection3.onRequest(vscode_languageserver_protocol_1.WorkspaceSymbolResolveRequest.type, handler),
+        onCodeAction: (handler) => connection3.onRequest(vscode_languageserver_protocol_1.CodeActionRequest.type, (params, cancel) => {
+          return handler(params, cancel, (0, progress_1.attachWorkDone)(connection3, params), (0, progress_1.attachPartialResult)(connection3, params));
         }),
-        onCodeActionResolve: (handler) => connection2.onRequest(vscode_languageserver_protocol_1.CodeActionResolveRequest.type, (params, cancel) => {
+        onCodeActionResolve: (handler) => connection3.onRequest(vscode_languageserver_protocol_1.CodeActionResolveRequest.type, (params, cancel) => {
           return handler(params, cancel);
         }),
-        onCodeLens: (handler) => connection2.onRequest(vscode_languageserver_protocol_1.CodeLensRequest.type, (params, cancel) => {
-          return handler(params, cancel, (0, progress_1.attachWorkDone)(connection2, params), (0, progress_1.attachPartialResult)(connection2, params));
+        onCodeLens: (handler) => connection3.onRequest(vscode_languageserver_protocol_1.CodeLensRequest.type, (params, cancel) => {
+          return handler(params, cancel, (0, progress_1.attachWorkDone)(connection3, params), (0, progress_1.attachPartialResult)(connection3, params));
         }),
-        onCodeLensResolve: (handler) => connection2.onRequest(vscode_languageserver_protocol_1.CodeLensResolveRequest.type, (params, cancel) => {
+        onCodeLensResolve: (handler) => connection3.onRequest(vscode_languageserver_protocol_1.CodeLensResolveRequest.type, (params, cancel) => {
           return handler(params, cancel);
         }),
-        onDocumentFormatting: (handler) => connection2.onRequest(vscode_languageserver_protocol_1.DocumentFormattingRequest.type, (params, cancel) => {
-          return handler(params, cancel, (0, progress_1.attachWorkDone)(connection2, params), void 0);
+        onDocumentFormatting: (handler) => connection3.onRequest(vscode_languageserver_protocol_1.DocumentFormattingRequest.type, (params, cancel) => {
+          return handler(params, cancel, (0, progress_1.attachWorkDone)(connection3, params), void 0);
         }),
-        onDocumentRangeFormatting: (handler) => connection2.onRequest(vscode_languageserver_protocol_1.DocumentRangeFormattingRequest.type, (params, cancel) => {
-          return handler(params, cancel, (0, progress_1.attachWorkDone)(connection2, params), void 0);
+        onDocumentRangeFormatting: (handler) => connection3.onRequest(vscode_languageserver_protocol_1.DocumentRangeFormattingRequest.type, (params, cancel) => {
+          return handler(params, cancel, (0, progress_1.attachWorkDone)(connection3, params), void 0);
         }),
-        onDocumentOnTypeFormatting: (handler) => connection2.onRequest(vscode_languageserver_protocol_1.DocumentOnTypeFormattingRequest.type, (params, cancel) => {
+        onDocumentOnTypeFormatting: (handler) => connection3.onRequest(vscode_languageserver_protocol_1.DocumentOnTypeFormattingRequest.type, (params, cancel) => {
           return handler(params, cancel);
         }),
-        onRenameRequest: (handler) => connection2.onRequest(vscode_languageserver_protocol_1.RenameRequest.type, (params, cancel) => {
-          return handler(params, cancel, (0, progress_1.attachWorkDone)(connection2, params), void 0);
+        onRenameRequest: (handler) => connection3.onRequest(vscode_languageserver_protocol_1.RenameRequest.type, (params, cancel) => {
+          return handler(params, cancel, (0, progress_1.attachWorkDone)(connection3, params), void 0);
         }),
-        onPrepareRename: (handler) => connection2.onRequest(vscode_languageserver_protocol_1.PrepareRenameRequest.type, (params, cancel) => {
+        onPrepareRename: (handler) => connection3.onRequest(vscode_languageserver_protocol_1.PrepareRenameRequest.type, (params, cancel) => {
           return handler(params, cancel);
         }),
-        onDocumentLinks: (handler) => connection2.onRequest(vscode_languageserver_protocol_1.DocumentLinkRequest.type, (params, cancel) => {
-          return handler(params, cancel, (0, progress_1.attachWorkDone)(connection2, params), (0, progress_1.attachPartialResult)(connection2, params));
+        onDocumentLinks: (handler) => connection3.onRequest(vscode_languageserver_protocol_1.DocumentLinkRequest.type, (params, cancel) => {
+          return handler(params, cancel, (0, progress_1.attachWorkDone)(connection3, params), (0, progress_1.attachPartialResult)(connection3, params));
         }),
-        onDocumentLinkResolve: (handler) => connection2.onRequest(vscode_languageserver_protocol_1.DocumentLinkResolveRequest.type, (params, cancel) => {
+        onDocumentLinkResolve: (handler) => connection3.onRequest(vscode_languageserver_protocol_1.DocumentLinkResolveRequest.type, (params, cancel) => {
           return handler(params, cancel);
         }),
-        onDocumentColor: (handler) => connection2.onRequest(vscode_languageserver_protocol_1.DocumentColorRequest.type, (params, cancel) => {
-          return handler(params, cancel, (0, progress_1.attachWorkDone)(connection2, params), (0, progress_1.attachPartialResult)(connection2, params));
+        onDocumentColor: (handler) => connection3.onRequest(vscode_languageserver_protocol_1.DocumentColorRequest.type, (params, cancel) => {
+          return handler(params, cancel, (0, progress_1.attachWorkDone)(connection3, params), (0, progress_1.attachPartialResult)(connection3, params));
         }),
-        onColorPresentation: (handler) => connection2.onRequest(vscode_languageserver_protocol_1.ColorPresentationRequest.type, (params, cancel) => {
-          return handler(params, cancel, (0, progress_1.attachWorkDone)(connection2, params), (0, progress_1.attachPartialResult)(connection2, params));
+        onColorPresentation: (handler) => connection3.onRequest(vscode_languageserver_protocol_1.ColorPresentationRequest.type, (params, cancel) => {
+          return handler(params, cancel, (0, progress_1.attachWorkDone)(connection3, params), (0, progress_1.attachPartialResult)(connection3, params));
         }),
-        onFoldingRanges: (handler) => connection2.onRequest(vscode_languageserver_protocol_1.FoldingRangeRequest.type, (params, cancel) => {
-          return handler(params, cancel, (0, progress_1.attachWorkDone)(connection2, params), (0, progress_1.attachPartialResult)(connection2, params));
+        onFoldingRanges: (handler) => connection3.onRequest(vscode_languageserver_protocol_1.FoldingRangeRequest.type, (params, cancel) => {
+          return handler(params, cancel, (0, progress_1.attachWorkDone)(connection3, params), (0, progress_1.attachPartialResult)(connection3, params));
         }),
-        onSelectionRanges: (handler) => connection2.onRequest(vscode_languageserver_protocol_1.SelectionRangeRequest.type, (params, cancel) => {
-          return handler(params, cancel, (0, progress_1.attachWorkDone)(connection2, params), (0, progress_1.attachPartialResult)(connection2, params));
+        onSelectionRanges: (handler) => connection3.onRequest(vscode_languageserver_protocol_1.SelectionRangeRequest.type, (params, cancel) => {
+          return handler(params, cancel, (0, progress_1.attachWorkDone)(connection3, params), (0, progress_1.attachPartialResult)(connection3, params));
         }),
-        onExecuteCommand: (handler) => connection2.onRequest(vscode_languageserver_protocol_1.ExecuteCommandRequest.type, (params, cancel) => {
-          return handler(params, cancel, (0, progress_1.attachWorkDone)(connection2, params), void 0);
+        onExecuteCommand: (handler) => connection3.onRequest(vscode_languageserver_protocol_1.ExecuteCommandRequest.type, (params, cancel) => {
+          return handler(params, cancel, (0, progress_1.attachWorkDone)(connection3, params), void 0);
         }),
-        dispose: () => connection2.dispose()
+        dispose: () => connection3.dispose()
       };
       for (let remote of allRemotes) {
         remote.attach(protocolConnection);
       }
-      connection2.onRequest(vscode_languageserver_protocol_1.InitializeRequest.type, (params) => {
+      connection3.onRequest(vscode_languageserver_protocol_1.InitializeRequest.type, (params) => {
         watchDog.initialize(params);
         if (Is.string(params.trace)) {
           tracer.trace = vscode_languageserver_protocol_1.Trace.fromString(params.trace);
@@ -8149,7 +8149,7 @@ var require_server = __commonJS({
           remote.initialize(params.capabilities);
         }
         if (initializeHandler) {
-          let result = initializeHandler(params, new vscode_languageserver_protocol_1.CancellationTokenSource().token, (0, progress_1.attachWorkDone)(connection2, params), void 0);
+          let result = initializeHandler(params, new vscode_languageserver_protocol_1.CancellationTokenSource().token, (0, progress_1.attachWorkDone)(connection3, params), void 0);
           return asPromise(result).then((value) => {
             if (value instanceof vscode_languageserver_protocol_1.ResponseError) {
               return value;
@@ -8181,7 +8181,7 @@ var require_server = __commonJS({
           return result;
         }
       });
-      connection2.onRequest(vscode_languageserver_protocol_1.ShutdownRequest.type, () => {
+      connection3.onRequest(vscode_languageserver_protocol_1.ShutdownRequest.type, () => {
         watchDog.shutdownReceived = true;
         if (shutdownHandler) {
           return shutdownHandler(new vscode_languageserver_protocol_1.CancellationTokenSource().token);
@@ -8189,7 +8189,7 @@ var require_server = __commonJS({
           return void 0;
         }
       });
-      connection2.onNotification(vscode_languageserver_protocol_1.ExitNotification.type, () => {
+      connection3.onNotification(vscode_languageserver_protocol_1.ExitNotification.type, () => {
         try {
           if (exitHandler) {
             exitHandler();
@@ -8202,7 +8202,7 @@ var require_server = __commonJS({
           }
         }
       });
-      connection2.onNotification(vscode_languageserver_protocol_1.SetTraceNotification.type, (params) => {
+      connection3.onNotification(vscode_languageserver_protocol_1.SetTraceNotification.type, (params) => {
         tracer.trace = vscode_languageserver_protocol_1.Trace.fromString(params.value);
       });
       return protocolConnection;
@@ -8971,7 +8971,7 @@ var require_main5 = __commonJS({
 // src/server.ts
 var server_exports = {};
 __export(server_exports, {
-  connection: () => connection,
+  connection: () => connection2,
   documents: () => documents,
   visitors: () => visitors
 });
@@ -8984,7 +8984,7 @@ var import_vscode_languageserver = __toESM(require_main4());
 var hasConfigurationCapability = false;
 var hasWorkspaceFolderCapability = false;
 var hasDiagnosticRelatedInformationCapability = false;
-function handleOnInitialize({ params, connection: connection2 }) {
+function handleOnInitialize({ params, connection: connection3 }) {
   const capabilities = params.capabilities;
   hasConfigurationCapability = !!(capabilities.workspace != null && !!capabilities.workspace.configuration);
   hasWorkspaceFolderCapability = !!(capabilities.workspace != null && !!capabilities.workspace.workspaceFolders);
@@ -9023,18 +9023,18 @@ function handleOnInitialize({ params, connection: connection2 }) {
 }
 function handleOnInitialized({
   params,
-  connection: connection2
+  connection: connection3
 }) {
-  connection2.console.log("Mlang Initialized correctly!");
+  connection3.console.log("Mlang Initialized correctly!");
   if (hasConfigurationCapability) {
-    connection2.client.register(
+    connection3.client.register(
       import_vscode_languageserver.DidChangeConfigurationNotification.type,
       void 0
     );
   }
   if (hasWorkspaceFolderCapability) {
-    connection2.workspace.onDidChangeWorkspaceFolders((_event) => {
-      connection2.console.log("Workspace folder change event received.");
+    connection3.workspace.onDidChangeWorkspaceFolders((_event) => {
+      connection3.console.log("Workspace folder change event received.");
     });
   }
 }
@@ -9567,7 +9567,7 @@ var CERO_POSITION = {
   },
   end: {
     line: 1,
-    character: 1
+    character: 2
   }
 };
 
@@ -9771,6 +9771,9 @@ var Parser = class {
       return null;
     }
     if ((currToken.type === "IDENTIFIER" || currToken.type === "NATIVE_FUNCTION") && nextToken.type === "LPARENT") {
+      this.getPrevToken();
+      const position = this.getCurrentPosition();
+      this.getNextToken();
       const args = this.getFunctionArguments();
       this.getNextToken();
       const supressOutput = this.isOutputSupressed();
@@ -9781,6 +9784,7 @@ var Parser = class {
         LHE: {
           type: "IDENTIFIER",
           value: currToken.content,
+          position,
           functionData: {
             args
           }
@@ -9840,6 +9844,7 @@ var Parser = class {
           },
           RHE: {
             type: "FUNCTION_CALL",
+            position: this.getCurrentPosition(functionIdentifier),
             value: functionIdentifier.content,
             functionData: {
               args
@@ -11072,7 +11077,7 @@ var Visitor = class {
         this.visitExpression(node.RHE, "MO_ASSIGNMENT", false);
         break;
       case "FUNCTION_CALL":
-        if (node.LHE === void 0)
+        if (node?.LHE === void 0)
           return;
         this.visitExpression(node.LHE, "FUNCTION_CALL");
         break;
@@ -11109,14 +11114,30 @@ var Visitor = class {
             documentation: this.getDocumentationOrLineDefinition(node),
             arguments: args
           });
+          this.references.push({
+            name: node.value,
+            position: this.getExpressionPosition(node),
+            type: parentType === "ASSIGNMENT" ? "VARIABLE" : "FUNCTION",
+            documentation: node?.functionData?.description ?? ""
+          });
+        } else if (parentType === "FUNCTION_CALL") {
+          console.log(
+            `LOG: undefined position (${node.value}): ${node?.position === void 0 ? "undefined" : "DEFINED"}`
+          );
+          this.references.push({
+            name: node.value,
+            position: this.getExpressionPosition(node),
+            type: "FUNCTION",
+            documentation: node?.functionData?.description ?? ""
+          });
+        } else {
+          this.references.push({
+            name: node.value,
+            position: this.getExpressionPosition(node),
+            type: "VARIABLE",
+            documentation: node?.functionData?.description ?? ""
+          });
         }
-        this.references.push({
-          name: node.value,
-          position: this.getExpressionPosition(node),
-          // type: this.getReferenceTypeFromNode(node),
-          type: "VARIABLE",
-          documentation: node?.functionData?.description ?? ""
-        });
         if (node?.functionData?.args !== void 0) {
           const tokenList = this.getArgumentIdentifiersList(node);
           const ref = tokenList.map((arg) => {
@@ -11220,7 +11241,7 @@ var Visitor = class {
             this.references.push({
               name: token.content,
               position: this.getTokenPosition(token),
-              type: this.getReferenceTypeFromNode(node),
+              type: "VARIABLE",
               documentation: node?.functionData?.description ?? ""
             });
           }
@@ -11240,7 +11261,7 @@ var Visitor = class {
             return {
               name: arg.content,
               position: this.getTokenPosition(arg),
-              type: this.getReferenceTypeFromNode(node),
+              type: "VARIABLE",
               documentation: this.getDocumentationOrLineDefinition(node)
             };
           })
@@ -11275,8 +11296,9 @@ var Visitor = class {
    * Helper that returns the positon property of a node expression
    */
   getExpressionPosition(node) {
-    if (node.position === void 0)
+    if (node.position === void 0) {
       return CERO_POSITION;
+    }
     return node.position;
   }
   /**
@@ -11330,7 +11352,7 @@ var Visitor = class {
 
 // src/server.ts
 var DEBOUNCE_DELAY_MS = 1e3;
-var connection = (0, import_node2.createConnection)(import_node2.ProposedFeatures.all);
+var connection2 = (0, import_node2.createConnection)(import_node2.ProposedFeatures.all);
 var documentSettings = /* @__PURE__ */ new Map();
 var documents = new import_node2.TextDocuments(import_vscode_languageserver_textdocument2.TextDocument);
 var visitors = /* @__PURE__ */ new Map();
@@ -11338,14 +11360,14 @@ var documentChanges = /* @__PURE__ */ new Map();
 documents.onDidChangeContent((change) => {
   updateDocumentData(change.document.uri, change.document.getText());
 });
-connection.onInitialize((params) => handleOnInitialize({ params, connection }));
-connection.onInitialized((params) => {
-  handleOnInitialized({ params, connection });
+connection2.onInitialize((params) => handleOnInitialize({ params, connection: connection2 }));
+connection2.onInitialized((params) => {
+  handleOnInitialized({ params, connection: connection2 });
 });
-connection.onDefinition(
+connection2.onDefinition(
   async (params) => await handleDefinitions({ params, documents })
 );
-connection.onReferences((params) => {
+connection2.onReferences((params) => {
   const uri = params.textDocument.uri;
   const document = documents.get(uri);
   if (document === void 0)
@@ -11355,13 +11377,13 @@ connection.onReferences((params) => {
 documents.onDidClose((e) => {
   documentSettings.delete(e.document.uri);
 });
-connection.onCompletion((params) => handleCompletion({ params }));
-connection.onCompletionResolve((item) => {
+connection2.onCompletion((params) => handleCompletion({ params }));
+connection2.onCompletionResolve((item) => {
   return item;
 });
-documents.listen(connection);
-connection.listen();
-connection.onExit(() => {
+documents.listen(connection2);
+connection2.listen();
+connection2.onExit(() => {
   documentChanges.forEach((docChanges) => {
     clearTimeout(docChanges);
   });
@@ -11387,7 +11409,7 @@ function updateDocumentData(uri, text) {
       const errors = parser.getErrors().map((err) => getDiagnosticFromLitingMessage(err, "error"));
       const warnings = parser.getWarnings().map((warn) => getDiagnosticFromLitingMessage(warn, "warn"));
       const diagnostics = [...errors, ...warnings];
-      connection.sendDiagnostics({
+      connection2.sendDiagnostics({
         uri,
         diagnostics
       }).catch((err) => {

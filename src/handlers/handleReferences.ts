@@ -5,7 +5,7 @@ import {
 } from 'vscode-languageserver';
 import { type TextDocument } from 'vscode-languageserver-textdocument';
 import { getWordRangeAtPosition } from '../utils';
-import { visitors } from '../server';
+import { connection, visitors } from '../server';
 
 export function handleReferences(
   document: TextDocument,

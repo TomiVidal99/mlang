@@ -7,6 +7,6 @@ export const CERO_POSITION: Range = {
   },
   end: {
     line: 1,
-    character: 1,
+    character: 2,
   },
 } as const;
