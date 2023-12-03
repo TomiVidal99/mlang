@@ -49,7 +49,7 @@ export class Visitor {
         this.visitExpression(node.RHE as Expression, 'MO_ASSIGNMENT', false);
         break;
       case 'FUNCTION_CALL':
-        if (node.LHE === undefined) return;
+        if (node?.LHE === undefined) return;
         this.visitExpression(node.LHE, 'FUNCTION_CALL');
         break;
     }
@@ -106,20 +106,35 @@ export class Visitor {
             documentation: this.getDocumentationOrLineDefinition(node),
             arguments: args,
           });
+          this.references.push({
+            name: node.value as string,
+            position: this.getExpressionPosition(node),
+            type: parentType === 'ASSIGNMENT' ? 'VARIABLE' : 'FUNCTION',
+            documentation: node?.functionData?.description ?? '',
+          });
+        } else if (parentType === 'FUNCTION_CALL') {
+          this.references.push({
+            name: node.value as string,
+            position: this.getExpressionPosition(node),
+            type: 'FUNCTION',
+            documentation: node?.functionData?.description ?? '',
+          });
+        } else {
+          this.references.push({
+            name: node.value as string,
+            position: this.getExpressionPosition(node),
+            type: 'VARIABLE',
+            documentation: node?.functionData?.description ?? '',
+          });
         }
-        this.references.push({
-          name: node.value as string,
-          position: this.getExpressionPosition(node),
-          type: this.getReferenceTypeFromNode(node),
-          documentation: node?.functionData?.description ?? '',
-        });
         if (node?.functionData?.args !== undefined) {
           const tokenList = this.getArgumentIdentifiersList(node);
-          const ref = tokenList.map((arg) => {
+          const ref: Reference[] = tokenList.map((arg) => {
             return {
               name: arg.content as string,
               position: this.getTokenPosition(arg),
-              type: this.getReferenceTypeFromNode(node),
+              // type: this.getReferenceTypeFromNode(node),
+              type: 'VARIABLE',
               documentation: this.getDocumentationOrLineDefinition(node),
             };
           });
@@ -214,7 +229,7 @@ export class Visitor {
             this.references.push({
               name: token.content as string,
               position: this.getTokenPosition(token),
-              type: this.getReferenceTypeFromNode(node),
+              type: 'VARIABLE',
               documentation: node?.functionData?.description ?? '',
             });
           }
@@ -233,7 +248,7 @@ export class Visitor {
             return {
               name: arg.content as string,
               position: this.getTokenPosition(arg),
-              type: this.getReferenceTypeFromNode(node),
+              type: 'VARIABLE' as ReferenceType,
               documentation: this.getDocumentationOrLineDefinition(node),
             };
           }),

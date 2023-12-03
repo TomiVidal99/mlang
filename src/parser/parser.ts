@@ -257,11 +257,12 @@ export class Parser {
         'Could not parse function call',
         ERROR_CODES.FN_CALL_EXCEEDED_CALLS,
       );
-      this.warnings.push({
-        message: 'Unadvised function call',
-        range: this.getCurrentPosition(nextToken),
-        code: 7,
-      });
+      // TODO: this should be handle at visitor level, because we don't know if it's a variable or a function
+      // this.warnings.push({
+      //   message: 'Unadvised function call',
+      //   range: this.getCurrentPosition(nextToken),
+      //   code: 7,
+      // });
     } else {
       // console.log("prev token: ", this.tokens[this.currentTokenIndex - 1]);
       // console.log("currToken: ", this.getCurrentToken());

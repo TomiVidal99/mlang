@@ -9873,11 +9873,6 @@ var Parser = class {
         "Could not parse function call",
         ERROR_CODES.FN_CALL_EXCEEDED_CALLS
       );
-      this.warnings.push({
-        message: "Unadvised function call",
-        range: this.getCurrentPosition(nextToken),
-        code: 7
-      });
     } else {
       if (currToken === void 0)
         throw new Error("Unexpected undefined token. Code 70");
@@ -11118,7 +11113,8 @@ var Visitor = class {
         this.references.push({
           name: node.value,
           position: this.getExpressionPosition(node),
-          type: this.getReferenceTypeFromNode(node),
+          // type: this.getReferenceTypeFromNode(node),
+          type: "VARIABLE",
           documentation: node?.functionData?.description ?? ""
         });
         if (node?.functionData?.args !== void 0) {
@@ -11127,7 +11123,8 @@ var Visitor = class {
             return {
               name: arg.content,
               position: this.getTokenPosition(arg),
-              type: this.getReferenceTypeFromNode(node),
+              // type: this.getReferenceTypeFromNode(node),
+              type: "VARIABLE",
               documentation: this.getDocumentationOrLineDefinition(node)
             };
           });
