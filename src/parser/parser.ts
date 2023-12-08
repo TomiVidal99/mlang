@@ -268,6 +268,8 @@ export class Parser {
       //   range: this.getCurrentPosition(nextToken),
       //   code: 7,
       // });
+    } else if (currToken.type === 'KEYWORD' && currToken.content === 'if') {
+      return this.parseIfStatement();
     } else {
       // console.log("prev token: ", this.tokens[this.currentTokenIndex - 1]);
       // console.log("currToken: ", this.getCurrentToken());
@@ -300,6 +302,160 @@ export class Parser {
     }
 
     return null;
+  }
+
+  /**
+   * Parses an If Statement
+   * IMPORTANT: Expectes the current token to be '('
+   */
+  private parseIfStatement(): Statement {
+    if (this.getCurrentToken().type !== 'LPARENT') {
+      this.errors.push({
+        message: `Expected a left parenthesis. Got ${this.stringifyTokenContent()}`,
+        range: this.getCurrentPosition(),
+        code: ERROR_CODES.EXPECTED_LPAREN_IF_STMNT,
+      });
+    }
+
+    let endToken: Token | undefined;
+    let counter = 0;
+    // this do while should just parses what's inside the parenthesis
+    do {
+      this.skipNL(true);
+      if (
+        !this.isTokenValidBasicDataType(this.getCurrentToken()) &&
+        this.getCurrentToken().type !== 'RPARENT'
+      ) {
+        this.errors.push({
+          code: ERROR_CODES.EXPECTED_VALID_IF_STMNT,
+          range: this.getCurrentPosition(),
+          message: `Unexpected token: "${JSON.stringify(
+            this.getCurrentToken().content,
+          )}"`,
+        });
+        continue;
+      }
+
+      if (this.getCurrentToken().type === 'RPARENT') {
+        endToken = this.getCurrentToken();
+        break;
+      }
+
+      // next should be == > < <= >=
+      this.getNextToken();
+      if (
+        this.getCurrentToken().type !== 'EQUALS' &&
+        this.getCurrentToken().type !== 'GRATER_THAN' &&
+        this.getCurrentToken().type !== 'LESS_THAN'
+      ) {
+        this.errors.push({
+          code: ERROR_CODES.EXPECTED_VALID_IF_STMNT,
+          range: this.getCurrentPosition(),
+          message: `Unexpected token: "${JSON.stringify(
+            this.getCurrentToken().content,
+          )}"`,
+        });
+        continue;
+      }
+      // skip the next equals if exists
+      if (this.getNextToken()?.type !== 'EQUALS') {
+        this.getPrevToken();
+      }
+
+      this.getNextToken();
+      if (!this.isTokenValidBasicDataType(this.getCurrentToken())) {
+        this.errors.push({
+          code: ERROR_CODES.EXPECTED_VALID_IF_STMNT,
+          range: this.getCurrentPosition(),
+          message: `Unexpected token: "${JSON.stringify(
+            this.getCurrentToken().content,
+          )}"`,
+        });
+        continue;
+      }
+
+      if (this.skipNL(true).type === 'AND') {
+        if (this.skipNL(true).type !== 'AND') {
+          this.errors.push({
+            code: ERROR_CODES.EXPECTED_VALID_SYMBOL_IF_STMNT,
+            range: this.getCurrentPosition(),
+            message: `Unexpected token: "${JSON.stringify(
+              this.getCurrentToken().content,
+            )}"`,
+          });
+          continue;
+        }
+      } else if (this.skipNL().type === 'OR') {
+        if (this.skipNL(true).type !== 'OR') {
+          this.errors.push({
+            code: ERROR_CODES.EXPECTED_VALID_SYMBOL_IF_STMNT,
+            range: this.getCurrentPosition(),
+            message: `Unexpected token: "${JSON.stringify(
+              this.getCurrentToken().content,
+            )}"`,
+          });
+          continue;
+        }
+      }
+
+      endToken = this.skipNL(true);
+      this.getPrevToken();
+
+      counter++;
+    } while (
+      endToken !== undefined &&
+      counter < MAX_STATEMENTS &&
+      endToken.type !== 'RPARENT'
+    );
+
+    this.logErrorMaxCallsReached(
+      counter,
+      'Maximum tries reached when parsing if statement',
+      ERROR_CODES.EXCEEDED_CALLS_RPAREN_IF_STMNT,
+    );
+
+    // check statements inside if statement
+    // TODO
+    const statements: Statement[] = [];
+    let maxCalls = 0;
+    while (!this.isEndIfToken() && !this.isEOF() && maxCalls < MAX_STATEMENTS) {
+      const statement = this.parseStatement();
+      if (statement !== null) statements.push(statement);
+      maxCalls++;
+    }
+    this.logErrorMaxCallsReached(
+      maxCalls,
+      "Could not find closing keyword 'end' or 'endif'",
+      ERROR_CODES.MISSING_END_IF_STMNT,
+    );
+
+    const context = this.getIntoNewContext()[1];
+
+    return {
+      type: 'IF_STMNT',
+      supressOutput: true,
+      context,
+      LHE: {
+        type: 'IF_STMNT',
+        value: 'if', // TODO: here should maybe be all the conditions???
+        position: this.getCurrentPosition(),
+      },
+      RHE: statements,
+    };
+  }
+
+  /**
+   * Returns true if the current token or the given token
+   * it's 'end' or 'endif'
+   */
+  private isEndIfToken(token?: Token) {
+    return (
+      (token !== undefined &&
+        (token.content === 'end' || token.content === 'endif')) ||
+      (token !== undefined &&
+        (this.getCurrentToken().content === 'end' ||
+          this.getCurrentToken().content === 'endif'))
+    );
   }
 
   /**
@@ -393,7 +549,7 @@ export class Parser {
 
   /**
    * Returns the list of tokens that are contained in an vector
-   * Also returns weather the vector it's declared with ':' or just ','
+   * Also returns weather the vector it's declared with ': ' or just ', '
    */
   private getVectorArgs(): [Token[], 'COMMA' | 'COLON'] {
     const tokens: Token[] = [];
@@ -512,7 +668,7 @@ export class Parser {
   }
 
   /**
-   * Helper that extracts the statement of a function definition with output/outputs
+   * Helper that extracts the statement of a function definition with output / outputs
    * @args isSingleOutput - Weather the statement returns one or more outputs.
    */
   private getFunctionDefintionWithOutput(
@@ -615,7 +771,7 @@ export class Parser {
 
   /**
    * Helper that sends error if the arguments of a function defintion are not correct
-   * The arguments in a function definition should be IDENTIFIERs and default values (ASSIGNMENTs)
+   * The arguments in a function definition should be IDENTIFIERs and default values(ASSIGNMENTs)
    */
   private checkValidFunctionDefinitionArguments(args: Token[]): boolean {
     let isValidFlag = true;
@@ -807,7 +963,7 @@ export class Parser {
 
   /**
    * Helper that returns a list of identifiers of a list of variables
-   * i.e [a,b,c,d,...,N] = FUNCTION_CALL(), it returns a through N
+   * i.e[a, b, c, d,...,N] = FUNCTION_CALL(), it returns a through N
    */
   private getVariableVector(): Token[] {
     const tokens: Token[] = [];
@@ -1110,7 +1266,7 @@ export class Parser {
   /**
    * Helper that advances to the next token that's not a NL (new line)
    * @param next if true it starts by grabbing the next token
-   * TODO: maybe have a separated constant for the max of the counter??
+   * TODO: maybe have a separated constant for the max of the counter ??
    */
   private skipNL(next = false): Token {
     let counter = 0;
@@ -1171,8 +1327,8 @@ export class Parser {
 
   /**
    * Helper that returns weather the current token or
-   * a provided one is a basic data type (IDENTIFIER, STRING, DATA_VECTOR or NUMBER)
-   * TODO consider structs {}
+   * a provided one is a basic data type(IDENTIFIER, STRING, DATA_VECTOR or NUMBER)
+   * TODO consider structs { }
    */
   private isTokenDataType(token?: Token): boolean {
     if (token !== null && token !== undefined) {

@@ -49,6 +49,7 @@ export interface Expression {
     | 'FUNCTION_CALL'
     | 'VARIABLE_VECTOR'
     | 'ANONYMOUS_FUNCTION_DEFINITION'
+    | 'IF_STMNT'
     | 'FUNCTION_DEFINITION';
   value: string | string[] | Token[];
   LHO?: Expression;
@@ -59,6 +60,7 @@ export interface Expression {
 }
 
 export type StatementType =
+  | 'IF_STMNT'
   | 'ASSIGNMENT'
   | 'FUNCTION_CALL'
   | 'MO_ASSIGNMENT'

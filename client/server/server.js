@@ -9556,7 +9556,13 @@ var ERROR_CODES = {
   STRUCT_BAD_COMMA: 141,
   MAX_ITERATION_COMMENTS_BEFORE: 2e3,
   MAX_ITERATION_COMMENTS_AFTER: 2001,
-  MAX_ITERATION_PARSING_COMMENT_BEFORE: 3001
+  MAX_ITERATION_PARSING_COMMENT_BEFORE: 3001,
+  EXPECTED_LPAREN_IF_STMNT: 4e3,
+  EXCEEDED_CALLS_RPAREN_IF_STMNT: 4001,
+  EXPECTED_VALID_IF_STMNT: 4002,
+  EXPECTED_VALID_SYMBOL_IF_STMNT: 4003,
+  EXCEEDED_CALLS_PARSING_STMNTS_IF_STMNT: 4004,
+  MISSING_END_IF_STMNT: 4005
 };
 
 // src/constants/cero_position.ts
@@ -9878,6 +9884,8 @@ var Parser = class {
         "Could not parse function call",
         ERROR_CODES.FN_CALL_EXCEEDED_CALLS
       );
+    } else if (currToken.type === "KEYWORD" && currToken.content === "if") {
+      return this.parseIfStatement();
     } else {
       if (currToken === void 0)
         throw new Error("Unexpected undefined token. Code 70");
@@ -9894,6 +9902,117 @@ var Parser = class {
       return null;
     }
     return null;
+  }
+  /**
+   * Parses an If Statement
+   * IMPORTANT: Expectes the current token to be '('
+   */
+  parseIfStatement() {
+    if (this.getCurrentToken().type !== "LPARENT") {
+      this.errors.push({
+        message: `Expected a left parenthesis. Got ${this.stringifyTokenContent()}`,
+        range: this.getCurrentPosition(),
+        code: ERROR_CODES.EXPECTED_LPAREN_IF_STMNT
+      });
+    }
+    let endToken;
+    let counter = 0;
+    do {
+      this.skipNL(true);
+      if (!this.isTokenValidBasicDataType(this.getCurrentToken())) {
+        this.errors.push({
+          code: ERROR_CODES.EXPECTED_VALID_IF_STMNT,
+          range: this.getCurrentPosition(),
+          message: `Unexpected token: "${JSON.stringify(
+            this.getCurrentToken().content
+          )}"`
+        });
+        continue;
+      }
+      this.getNextToken();
+      if (this.getCurrentToken().type !== "EQUALS" && this.getCurrentToken().type !== "GRATER_THAN" && this.getCurrentToken().type !== "LESS_THAN") {
+        this.errors.push({
+          code: ERROR_CODES.EXPECTED_VALID_IF_STMNT,
+          range: this.getCurrentPosition(),
+          message: `Unexpected token: "${JSON.stringify(
+            this.getCurrentToken().content
+          )}"`
+        });
+        continue;
+      }
+      if (this.getNextToken()?.type !== "EQUALS") {
+        this.getPrevToken();
+      }
+      this.getNextToken();
+      if (!this.isTokenValidBasicDataType(this.getCurrentToken())) {
+        this.errors.push({
+          code: ERROR_CODES.EXPECTED_VALID_IF_STMNT,
+          range: this.getCurrentPosition(),
+          message: `Unexpected token: "${JSON.stringify(
+            this.getCurrentToken().content
+          )}"`
+        });
+        continue;
+      }
+      if (this.skipNL(true).type === "AND") {
+        if (this.skipNL(true).type !== "AND") {
+          this.errors.push({
+            code: ERROR_CODES.EXPECTED_VALID_SYMBOL_IF_STMNT,
+            range: this.getCurrentPosition(),
+            message: `Unexpected token: "${JSON.stringify(
+              this.getCurrentToken().content
+            )}"`
+          });
+          continue;
+        }
+      } else if (this.skipNL().type === "OR") {
+        if (this.skipNL(true).type !== "OR") {
+          this.errors.push({
+            code: ERROR_CODES.EXPECTED_VALID_SYMBOL_IF_STMNT,
+            range: this.getCurrentPosition(),
+            message: `Unexpected token: "${JSON.stringify(
+              this.getCurrentToken().content
+            )}"`
+          });
+          continue;
+        }
+      }
+      endToken = this.skipNL(true);
+      this.getPrevToken();
+      counter++;
+    } while (endToken !== void 0 && counter < MAX_STATEMENTS && endToken.type !== "RPARENT");
+    this.logErrorMaxCallsReached(
+      counter,
+      "Maximum tries reached when parsing if statement",
+      ERROR_CODES.EXCEEDED_CALLS_RPAREN_IF_STMNT
+    );
+    const statements = [];
+    this.logErrorMaxCallsReached(
+      counter,
+      "Maximum tries reached when parsing if statement",
+      ERROR_CODES.EXCEEDED_CALLS_PARSING_STMNTS_IF_STMNT
+    );
+    this.skipNL(true);
+    if (this.getCurrentToken().content !== "end" && this.getCurrentToken().content !== "endif") {
+      this.errors.push({
+        code: ERROR_CODES.MISSING_END_IF_STMNT,
+        range: this.getCurrentPosition(),
+        message: `Missing 'end' or 'endif'`
+      });
+    }
+    const context = this.getIntoNewContext()[1];
+    return {
+      type: "IF_STMNT",
+      supressOutput: true,
+      context,
+      LHE: {
+        type: "IF_STMNT",
+        value: "if",
+        // TODO: here should maybe be all the conditions???
+        position: this.getCurrentPosition()
+      },
+      RHE: statements
+    };
   }
   /**
    * Helper that returns a 'struct' Token if the grammar it's correct
@@ -9964,7 +10083,7 @@ var Parser = class {
   }
   /**
    * Returns the list of tokens that are contained in an vector
-   * Also returns weather the vector it's declared with ':' or just ','
+   * Also returns weather the vector it's declared with ': ' or just ', '
    */
   getVectorArgs() {
     const tokens = [];
@@ -10063,7 +10182,7 @@ var Parser = class {
     return tokens;
   }
   /**
-   * Helper that extracts the statement of a function definition with output/outputs
+   * Helper that extracts the statement of a function definition with output / outputs
    * @args isSingleOutput - Weather the statement returns one or more outputs.
    */
   getFunctionDefintionWithOutput(isSingleOutput) {
@@ -10156,7 +10275,7 @@ var Parser = class {
   }
   /**
    * Helper that sends error if the arguments of a function defintion are not correct
-   * The arguments in a function definition should be IDENTIFIERs and default values (ASSIGNMENTs)
+   * The arguments in a function definition should be IDENTIFIERs and default values(ASSIGNMENTs)
    */
   checkValidFunctionDefinitionArguments(args) {
     let isValidFlag = true;
@@ -10329,7 +10448,7 @@ var Parser = class {
   }
   /**
    * Helper that returns a list of identifiers of a list of variables
-   * i.e [a,b,c,d,...,N] = FUNCTION_CALL(), it returns a through N
+   * i.e[a, b, c, d,...,N] = FUNCTION_CALL(), it returns a through N
    */
   getVariableVector() {
     const tokens = [];
@@ -10598,7 +10717,7 @@ var Parser = class {
   /**
    * Helper that advances to the next token that's not a NL (new line)
    * @param next if true it starts by grabbing the next token
-   * TODO: maybe have a separated constant for the max of the counter??
+   * TODO: maybe have a separated constant for the max of the counter ??
    */
   skipNL(next = false) {
     let counter = 0;
@@ -10645,8 +10764,8 @@ var Parser = class {
   }
   /**
    * Helper that returns weather the current token or
-   * a provided one is a basic data type (IDENTIFIER, STRING, DATA_VECTOR or NUMBER)
-   * TODO consider structs {}
+   * a provided one is a basic data type(IDENTIFIER, STRING, DATA_VECTOR or NUMBER)
+   * TODO consider structs { }
    */
   isTokenDataType(token) {
     if (token !== null && token !== void 0) {
@@ -10741,6 +10860,11 @@ var Symbols = {
   COLON: ":",
   COMMA: ",",
   EQUALS: "=",
+  GRATER_THAN: ">",
+  LESS_THAN: "<",
+  AND: "&",
+  OR: "|",
+  EXCLAMATION: "!",
   SUBTRACTION: "-",
   ADDITION: "+",
   MULTIPLICATION: "*",
@@ -11121,9 +11245,6 @@ var Visitor = class {
             documentation: node?.functionData?.description ?? ""
           });
         } else if (parentType === "FUNCTION_CALL") {
-          console.log(
-            `LOG: undefined position (${node.value}): ${node?.position === void 0 ? "undefined" : "DEFINED"}`
-          );
           this.references.push({
             name: node.value,
             position: this.getExpressionPosition(node),
