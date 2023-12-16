@@ -80,7 +80,7 @@ export class Parser {
   }
 
   /*
-   * Helper function to advance to the next token
+   * Helper function to advance to the prev token
    */
   private getPrevToken(): Token | undefined {
     if (this.currentTokenIndex <= 0) {
@@ -111,6 +111,7 @@ export class Parser {
     if (
       currToken.content === 'end' ||
       currToken.content === 'endfunction' ||
+      currToken.content === 'endif' ||
       currToken.type === 'EOF'
     ) {
       this.getPrevToken();
@@ -309,6 +310,9 @@ export class Parser {
    * IMPORTANT: Expectes the current token to be '('
    */
   private parseIfStatement(): Statement {
+    const startingPosition = this.getPrevToken()?.position;
+    this.getNextToken();
+
     if (this.getCurrentToken().type !== 'LPARENT') {
       this.errors.push({
         message: `Expected a left parenthesis. Got ${this.stringifyTokenContent()}`,
@@ -430,6 +434,10 @@ export class Parser {
     );
 
     const context = this.getIntoNewContext()[1];
+    const position: Range = {
+      ...(startingPosition as Range),
+      end: this.getCurrentPosition().start,
+    };
 
     return {
       type: 'IF_STMNT',
@@ -438,7 +446,7 @@ export class Parser {
       LHE: {
         type: 'IF_STMNT',
         value: 'if', // TODO: here should maybe be all the conditions???
-        position: this.getCurrentPosition(),
+        position,
       },
       RHE: statements,
     };
@@ -448,13 +456,13 @@ export class Parser {
    * Returns true if the current token or the given token
    * it's 'end' or 'endif'
    */
-  private isEndIfToken(token?: Token) {
+  private isEndIfToken(token?: Token): boolean {
+    if (token !== undefined) {
+      return token.content === 'end' || token.content === 'endif';
+    }
     return (
-      (token !== undefined &&
-        (token.content === 'end' || token.content === 'endif')) ||
-      (token !== undefined &&
-        (this.getCurrentToken().content === 'end' ||
-          this.getCurrentToken().content === 'endif'))
+      this.getCurrentToken().content === 'end' ||
+      this.getCurrentToken().content === 'endif'
     );
   }
 
