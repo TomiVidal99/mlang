@@ -23,7 +23,7 @@ export class Parser {
   private warnings: LintingWarning[] = [];
   private readonly contextDepth: string[] = ['0'];
 
-  constructor(private readonly tokens: Token[]) {}
+  constructor(private readonly tokens: Token[]) { }
 
   public clearLintingMessages(): void {
     this.errors = [];
@@ -307,7 +307,7 @@ export class Parser {
 
   /**
    * Parses an If Statement
-   * IMPORTANT: Expectes the current token to be '('
+   * IMPORTANT: Expects the current token to be '('
    */
   private parseIfStatement(): Statement {
     const startingPosition = this.getPrevToken()?.position;
@@ -315,96 +315,31 @@ export class Parser {
 
     if (this.getCurrentToken().type !== 'LPARENT') {
       this.errors.push({
-        message: `Expected a left parenthesis. Got ${this.stringifyTokenContent()}`,
+        message: `Expected '('. Got ${this.stringifyTokenContent()}`,
         range: this.getCurrentPosition(),
         code: ERROR_CODES.EXPECTED_LPAREN_IF_STMNT,
       });
     }
 
+    // this do while should just parses what's inside the parenthesis
     let endToken: Token | undefined;
     let counter = 0;
-    // this do while should just parses what's inside the parenthesis
     do {
       this.skipNL(true);
-      if (
-        !this.isTokenValidBasicDataType(this.getCurrentToken()) &&
-        this.getCurrentToken().type !== 'RPARENT'
-      ) {
+      const [isValidCondition, conditionsEnded] = this.isValidCondition();
+      if (!isValidCondition) {
         this.errors.push({
-          code: ERROR_CODES.EXPECTED_VALID_IF_STMNT,
+          message: `Unexpected token in condition. Got ${this.getCurrentContent()}`,
+          code: ERROR_CODES.EXPECTED_VALID_SYMBOL_IF_STMNT,
           range: this.getCurrentPosition(),
-          message: `Unexpected token: "${JSON.stringify(
-            this.getCurrentToken().content,
-          )}"`,
         });
-        continue;
       }
-
-      if (this.getCurrentToken().type === 'RPARENT') {
+      if (conditionsEnded) {
         endToken = this.getCurrentToken();
+        this.skipNL(true);
         break;
       }
-
-      // next should be == > < <= >=
-      this.getNextToken();
-      if (
-        this.getCurrentToken().type !== 'EQUALS' &&
-        this.getCurrentToken().type !== 'GRATER_THAN' &&
-        this.getCurrentToken().type !== 'LESS_THAN'
-      ) {
-        this.errors.push({
-          code: ERROR_CODES.EXPECTED_VALID_IF_STMNT,
-          range: this.getCurrentPosition(),
-          message: `Unexpected token: "${JSON.stringify(
-            this.getCurrentToken().content,
-          )}"`,
-        });
-        continue;
-      }
-      // skip the next equals if exists
-      if (this.getNextToken()?.type !== 'EQUALS') {
-        this.getPrevToken();
-      }
-
-      this.getNextToken();
-      if (!this.isTokenValidBasicDataType(this.getCurrentToken())) {
-        this.errors.push({
-          code: ERROR_CODES.EXPECTED_VALID_IF_STMNT,
-          range: this.getCurrentPosition(),
-          message: `Unexpected token: "${JSON.stringify(
-            this.getCurrentToken().content,
-          )}"`,
-        });
-        continue;
-      }
-
-      if (this.skipNL(true).type === 'AND') {
-        if (this.skipNL(true).type !== 'AND') {
-          this.errors.push({
-            code: ERROR_CODES.EXPECTED_VALID_SYMBOL_IF_STMNT,
-            range: this.getCurrentPosition(),
-            message: `Unexpected token: "${JSON.stringify(
-              this.getCurrentToken().content,
-            )}"`,
-          });
-          continue;
-        }
-      } else if (this.skipNL().type === 'OR') {
-        if (this.skipNL(true).type !== 'OR') {
-          this.errors.push({
-            code: ERROR_CODES.EXPECTED_VALID_SYMBOL_IF_STMNT,
-            range: this.getCurrentPosition(),
-            message: `Unexpected token: "${JSON.stringify(
-              this.getCurrentToken().content,
-            )}"`,
-          });
-          continue;
-        }
-      }
-
-      endToken = this.skipNL(true);
-      this.getPrevToken();
-
+      this.skipNL(true);
       counter++;
     } while (
       endToken !== undefined &&
@@ -439,6 +374,8 @@ export class Parser {
       end: this.getCurrentPosition().start,
     };
 
+    this.skipNL(true);
+
     return {
       type: 'IF_STMNT',
       supressOutput: true,
@@ -450,6 +387,138 @@ export class Parser {
       },
       RHE: statements,
     };
+  }
+
+  /**
+   * Helper that returns the content of the current token as string
+   */
+  private getCurrentContent(): string {
+    return JSON.stringify(this.getCurrentToken().content);
+  }
+
+  /**
+   * Check if the current token and the next one are valid
+   * concatenators
+   * (concatenators: && and ||)
+   * IMPORTANT: expects that the current token it's the first one to be checked
+   * @returns boolean - true if it's valid
+   */
+  private isValidConditionConcat(): boolean {
+    if (this.getCurrentToken().type === 'AND') {
+      if (this.getNextToken()?.type !== 'AND') {
+        this.errors.push({
+          message: `Expected a "&" symbol. Got ${JSON.stringify(
+            this.getCurrentToken().content,
+          )}`,
+          code: ERROR_CODES.EXPECTED_VALID_SYMBOL_IF_STMNT,
+          range: this.getCurrentPosition(),
+        });
+        return false;
+      }
+      return true;
+    } else if (this.getCurrentToken().type === 'OR') {
+      if (this.getNextToken()?.type !== 'OR') {
+        this.errors.push({
+          message: `Expected a "|" symbol. Got ${JSON.stringify(
+            this.getCurrentToken().content,
+          )}`,
+          code: ERROR_CODES.EXPECTED_VALID_SYMBOL_IF_STMNT,
+          range: this.getCurrentPosition(),
+        });
+        return false;
+      }
+      return true;
+    }
+    return false;
+  }
+
+  /**
+   * Helper that check weather the current token and the following ones
+   * make a valid condition.
+   * finishedConditions it's weather it found a ')' at the end or not
+   * IMPORTANT: it expects that the current token it's the first data type
+   * IMPORTANT: it ends in the condition concatenators or ')'
+   * @returns [boolean, boolean] - [isValidCondition, finishedConditions]
+   */
+  private isValidCondition(): [boolean, boolean] {
+    if (!this.isValidConditionDataType()) {
+      this.errors.push({
+        code: ERROR_CODES.EXPECTED_VALID_IF_STMNT,
+        range: this.getCurrentPosition(),
+        message: `Unexpected token: "${JSON.stringify(
+          this.getCurrentToken().content,
+        )}"`,
+      });
+      return [false, false];
+    }
+
+    switch (this.skipNL(true).type) {
+      case 'RPARENT':
+        return [true, true];
+      case 'AND':
+      case 'OR':
+        this.skipNL(true);
+        this.isValidComparingSymbol();
+        this.skipNL(true);
+        if (!this.isValidConditionDataType()) return [false, false];
+        if (this.skipNL(true).type === 'RPARENT') return [true, true];
+        if (!this.isValidConditionConcat()) return [false, false];
+        return [true, false];
+    }
+
+    return [true, false];
+  }
+
+  /**
+   * Helper that returns weather current token it's a valid data type
+   * for a condition
+   * IMPORTANT: expects that the current token it's the one being checked
+   * @returns boolean - true if the data type it's valid
+   */
+  private isValidConditionDataType(): boolean {
+    return (
+      this.isTokenValidBasicDataType(this.getCurrentToken()) ||
+      this.getCurrentToken().type === 'VECTOR'
+    );
+  }
+
+  /**
+   * Helper that check weather the current and the next symbol
+   * are valid comparing symbols (==, <, >, <=, >=)
+   * IMPORTANT: expects that the current symbol it's the one to check
+   * @returns boolean - true if it is a valid comparing symbol
+   */
+  private isValidComparingSymbol(): boolean {
+    if (this.getCurrentToken().type !== 'EQUALS') {
+      const nextToken = this.getNextToken();
+      if (nextToken?.type !== 'EQUALS') {
+        this.errors.push({
+          code: ERROR_CODES.EXPECTED_VALID_IF_STMNT,
+          range: this.getCurrentPosition(nextToken),
+          message: `Unexpected token: "${JSON.stringify(nextToken?.content)}"`,
+        });
+        return false;
+      }
+    } else if (
+      this.getCurrentToken().type !== 'GRATER_THAN' &&
+      this.getCurrentToken().type !== 'LESS_THAN'
+    ) {
+      this.errors.push({
+        code: ERROR_CODES.EXPECTED_VALID_IF_STMNT,
+        range: this.getCurrentPosition(),
+        message: `Unexpected token: "${JSON.stringify(
+          this.getCurrentToken().content,
+        )}"`,
+      });
+      return false;
+    }
+
+    // skip the next equals if exists
+    if (this.getNextToken()?.type !== 'EQUALS') {
+      this.getPrevToken();
+    }
+
+    return true;
   }
 
   /**
@@ -490,9 +559,8 @@ export class Parser {
         (comma.type !== 'COMMA' && comma.type !== 'RSQUIRLY')
       ) {
         this.errors.push({
-          message: `Unexpected struct value. Got "${
-            comma?.type ?? 'UNDEFINED'
-          }". Code ${ERROR_CODES.STRUCT_BAD_COMMA.toString()}`,
+          message: `Unexpected struct value. Got "${comma?.type ?? 'UNDEFINED'
+            }". Code ${ERROR_CODES.STRUCT_BAD_COMMA.toString()}`,
           code: ERROR_CODES.STRUCT_BAD_ARGS,
           range: this.getCurrentPosition(),
         });
@@ -529,9 +597,8 @@ export class Parser {
       token.type !== 'STRUCT'
     ) {
       this.errors.push({
-        message: `Unexpected struct value. Got "${
-          token.type
-        }". Code ${ERROR_CODES.STRUCT_BAD_ARGS.toString()}`,
+        message: `Unexpected struct value. Got "${token.type
+          }". Code ${ERROR_CODES.STRUCT_BAD_ARGS.toString()}`,
         code: ERROR_CODES.STRUCT_BAD_ARGS,
         range: this.getCurrentPosition(),
       });
@@ -1167,9 +1234,8 @@ export class Parser {
     const tokens: Token[] = [];
     if (this.getCurrentToken().type !== 'LPARENT') {
       this.errors.push({
-        message: `Expected '(' for function call. Got: ${
-          this.getCurrentToken().type
-        }`,
+        message: `Expected '(' for function call. Got: ${this.getCurrentToken().type
+          }`,
         range: this.getCurrentPosition(),
         code: 10,
       });

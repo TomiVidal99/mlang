@@ -196,3 +196,34 @@ test('Octave/Matlab Parser, should parse if statements', function () {
 
   expect(errors.length).toStrictEqual(0);
 });
+
+test('Octave/Matlab Parser, should parse if statements with new lines', function () {
+  const inputCode = `
+    a = 1;
+    if (
+      a 
+      ==
+      1
+      )
+      disp("true");
+    end
+  `;
+
+  const tokenizer = new Tokenizer(inputCode);
+  const tokens = tokenizer.getAllTokens();
+  const parser = new Parser(tokens);
+  const program = parser.makeAST();
+  const visitor = new Visitor();
+  visitor.visitProgram(program);
+
+  const errors = parser.getErrors();
+
+  // console.log('TOKENS: ' + JSON.stringify(tokens));
+  console.log('STATEMENTS: ' + JSON.stringify(program.body));
+
+  if (errors.length > 0) {
+    console.log('ERRORS: ' + JSON.stringify(errors));
+  }
+
+  expect(errors.length).toStrictEqual(0);
+});

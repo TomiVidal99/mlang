@@ -9751,7 +9751,7 @@ var Parser = class {
     }
   }
   /*
-   * Helper function to advance to the next token
+   * Helper function to advance to the prev token
    */
   getPrevToken() {
     if (this.currentTokenIndex <= 0) {
@@ -9772,7 +9772,7 @@ var Parser = class {
     const nextToken = this.getNextToken();
     if (nextToken === void 0)
       return null;
-    if (currToken.content === "end" || currToken.content === "endfunction" || currToken.type === "EOF") {
+    if (currToken.content === "end" || currToken.content === "endfunction" || currToken.content === "endif" || currToken.type === "EOF") {
       this.getPrevToken();
       return null;
     }
@@ -9905,12 +9905,14 @@ var Parser = class {
   }
   /**
    * Parses an If Statement
-   * IMPORTANT: Expectes the current token to be '('
+   * IMPORTANT: Expects the current token to be '('
    */
   parseIfStatement() {
+    const startingPosition = this.getPrevToken()?.position;
+    this.getNextToken();
     if (this.getCurrentToken().type !== "LPARENT") {
       this.errors.push({
-        message: `Expected a left parenthesis. Got ${this.stringifyTokenContent()}`,
+        message: `Expected '('. Got ${this.stringifyTokenContent()}`,
         range: this.getCurrentPosition(),
         code: ERROR_CODES.EXPECTED_LPAREN_IF_STMNT
       });
@@ -9919,66 +9921,20 @@ var Parser = class {
     let counter = 0;
     do {
       this.skipNL(true);
-      if (!this.isTokenValidBasicDataType(this.getCurrentToken())) {
+      const [isValidCondition, conditionsEnded] = this.isValidCondition();
+      if (!isValidCondition) {
         this.errors.push({
-          code: ERROR_CODES.EXPECTED_VALID_IF_STMNT,
-          range: this.getCurrentPosition(),
-          message: `Unexpected token: "${JSON.stringify(
-            this.getCurrentToken().content
-          )}"`
+          message: `Unexpected token in condition. Got ${this.getCurrentContent()}`,
+          code: ERROR_CODES.EXPECTED_VALID_SYMBOL_IF_STMNT,
+          range: this.getCurrentPosition()
         });
-        continue;
       }
-      this.getNextToken();
-      if (this.getCurrentToken().type !== "EQUALS" && this.getCurrentToken().type !== "GRATER_THAN" && this.getCurrentToken().type !== "LESS_THAN") {
-        this.errors.push({
-          code: ERROR_CODES.EXPECTED_VALID_IF_STMNT,
-          range: this.getCurrentPosition(),
-          message: `Unexpected token: "${JSON.stringify(
-            this.getCurrentToken().content
-          )}"`
-        });
-        continue;
+      if (conditionsEnded) {
+        endToken = this.getCurrentToken();
+        this.skipNL(true);
+        break;
       }
-      if (this.getNextToken()?.type !== "EQUALS") {
-        this.getPrevToken();
-      }
-      this.getNextToken();
-      if (!this.isTokenValidBasicDataType(this.getCurrentToken())) {
-        this.errors.push({
-          code: ERROR_CODES.EXPECTED_VALID_IF_STMNT,
-          range: this.getCurrentPosition(),
-          message: `Unexpected token: "${JSON.stringify(
-            this.getCurrentToken().content
-          )}"`
-        });
-        continue;
-      }
-      if (this.skipNL(true).type === "AND") {
-        if (this.skipNL(true).type !== "AND") {
-          this.errors.push({
-            code: ERROR_CODES.EXPECTED_VALID_SYMBOL_IF_STMNT,
-            range: this.getCurrentPosition(),
-            message: `Unexpected token: "${JSON.stringify(
-              this.getCurrentToken().content
-            )}"`
-          });
-          continue;
-        }
-      } else if (this.skipNL().type === "OR") {
-        if (this.skipNL(true).type !== "OR") {
-          this.errors.push({
-            code: ERROR_CODES.EXPECTED_VALID_SYMBOL_IF_STMNT,
-            range: this.getCurrentPosition(),
-            message: `Unexpected token: "${JSON.stringify(
-              this.getCurrentToken().content
-            )}"`
-          });
-          continue;
-        }
-      }
-      endToken = this.skipNL(true);
-      this.getPrevToken();
+      this.skipNL(true);
       counter++;
     } while (endToken !== void 0 && counter < MAX_STATEMENTS && endToken.type !== "RPARENT");
     this.logErrorMaxCallsReached(
@@ -9987,20 +9943,24 @@ var Parser = class {
       ERROR_CODES.EXCEEDED_CALLS_RPAREN_IF_STMNT
     );
     const statements = [];
-    this.logErrorMaxCallsReached(
-      counter,
-      "Maximum tries reached when parsing if statement",
-      ERROR_CODES.EXCEEDED_CALLS_PARSING_STMNTS_IF_STMNT
-    );
-    this.skipNL(true);
-    if (this.getCurrentToken().content !== "end" && this.getCurrentToken().content !== "endif") {
-      this.errors.push({
-        code: ERROR_CODES.MISSING_END_IF_STMNT,
-        range: this.getCurrentPosition(),
-        message: `Missing 'end' or 'endif'`
-      });
+    let maxCalls = 0;
+    while (!this.isEndIfToken() && !this.isEOF() && maxCalls < MAX_STATEMENTS) {
+      const statement = this.parseStatement();
+      if (statement !== null)
+        statements.push(statement);
+      maxCalls++;
     }
+    this.logErrorMaxCallsReached(
+      maxCalls,
+      "Could not find closing keyword 'end' or 'endif'",
+      ERROR_CODES.MISSING_END_IF_STMNT
+    );
     const context = this.getIntoNewContext()[1];
+    const position = {
+      ...startingPosition,
+      end: this.getCurrentPosition().start
+    };
+    this.skipNL(true);
     return {
       type: "IF_STMNT",
       supressOutput: true,
@@ -10009,10 +9969,139 @@ var Parser = class {
         type: "IF_STMNT",
         value: "if",
         // TODO: here should maybe be all the conditions???
-        position: this.getCurrentPosition()
+        position
       },
       RHE: statements
     };
+  }
+  /**
+   * Helper that returns the content of the current token as string
+   */
+  getCurrentContent() {
+    return JSON.stringify(this.getCurrentToken().content);
+  }
+  /**
+   * Check if the current token and the next one are valid
+   * concatenators
+   * (concatenators: && and ||)
+   * IMPORTANT: expects that the current token it's the first one to be checked
+   * @returns boolean - true if it's valid
+   */
+  isValidConditionConcat() {
+    if (this.getCurrentToken().type === "AND") {
+      if (this.getNextToken()?.type !== "AND") {
+        this.errors.push({
+          message: `Expected a "&" symbol. Got ${JSON.stringify(
+            this.getCurrentToken().content
+          )}`,
+          code: ERROR_CODES.EXPECTED_VALID_SYMBOL_IF_STMNT,
+          range: this.getCurrentPosition()
+        });
+        return false;
+      }
+      return true;
+    } else if (this.getCurrentToken().type === "OR") {
+      if (this.getNextToken()?.type !== "OR") {
+        this.errors.push({
+          message: `Expected a "|" symbol. Got ${JSON.stringify(
+            this.getCurrentToken().content
+          )}`,
+          code: ERROR_CODES.EXPECTED_VALID_SYMBOL_IF_STMNT,
+          range: this.getCurrentPosition()
+        });
+        return false;
+      }
+      return true;
+    }
+    return false;
+  }
+  /**
+   * Helper that check weather the current token and the following ones
+   * make a valid condition.
+   * finishedConditions it's weather it found a ')' at the end or not
+   * IMPORTANT: it expects that the current token it's the first data type
+   * IMPORTANT: it ends in the condition concatenators or ')'
+   * @returns [boolean, boolean] - [isValidCondition, finishedConditions]
+   */
+  isValidCondition() {
+    if (!this.isValidConditionDataType()) {
+      this.errors.push({
+        code: ERROR_CODES.EXPECTED_VALID_IF_STMNT,
+        range: this.getCurrentPosition(),
+        message: `Unexpected token: "${JSON.stringify(
+          this.getCurrentToken().content
+        )}"`
+      });
+      return [false, false];
+    }
+    switch (this.skipNL(true).type) {
+      case "RPARENT":
+        return [true, true];
+      case "AND":
+      case "OR":
+        this.skipNL(true);
+        this.isValidComparingSymbol();
+        this.skipNL(true);
+        if (!this.isValidConditionDataType())
+          return [false, false];
+        if (this.skipNL(true).type === "RPARENT")
+          return [true, true];
+        if (!this.isValidConditionConcat())
+          return [false, false];
+        return [true, false];
+    }
+    return [true, false];
+  }
+  /**
+   * Helper that returns weather current token it's a valid data type
+   * for a condition
+   * IMPORTANT: expects that the current token it's the one being checked
+   * @returns boolean - true if the data type it's valid
+   */
+  isValidConditionDataType() {
+    return this.isTokenValidBasicDataType(this.getCurrentToken()) || this.getCurrentToken().type === "VECTOR";
+  }
+  /**
+   * Helper that check weather the current and the next symbol
+   * are valid comparing symbols (==, <, >, <=, >=)
+   * IMPORTANT: expects that the current symbol it's the one to check
+   * @returns boolean - true if it is a valid comparing symbol
+   */
+  isValidComparingSymbol() {
+    if (this.getCurrentToken().type !== "EQUALS") {
+      const nextToken = this.getNextToken();
+      if (nextToken?.type !== "EQUALS") {
+        this.errors.push({
+          code: ERROR_CODES.EXPECTED_VALID_IF_STMNT,
+          range: this.getCurrentPosition(nextToken),
+          message: `Unexpected token: "${JSON.stringify(nextToken?.content)}"`
+        });
+        return false;
+      }
+    } else if (this.getCurrentToken().type !== "GRATER_THAN" && this.getCurrentToken().type !== "LESS_THAN") {
+      this.errors.push({
+        code: ERROR_CODES.EXPECTED_VALID_IF_STMNT,
+        range: this.getCurrentPosition(),
+        message: `Unexpected token: "${JSON.stringify(
+          this.getCurrentToken().content
+        )}"`
+      });
+      return false;
+    }
+    if (this.getNextToken()?.type !== "EQUALS") {
+      this.getPrevToken();
+    }
+    return true;
+  }
+  /**
+   * Returns true if the current token or the given token
+   * it's 'end' or 'endif'
+   */
+  isEndIfToken(token) {
+    if (token !== void 0) {
+      return token.content === "end" || token.content === "endif";
+    }
+    return this.getCurrentToken().content === "end" || this.getCurrentToken().content === "endif";
   }
   /**
    * Helper that returns a 'struct' Token if the grammar it's correct
