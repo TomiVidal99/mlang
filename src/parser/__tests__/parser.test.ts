@@ -86,18 +86,18 @@ test('Octave/Matlab Parser, should parse empty function definition with comments
   const errors = parser.getErrors();
 
   expect(errors.length).toStrictEqual(0);
-  expect(parsedStatement.type).toStrictEqual('FUNCTION_DEFINITION');
-  expect(parsedStatement.supressOutput).toStrictEqual(true);
-  expect(parsedStatement.LHE.type).toStrictEqual('IDENTIFIER');
-  expect(parsedStatement.LHE.value).toStrictEqual('myCoolFunction');
-  expect(parsedStatement.LHE.functionData.closingToken.type).toStrictEqual(
+  expect(parsedStatement?.type).toStrictEqual('FUNCTION_DEFINITION');
+  expect(parsedStatement?.supressOutput).toStrictEqual(true);
+  expect(parsedStatement?.LHE?.type).toStrictEqual('IDENTIFIER');
+  expect(parsedStatement?.LHE?.value).toStrictEqual('myCoolFunction');
+  expect(parsedStatement?.LHE?.functionData?.closingToken?.type).toStrictEqual(
     'KEYWORD',
   );
-  expect(parsedStatement.LHE.functionData.closingToken.content).toStrictEqual(
-    'end',
-  );
   expect(
-    parsedStatement.LHE.functionData.contextCreated.length > 0,
+    parsedStatement?.LHE?.functionData?.closingToken?.content,
+  ).toStrictEqual('end');
+  expect(
+    parsedStatement?.LHE?.functionData?.contextCreated?.length > 0,
   ).toStrictEqual(true);
 });
 
@@ -188,7 +188,7 @@ test('Octave/Matlab Parser, should parse if statements', function () {
   const errors = parser.getErrors();
 
   // console.log('TOKENS: ' + JSON.stringify(tokens));
-  console.log('STATEMENTS: ' + JSON.stringify(program.body));
+  // console.log('STATEMENTS: ' + JSON.stringify(program.body));
 
   if (errors.length > 0) {
     console.log('ERRORS: ' + JSON.stringify(errors));

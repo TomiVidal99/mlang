@@ -23,7 +23,7 @@ export class Parser {
   private warnings: LintingWarning[] = [];
   private readonly contextDepth: string[] = ['0'];
 
-  constructor(private readonly tokens: Token[]) { }
+  constructor(private readonly tokens: Token[]) {}
 
   public clearLintingMessages(): void {
     this.errors = [];
@@ -326,6 +326,19 @@ export class Parser {
     let counter = 0;
     do {
       this.skipNL(true);
+      if (!this.isValidConditionDataType()) {
+        this.errors.push({
+          code: ERROR_CODES.EXPECTED_VALID_IF_STMNT,
+          range: this.getCurrentPosition(),
+          message: `Unexpected token: "${JSON.stringify(
+            this.getCurrentToken().content,
+          )}"`,
+        });
+        endToken = this.getCurrentToken();
+        this.skipNL(true);
+        break;
+      }
+      this.skipNL(true);
       const [isValidCondition, conditionsEnded] = this.isValidCondition();
       if (!isValidCondition) {
         this.errors.push({
@@ -438,21 +451,11 @@ export class Parser {
    * finishedConditions it's weather it found a ')' at the end or not
    * IMPORTANT: it expects that the current token it's the first data type
    * IMPORTANT: it ends in the condition concatenators or ')'
+   * TODO: better check the recursion here. It may cause problems
    * @returns [boolean, boolean] - [isValidCondition, finishedConditions]
    */
   private isValidCondition(): [boolean, boolean] {
-    if (!this.isValidConditionDataType()) {
-      this.errors.push({
-        code: ERROR_CODES.EXPECTED_VALID_IF_STMNT,
-        range: this.getCurrentPosition(),
-        message: `Unexpected token: "${JSON.stringify(
-          this.getCurrentToken().content,
-        )}"`,
-      });
-      return [false, false];
-    }
-
-    switch (this.skipNL(true).type) {
+    switch (this.getCurrentToken().type) {
       case 'RPARENT':
         return [true, true];
       case 'AND':
@@ -464,6 +467,23 @@ export class Parser {
         if (this.skipNL(true).type === 'RPARENT') return [true, true];
         if (!this.isValidConditionConcat()) return [false, false];
         return [true, false];
+      default: {
+        // when there's a comparing symbol
+        if (!this.isValidComparingSymbol()) return [false, false];
+        this.skipNL(true);
+        if (!this.isValidConditionDataType()) {
+          this.errors.push({
+            message: `Expected a valid data type. Got ${this.getCurrentContent()}`,
+            code: ERROR_CODES.EXPECTED_VALID_DATA_TYPE_IF_STMNT,
+            range: this.getCurrentPosition(),
+          });
+        }
+        this.skipNL(true);
+        const [isValidCondition, finishedConditions] = this.isValidCondition();
+        if (finishedConditions) return [true, true];
+        if (!isValidCondition) return [false, true];
+        break;
+      }
     }
 
     return [true, false];
@@ -489,36 +509,40 @@ export class Parser {
    * @returns boolean - true if it is a valid comparing symbol
    */
   private isValidComparingSymbol(): boolean {
-    if (this.getCurrentToken().type !== 'EQUALS') {
+    if (this.getCurrentToken().type === 'EQUALS') {
       const nextToken = this.getNextToken();
       if (nextToken?.type !== 'EQUALS') {
         this.errors.push({
           code: ERROR_CODES.EXPECTED_VALID_IF_STMNT,
           range: this.getCurrentPosition(nextToken),
-          message: `Unexpected token: "${JSON.stringify(nextToken?.content)}"`,
+          message: `Unexpected token: "${JSON.stringify(
+            nextToken?.content,
+          )}". Was expecting '='`,
         });
+        this.getPrevToken();
         return false;
       }
+      return true;
     } else if (
-      this.getCurrentToken().type !== 'GRATER_THAN' &&
-      this.getCurrentToken().type !== 'LESS_THAN'
+      this.getCurrentToken().type === 'GRATER_THAN' ||
+      this.getCurrentToken().type === 'LESS_THAN'
     ) {
+      // skip the next equals if exists
+      if (this.getNextToken()?.type !== 'EQUALS') {
+        this.getPrevToken();
+      }
+      return true;
+    } else {
       this.errors.push({
         code: ERROR_CODES.EXPECTED_VALID_IF_STMNT,
         range: this.getCurrentPosition(),
         message: `Unexpected token: "${JSON.stringify(
           this.getCurrentToken().content,
-        )}"`,
+        )}. Was expecting '<' or '>'"`,
       });
-      return false;
     }
 
-    // skip the next equals if exists
-    if (this.getNextToken()?.type !== 'EQUALS') {
-      this.getPrevToken();
-    }
-
-    return true;
+    return false;
   }
 
   /**
@@ -559,8 +583,9 @@ export class Parser {
         (comma.type !== 'COMMA' && comma.type !== 'RSQUIRLY')
       ) {
         this.errors.push({
-          message: `Unexpected struct value. Got "${comma?.type ?? 'UNDEFINED'
-            }". Code ${ERROR_CODES.STRUCT_BAD_COMMA.toString()}`,
+          message: `Unexpected struct value. Got "${
+            comma?.type ?? 'UNDEFINED'
+          }". Code ${ERROR_CODES.STRUCT_BAD_COMMA.toString()}`,
           code: ERROR_CODES.STRUCT_BAD_ARGS,
           range: this.getCurrentPosition(),
         });
@@ -597,8 +622,9 @@ export class Parser {
       token.type !== 'STRUCT'
     ) {
       this.errors.push({
-        message: `Unexpected struct value. Got "${token.type
-          }". Code ${ERROR_CODES.STRUCT_BAD_ARGS.toString()}`,
+        message: `Unexpected struct value. Got "${
+          token.type
+        }". Code ${ERROR_CODES.STRUCT_BAD_ARGS.toString()}`,
         code: ERROR_CODES.STRUCT_BAD_ARGS,
         range: this.getCurrentPosition(),
       });
@@ -1234,8 +1260,9 @@ export class Parser {
     const tokens: Token[] = [];
     if (this.getCurrentToken().type !== 'LPARENT') {
       this.errors.push({
-        message: `Expected '(' for function call. Got: ${this.getCurrentToken().type
-          }`,
+        message: `Expected '(' for function call. Got: ${
+          this.getCurrentToken().type
+        }`,
         range: this.getCurrentPosition(),
         code: 10,
       });

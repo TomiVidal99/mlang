@@ -9562,7 +9562,8 @@ var ERROR_CODES = {
   EXPECTED_VALID_IF_STMNT: 4002,
   EXPECTED_VALID_SYMBOL_IF_STMNT: 4003,
   EXCEEDED_CALLS_PARSING_STMNTS_IF_STMNT: 4004,
-  MISSING_END_IF_STMNT: 4005
+  MISSING_END_IF_STMNT: 4005,
+  EXPECTED_VALID_DATA_TYPE_IF_STMNT: 4006
 };
 
 // src/constants/cero_position.ts
@@ -9921,6 +9922,19 @@ var Parser = class {
     let counter = 0;
     do {
       this.skipNL(true);
+      if (!this.isValidConditionDataType()) {
+        this.errors.push({
+          code: ERROR_CODES.EXPECTED_VALID_IF_STMNT,
+          range: this.getCurrentPosition(),
+          message: `Unexpected token: "${JSON.stringify(
+            this.getCurrentToken().content
+          )}"`
+        });
+        endToken = this.getCurrentToken();
+        this.skipNL(true);
+        break;
+      }
+      this.skipNL(true);
       const [isValidCondition, conditionsEnded] = this.isValidCondition();
       if (!isValidCondition) {
         this.errors.push({
@@ -10021,20 +10035,11 @@ var Parser = class {
    * finishedConditions it's weather it found a ')' at the end or not
    * IMPORTANT: it expects that the current token it's the first data type
    * IMPORTANT: it ends in the condition concatenators or ')'
+   * TODO: better check the recursion here. It may cause problems
    * @returns [boolean, boolean] - [isValidCondition, finishedConditions]
    */
   isValidCondition() {
-    if (!this.isValidConditionDataType()) {
-      this.errors.push({
-        code: ERROR_CODES.EXPECTED_VALID_IF_STMNT,
-        range: this.getCurrentPosition(),
-        message: `Unexpected token: "${JSON.stringify(
-          this.getCurrentToken().content
-        )}"`
-      });
-      return [false, false];
-    }
-    switch (this.skipNL(true).type) {
+    switch (this.getCurrentToken().type) {
       case "RPARENT":
         return [true, true];
       case "AND":
@@ -10049,6 +10054,25 @@ var Parser = class {
         if (!this.isValidConditionConcat())
           return [false, false];
         return [true, false];
+      default: {
+        if (!this.isValidComparingSymbol())
+          return [false, false];
+        this.skipNL(true);
+        if (!this.isValidConditionDataType()) {
+          this.errors.push({
+            message: `Expected a valid data type. Got ${this.getCurrentContent()}`,
+            code: ERROR_CODES.EXPECTED_VALID_DATA_TYPE_IF_STMNT,
+            range: this.getCurrentPosition()
+          });
+        }
+        this.skipNL(true);
+        const [isValidCondition, finishedConditions] = this.isValidCondition();
+        if (finishedConditions)
+          return [true, true];
+        if (!isValidCondition)
+          return [false, true];
+        break;
+      }
     }
     return [true, false];
   }
@@ -10068,30 +10092,35 @@ var Parser = class {
    * @returns boolean - true if it is a valid comparing symbol
    */
   isValidComparingSymbol() {
-    if (this.getCurrentToken().type !== "EQUALS") {
+    if (this.getCurrentToken().type === "EQUALS") {
       const nextToken = this.getNextToken();
       if (nextToken?.type !== "EQUALS") {
         this.errors.push({
           code: ERROR_CODES.EXPECTED_VALID_IF_STMNT,
           range: this.getCurrentPosition(nextToken),
-          message: `Unexpected token: "${JSON.stringify(nextToken?.content)}"`
+          message: `Unexpected token: "${JSON.stringify(
+            nextToken?.content
+          )}". Was expecting '='`
         });
+        this.getPrevToken();
         return false;
       }
-    } else if (this.getCurrentToken().type !== "GRATER_THAN" && this.getCurrentToken().type !== "LESS_THAN") {
+      return true;
+    } else if (this.getCurrentToken().type === "GRATER_THAN" || this.getCurrentToken().type === "LESS_THAN") {
+      if (this.getNextToken()?.type !== "EQUALS") {
+        this.getPrevToken();
+      }
+      return true;
+    } else {
       this.errors.push({
         code: ERROR_CODES.EXPECTED_VALID_IF_STMNT,
         range: this.getCurrentPosition(),
         message: `Unexpected token: "${JSON.stringify(
           this.getCurrentToken().content
-        )}"`
+        )}. Was expecting '<' or '>'"`
       });
-      return false;
     }
-    if (this.getNextToken()?.type !== "EQUALS") {
-      this.getPrevToken();
-    }
-    return true;
+    return false;
   }
   /**
    * Returns true if the current token or the given token
