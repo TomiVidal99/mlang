@@ -1,15 +1,44 @@
-import { Token, getTokenFromSymbols } from "../types";
-import { getKeywordsFromCompletion, getRowsAndColsInCursor, isLetter, isNumber } from "../utils";
-import {Range} from "vscode-languageserver";
+import { type Token, getTokenFromSymbols } from '../types';
+import {
+  getKeywordsFromCompletion,
+  getNataiveFunctionsList,
+  getRowsAndColsInCursor,
+  isLetter,
+  isNumber,
+} from '../utils';
+import { type Range } from 'vscode-languageserver';
+
+const MAX_TOKENS_CALLS = 10000 as const;
 
 export class Tokenizer {
+  private text: string;
   private currPos = 0;
   private nextPos = 0;
   private currChar: string;
   private nextChar: string;
-  private tokens: Token[] = [];
+  private readonly tokens: Token[] = [];
+  private readonly keywords = getKeywordsFromCompletion();
+  private readonly nativeFunctions = getNataiveFunctionsList();
 
-  constructor(private text: string) {
+  constructor(text = '') {
+    this.text = text;
+    this.readChar();
+  }
+
+  private setInitialConditions(): void {
+    this.currPos = 0;
+    this.nextPos = 0;
+    this.currChar = '';
+    this.nextChar = '';
+    this.tokens.length = 0;
+  }
+
+  /**
+   * Updates the current text to the provided one.
+   */
+  public updateText(text: string): void {
+    this.text = text;
+    this.setInitialConditions();
     this.readChar();
   }
 
@@ -19,9 +48,23 @@ export class Tokenizer {
    */
   public getAllTokens(): Token[] {
     const tokens: Token[] = [];
+    let counter = 0;
     do {
       tokens.push(this.getNextToken());
-    } while (tokens[tokens.length - 1].type !== "EOF");
+      counter++;
+    } while (
+      tokens[tokens.length - 1].type !== 'EOF' &&
+      counter <= MAX_TOKENS_CALLS
+    );
+
+    if (counter >= MAX_TOKENS_CALLS) {
+      throw new Error(
+        'Tokens calls exeeded. ' +
+          JSON.stringify(this.text) +
+          ' -> ' +
+          JSON.stringify(this.tokens.map((t) => t.type)),
+      );
+    }
 
     return tokens;
   }
@@ -30,62 +73,86 @@ export class Tokenizer {
    * Gets the next token
    */
   public getNextToken(): Token {
-
     // ignore spaces and jump lines
-    while (/\s/.test(this.currChar)) {
+    while (this.currChar === ' ') {
       this.readChar();
     }
 
     const token = getTokenFromSymbols(this.currChar);
-    if (token && this.isValidStartingToken(token)) {
+    if (token !== undefined && this.isValidStartingToken(token)) {
       this.readChar();
       return this.addToken({
         ...token,
-        position: this.getPosition(token.type !== "EOF" ? token.content : ""),
+        position: this.getPositionAfterCursor(
+          token.type !== 'EOF' ? (token.content as string) : '',
+        ),
       });
     }
 
-    if (this.currChar === "#" || this.currChar === "%") {
+    if (this.currChar === '#' || this.currChar === '%') {
       const comment = this.readComment();
       return this.addToken({
-        type: "COMMENT",
+        type: 'COMMENT',
         content: comment,
-        position: this.getPosition(comment),
+        position: this.getPositionAfterCursor(comment),
       });
     } else if (isLetter(this.currChar)) {
-      const intialPos = this.currPos;
+      // const initialPos = this.currPos;
       const literal = this.readLiteral();
-      const postPos = this.currPos;
-      this.currPos = intialPos-1;
-      const position = this.getPosition(literal);
-      this.currPos = postPos;
+      // const postPos = this.currPos;
+      // this.currPos = initialPos - 1;
+      // const prevPos = this.getPosition(literal);
+      // this.currPos = postPos;
       return this.addToken({
         ...this.tokenFromLiteral(literal),
-        position,
+        position: this.getPositionAfterCursor(literal),
       });
     } else if (isNumber(this.currChar)) {
       const number = this.readNumber();
       return this.addToken({
-        type: "NUMBER",
+        type: 'NUMBER',
         content: number,
-        position: this.getPosition(number),
+        position: this.getPositionAfterCursor(number),
       });
     } else if (this.currChar === '"' || this.currChar === "'") {
       const str = this.readLiteralString();
       return this.addToken({
-        type: "STRING",
+        type: 'STRING',
         content: str,
-        position: this.getPosition(str),
+        position: this.getPositionAfterCursor(str),
       });
     } else {
       this.readChar();
       return this.addToken({
-        type: "ILLEGAL",
-        content: "illegal",
-        position: null,
+        type: 'ILLEGAL',
+        content: 'illegal',
+        position: this.getPositionAfterCursor(this.currChar),
       });
     }
+  }
 
+  /**
+   * Returns the Range of a character in the text
+   * considering that it starts after the token content has been read
+   */
+  private getPositionAfterCursor(content: string): Range {
+    const initialPosition = this.currPos - content.length;
+    const finalPosition = this.currPos;
+    this.currPos = initialPosition;
+    const [line, character] = this.getRowsColsCursor();
+    const [lineEndPoint, characterEndPoint] = this.getRowsColsCursor(content);
+    const range: Range = {
+      start: {
+        line,
+        character,
+      },
+      end: {
+        line: lineEndPoint,
+        character: characterEndPoint,
+      },
+    };
+    this.currPos = finalPosition;
+    return range;
   }
 
   /**
@@ -94,20 +161,23 @@ export class Tokenizer {
    * but: % this is a comment, '%' it's NOT a valid token.
    */
   private isValidStartingToken(token: Token): boolean {
-    if (token.type !== "MODULUS") return true;
+    if (token.type !== 'MODULUS') return true;
     const lastToken = this.tokens[this.tokens.length - 1];
-    return (lastToken && (lastToken.type === "IDENTIFIER" || lastToken.type === "NUMBER"));
+    return (
+      lastToken !== undefined &&
+      (lastToken.type === 'IDENTIFIER' || lastToken.type === 'NUMBER')
+    );
   }
 
   /**
    * Helper that reads a comment and returns the content
    */
   private readComment(): string {
-    let comment = "";
+    let comment = '';
     do {
       comment += this.currChar;
       this.readChar();
-    } while (this.currChar !== "\n" && this.currPos < this.text.length);
+    } while (this.currChar !== '\n' && this.currPos < this.text.length);
     return comment;
   }
 
@@ -120,23 +190,25 @@ export class Tokenizer {
    * Returns the Token corresponding to keywords or literals.
    */
   private tokenFromLiteral(literal: string): Token {
-    const keywords = getKeywordsFromCompletion();
-    for (const keyword of keywords) {
-      if (keyword === literal) {
-        return {
-          type: "KEYWORD",
-          content: literal,
-          position: this.getPosition(literal),
-        };
-      }
+    if (this.keywords.includes(literal)) {
+      return {
+        type: 'KEYWORD',
+        content: literal,
+        position: this.getPosition(literal),
+      };
+    } else if (this.nativeFunctions.includes(literal)) {
+      return {
+        type: 'NATIVE_FUNCTION',
+        content: literal,
+        position: this.getPosition(literal),
+      };
     }
     return {
-      type: "IDENTIFIER",
+      type: 'IDENTIFIER',
       content: literal,
       position: this.getPosition(literal),
     };
   }
-
 
   /**
    * Helper that returns the Range position
@@ -155,18 +227,22 @@ export class Tokenizer {
       end: {
         line: lineEndPoint,
         character: characterEndPoint,
-      }
+      },
     };
   }
 
   /**
- * Returns the rows and columns corresponding to the current position in the text.
- * TODO: fix possible problems
- * @returns {[number, number]} An array containing the row and column.
- */
-  private getRowsColsCursor(content?: string): [number, number] {
-    const characterPosition = content ? this.currPos + content.length : this.currPos;
-    return getRowsAndColsInCursor({text: this.text, characterPosition});
+   * Returns the rows and columns corresponding to the current position in the text.
+   * TODO: fix possible problems
+   * @returns {[number, number]} An array containing the row and column [[ROW, COL]].
+   */
+  private getRowsColsCursor(content: string | null = null): [number, number] {
+    const characterPosition =
+      content !== null ? this.currPos + content.length + 1 : this.currPos;
+    return getRowsAndColsInCursor({
+      text: this.text,
+      characterPosition,
+    });
   }
 
   /**
@@ -174,8 +250,8 @@ export class Tokenizer {
    */
   private readChar(): void {
     if (this.currPos >= this.text.length || this.text.length <= 3) {
-      this.currChar = "\0";
-      this.nextChar = "\0";
+      this.currChar = '\0';
+      this.nextChar = '\0';
       return;
     }
 
@@ -184,20 +260,16 @@ export class Tokenizer {
       this.nextChar = this.text[1];
       this.currPos = 1;
       this.nextPos = 2;
-      return;
     } else if (this.nextPos >= this.text.length) {
       this.currChar = this.nextChar;
-      this.nextChar = " ";
+      this.nextChar = '\0';
       this.currPos = this.nextPos;
-      return;
     } else {
       this.currChar = this.nextChar;
       this.nextChar = this.text[this.nextPos];
       this.currPos = this.nextPos;
       this.nextPos++;
-      return;
     }
-
   }
 
   /**
@@ -206,7 +278,10 @@ export class Tokenizer {
    */
   private readLiteral(): string {
     let literal = '';
-    while (/[a-zA-Z0-9_]/.test(this.currChar) && this.currPos < this.text.length) {
+    while (
+      /[a-zA-Z0-9_]/.test(this.currChar) &&
+      this.currPos <= this.text.length
+    ) {
       literal += this.currChar;
       this.readChar();
     }
@@ -220,7 +295,8 @@ export class Tokenizer {
   private readNumber(): string {
     let literal = '';
 
-    while (/\d/.test(this.currChar) ||
+    while (
+      /\d/.test(this.currChar) ||
       /\.\d/.test(this.currChar + this.nextChar) ||
       /e\d/.test(this.currChar + this.nextChar) ||
       /e[++-]/.test(this.currChar + this.nextChar) ||
@@ -236,16 +312,20 @@ export class Tokenizer {
   /**
    * Gets a literal string from the text.
    */
-  private readLiteralString() {
+  private readLiteralString(): string {
     let literal = this.currChar;
 
     do {
       this.readChar();
       literal += this.currChar;
-    } while (this.currChar !== '"' && this.currChar !== "'" && this.currPos < this.text.length);
+    } while (
+      this.currChar !== '"' &&
+      this.currChar !== "'" &&
+      this.currChar !== '\n' &&
+      this.currPos < this.text.length
+    );
     this.readChar();
 
     return literal;
   }
-
 }

@@ -7,11 +7,11 @@ export function getAllMFiles(rootDir: string): string[] {
   function traverseDir(currentDir: string) {
     const dirEntries = fs.readdirSync(currentDir, { withFileTypes: true });
     for (const dirEntry of dirEntries) {
-      //const fullPath = `${currentDir}/${dirEntry.name}`;
+      // const fullPath = `${currentDir}/${dirEntry.name}`;
       const fullPath = path.join(currentDir, dirEntry.name);
       if (dirEntry.isDirectory()) {
         traverseDir(fullPath);
-      } else if (dirEntry.isFile() && dirEntry.name.endsWith(".m")) {
+      } else if (dirEntry.isFile() && dirEntry.name.endsWith('.m')) {
         files.push(fullPath);
       }
     }

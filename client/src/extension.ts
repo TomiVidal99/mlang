@@ -1,20 +1,18 @@
-import { workspace, ExtensionContext } from 'vscode';
-import * as vscode from "vscode";
+import { workspace, type ExtensionContext } from 'vscode';
+import * as vscode from 'vscode';
 import path = require('path');
 
 import {
   LanguageClient,
-  LanguageClientOptions,
-  ServerOptions,
-  TransportKind
+  type LanguageClientOptions,
+  type ServerOptions,
+  TransportKind,
 } from 'vscode-languageclient/node';
 
-let client: LanguageClient;
+let client: LanguageClient | undefined;
 
-export function activate(context: ExtensionContext) {
-  const serverModule = context.asAbsolutePath(
-		path.join('server', 'server.js')
-	);
+export function activate(context: ExtensionContext): void {
+  const serverModule = context.asAbsolutePath(path.join('server', 'server.js'));
   const serverOptions: ServerOptions = {
     run: { module: serverModule, transport: TransportKind.stdio },
     debug: {
@@ -30,42 +28,59 @@ export function activate(context: ExtensionContext) {
     ],
     synchronize: {
       // Notify the server about file changes to '.clientrc files contained in the workspace
-      fileEvents: workspace.createFileSystemWatcher('**/.clientrc')
-    }
+      fileEvents: workspace.createFileSystemWatcher('**/.clientrc'),
+    },
   };
 
   client = new LanguageClient(
     'mlang',
     'Octave/Matlab LSP server',
     serverOptions,
-    clientOptions
+    clientOptions,
   );
 
   // Register the "extension.restartServer" command
-  context.subscriptions.push(vscode.commands.registerCommand('mlang.restart', () => {
-    if (!client || !client.isRunning()) {
-      client.start();
-    } else {
-      client.restart();
-    }
-  }));
-  context.subscriptions.push(vscode.commands.registerCommand('mlang.stop', () => {
-    if (client?.isRunning()) {
-      client.stop();
-    }
-  }));
-  context.subscriptions.push(vscode.commands.registerCommand('mlang.start', () => {
-    if (!client?.isRunning()) {
-      client.start();
-    }
-  }));
+  context.subscriptions.push(
+    vscode.commands.registerCommand('mlang.restart', () => {
+      if (client === undefined) return;
+      if (!client.isRunning()) {
+        client.start().catch((err) => {
+          throw new Error(err);
+        });
+      } else {
+        client.restart().catch((err) => {
+          throw new Error(err);
+        });
+      }
+    }),
+  );
+  context.subscriptions.push(
+    vscode.commands.registerCommand('mlang.stop', () => {
+      if (client === undefined) return;
+      if (client?.isRunning()) {
+        client.stop().catch((err) => {
+          throw new Error(err);
+        });
+      }
+    }),
+  );
+  context.subscriptions.push(
+    vscode.commands.registerCommand('mlang.start', () => {
+      if (client === undefined) return;
+      if (!client?.isRunning()) {
+        client.start().catch((err) => {
+          throw new Error(err);
+        });
+      }
+    }),
+  );
 
-  client.start();
+  client.start().catch((err) => {
+    throw new Error(err);
+  });
 }
 
 export function deactivate(): Thenable<void> | undefined {
-  if (!client) {
-    return undefined;
-  }
+  if (client === undefined) return undefined;
   return client.stop();
 }

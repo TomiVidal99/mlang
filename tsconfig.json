@@ -1,6 +1,10 @@
 {
   "compilerOptions": {
+    "types": [
+      "bun-types"
+    ],
     "emitDeclarationOnly": true,
-    "declaration": true
+    "declaration": true,
+    "strictNullChecks": true
   }
 }

@@ -1,4 +1,4 @@
-import { Token, TokenType } from ".";
+import { type Token, type TokenType } from '.';
 
 /**
  * Represents a set of symbols and their corresponding tokens.
@@ -6,25 +6,31 @@ import { Token, TokenType } from ".";
  * @enum {string}
  */
 export const Symbols = {
-  EOF: "\0",
-  AT: "@",
-  COLON: ":",
-  COMMA: ",",
-  EQUALS: "=",
-  SUBTRACTION: "-",
-  ADDITION: "+",
-  MULTIPLICATION: "*",
-  DIVISION: "/",
-  MODULUS: "%",
-  EXPONENTIATION: "^",
-  PERIOD: ".",
-  SEMICOLON: ";",
-  LBRACKET: "[",
-  RBRACKET: "]",
-  LSQUIRLY: "{",
-  RSQUIRLY: "}",
-  LPARENT: "(",
-  RPARENT: ")",
+  NL: '\n',
+  EOF: '\0',
+  AT: '@',
+  COLON: ':',
+  COMMA: ',',
+  EQUALS: '=',
+  GRATER_THAN: '>',
+  LESS_THAN: '<',
+  AND: '&',
+  OR: '|',
+  EXCLAMATION: '!',
+  SUBTRACTION: '-',
+  ADDITION: '+',
+  MULTIPLICATION: '*',
+  DIVISION: '/',
+  MODULUS: '%',
+  EXPONENTIATION: '^',
+  PERIOD: '.',
+  SEMICOLON: ';',
+  LBRACKET: '[',
+  RBRACKET: ']',
+  LSQUIRLY: '{',
+  RSQUIRLY: '}',
+  LPARENT: '(',
+  RPARENT: ')',
 } as const;
 
 /**
@@ -36,7 +42,7 @@ export function getTokenFromSymbols(char: string): Token | undefined {
   for (const [key, value] of Object.entries(Symbols)) {
     if (value === char) {
       return {
-        content: key === "EOF" ? "eof" : char,
+        content: key === 'EOF' ? 'eof' : char,
         type: key as TokenType,
         position: null,
       };

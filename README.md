@@ -10,6 +10,7 @@ This is an implementation of the [Language Server Protocol](https://code.visuals
 
 - [Typescript](https://www.typescriptlang.org/)
 - [esbuild](https://esbuild.github.io/)
+- [bun](https://bun.sh/) _just for testing_
 - [vscode-languageserver](https://www.npmjs.com/package/vscode-languageserver) _(LSP official node package)_
 
 ## Working features
@@ -49,19 +50,22 @@ end
 
 ## TODO
 
-- [ ] ADD: STRUCTS '{}'.
-- [ ] FIX: consider keywords like global.
-- [ ] FIX: multiple calls freezes the server.
-- [ ] FIX: KEYWORDS are not native functions.
+- [ ] FIX: statements can have expression within the conditions. if (3+1 == 4) etc.
+- [ ] FIX: use INFO instead of WARN in ';' missing message.
+- [ ] FIX: documentation not showing for function definitions.
+- [ ] MAYBE: instead of creating new instances of Tokenizer, Parser and Visitor, reuse the same.
+- [ ] FIX: 'x(1)' it's not just a function call, it could be a vector (eventually add checking that the element accessed it's valid).
+- [ ] FIX: structs can be accessed inside vector outputs: '[a.x] = myFunc()'.
+- [ ] FIX: add more keywords like: 'global'.
 - [ ] FIX: functions with no parenthesis are not getting recognized.
-- [ ] FIX: '\n' inside strings breaks the getRowsAndCols function.
 - [ ] ADD: diagnostics for: redefined functions, missing imports.
 - [ ] ADD: references to files.
 - [ ] ADD: block comments.
 - [ ] ADD: Maybe consider documentation with comments on variable as well.
 - [ ] ADD: CI/CD.
+- [ ] ADD: Finish refactor on error codes (for the ERROR_CODES and the throw errors).
 - [ ] FEATURES?: Maybe have a user setting to be able to multiple variables and functions definitions, instead of grabbing the first one?
-
+- [ ] FEATURES: run lines of code or code blocks (%%).
 
 <!-- ## How to contribute? -->
 

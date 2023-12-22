@@ -3376,8 +3376,8 @@ var require_main2 = __commonJS({
         }
         uinteger2.is = is;
       })(uinteger = exports2.uinteger || (exports2.uinteger = {}));
-      var Position3;
-      (function(Position4) {
+      var Position;
+      (function(Position2) {
         function create(line, character) {
           if (line === Number.MAX_VALUE) {
             line = uinteger.MAX_VALUE;
@@ -3387,31 +3387,31 @@ var require_main2 = __commonJS({
           }
           return { line, character };
         }
-        Position4.create = create;
+        Position2.create = create;
         function is(value) {
           var candidate = value;
           return Is.objectLiteral(candidate) && Is.uinteger(candidate.line) && Is.uinteger(candidate.character);
         }
-        Position4.is = is;
-      })(Position3 = exports2.Position || (exports2.Position = {}));
-      var Range3;
-      (function(Range4) {
+        Position2.is = is;
+      })(Position = exports2.Position || (exports2.Position = {}));
+      var Range2;
+      (function(Range3) {
         function create(one, two, three, four) {
           if (Is.uinteger(one) && Is.uinteger(two) && Is.uinteger(three) && Is.uinteger(four)) {
-            return { start: Position3.create(one, two), end: Position3.create(three, four) };
-          } else if (Position3.is(one) && Position3.is(two)) {
+            return { start: Position.create(one, two), end: Position.create(three, four) };
+          } else if (Position.is(one) && Position.is(two)) {
             return { start: one, end: two };
           } else {
             throw new Error("Range#create called with invalid arguments[".concat(one, ", ").concat(two, ", ").concat(three, ", ").concat(four, "]"));
           }
         }
-        Range4.create = create;
+        Range3.create = create;
         function is(value) {
           var candidate = value;
-          return Is.objectLiteral(candidate) && Position3.is(candidate.start) && Position3.is(candidate.end);
+          return Is.objectLiteral(candidate) && Position.is(candidate.start) && Position.is(candidate.end);
         }
-        Range4.is = is;
-      })(Range3 = exports2.Range || (exports2.Range = {}));
+        Range3.is = is;
+      })(Range2 = exports2.Range || (exports2.Range = {}));
       var Location;
       (function(Location2) {
         function create(uri, range) {
@@ -3420,7 +3420,7 @@ var require_main2 = __commonJS({
         Location2.create = create;
         function is(value) {
           var candidate = value;
-          return Is.objectLiteral(candidate) && Range3.is(candidate.range) && (Is.string(candidate.uri) || Is.undefined(candidate.uri));
+          return Is.objectLiteral(candidate) && Range2.is(candidate.range) && (Is.string(candidate.uri) || Is.undefined(candidate.uri));
         }
         Location2.is = is;
       })(Location = exports2.Location || (exports2.Location = {}));
@@ -3432,7 +3432,7 @@ var require_main2 = __commonJS({
         LocationLink2.create = create;
         function is(value) {
           var candidate = value;
-          return Is.objectLiteral(candidate) && Range3.is(candidate.targetRange) && Is.string(candidate.targetUri) && Range3.is(candidate.targetSelectionRange) && (Range3.is(candidate.originSelectionRange) || Is.undefined(candidate.originSelectionRange));
+          return Is.objectLiteral(candidate) && Range2.is(candidate.targetRange) && Is.string(candidate.targetUri) && Range2.is(candidate.targetSelectionRange) && (Range2.is(candidate.originSelectionRange) || Is.undefined(candidate.originSelectionRange));
         }
         LocationLink2.is = is;
       })(LocationLink = exports2.LocationLink || (exports2.LocationLink = {}));
@@ -3464,7 +3464,7 @@ var require_main2 = __commonJS({
         ColorInformation2.create = create;
         function is(value) {
           var candidate = value;
-          return Is.objectLiteral(candidate) && Range3.is(candidate.range) && Color.is(candidate.color);
+          return Is.objectLiteral(candidate) && Range2.is(candidate.range) && Color.is(candidate.color);
         }
         ColorInformation2.is = is;
       })(ColorInformation = exports2.ColorInformation || (exports2.ColorInformation = {}));
@@ -3480,7 +3480,7 @@ var require_main2 = __commonJS({
         ColorPresentation2.create = create;
         function is(value) {
           var candidate = value;
-          return Is.objectLiteral(candidate) && Is.string(candidate.label) && (Is.undefined(candidate.textEdit) || TextEdit2.is(candidate)) && (Is.undefined(candidate.additionalTextEdits) || Is.typedArray(candidate.additionalTextEdits, TextEdit2.is));
+          return Is.objectLiteral(candidate) && Is.string(candidate.label) && (Is.undefined(candidate.textEdit) || TextEdit.is(candidate)) && (Is.undefined(candidate.additionalTextEdits) || Is.typedArray(candidate.additionalTextEdits, TextEdit.is));
         }
         ColorPresentation2.is = is;
       })(ColorPresentation = exports2.ColorPresentation || (exports2.ColorPresentation = {}));
@@ -3553,8 +3553,8 @@ var require_main2 = __commonJS({
         }
         CodeDescription2.is = is;
       })(CodeDescription = exports2.CodeDescription || (exports2.CodeDescription = {}));
-      var Diagnostic3;
-      (function(Diagnostic4) {
+      var Diagnostic;
+      (function(Diagnostic2) {
         function create(range, message, severity, code, source, relatedInformation) {
           var result = { range, message };
           if (Is.defined(severity)) {
@@ -3571,14 +3571,14 @@ var require_main2 = __commonJS({
           }
           return result;
         }
-        Diagnostic4.create = create;
+        Diagnostic2.create = create;
         function is(value) {
           var _a;
           var candidate = value;
-          return Is.defined(candidate) && Range3.is(candidate.range) && Is.string(candidate.message) && (Is.number(candidate.severity) || Is.undefined(candidate.severity)) && (Is.integer(candidate.code) || Is.string(candidate.code) || Is.undefined(candidate.code)) && (Is.undefined(candidate.codeDescription) || Is.string((_a = candidate.codeDescription) === null || _a === void 0 ? void 0 : _a.href)) && (Is.string(candidate.source) || Is.undefined(candidate.source)) && (Is.undefined(candidate.relatedInformation) || Is.typedArray(candidate.relatedInformation, DiagnosticRelatedInformation.is));
+          return Is.defined(candidate) && Range2.is(candidate.range) && Is.string(candidate.message) && (Is.number(candidate.severity) || Is.undefined(candidate.severity)) && (Is.integer(candidate.code) || Is.string(candidate.code) || Is.undefined(candidate.code)) && (Is.undefined(candidate.codeDescription) || Is.string((_a = candidate.codeDescription) === null || _a === void 0 ? void 0 : _a.href)) && (Is.string(candidate.source) || Is.undefined(candidate.source)) && (Is.undefined(candidate.relatedInformation) || Is.typedArray(candidate.relatedInformation, DiagnosticRelatedInformation.is));
         }
-        Diagnostic4.is = is;
-      })(Diagnostic3 = exports2.Diagnostic || (exports2.Diagnostic = {}));
+        Diagnostic2.is = is;
+      })(Diagnostic = exports2.Diagnostic || (exports2.Diagnostic = {}));
       var Command;
       (function(Command2) {
         function create(title, command) {
@@ -3599,26 +3599,26 @@ var require_main2 = __commonJS({
         }
         Command2.is = is;
       })(Command = exports2.Command || (exports2.Command = {}));
-      var TextEdit2;
-      (function(TextEdit3) {
+      var TextEdit;
+      (function(TextEdit2) {
         function replace(range, newText) {
           return { range, newText };
         }
-        TextEdit3.replace = replace;
+        TextEdit2.replace = replace;
         function insert(position, newText) {
           return { range: { start: position, end: position }, newText };
         }
-        TextEdit3.insert = insert;
+        TextEdit2.insert = insert;
         function del(range) {
           return { range, newText: "" };
         }
-        TextEdit3.del = del;
+        TextEdit2.del = del;
         function is(value) {
           var candidate = value;
-          return Is.objectLiteral(candidate) && Is.string(candidate.newText) && Range3.is(candidate.range);
+          return Is.objectLiteral(candidate) && Is.string(candidate.newText) && Range2.is(candidate.range);
         }
-        TextEdit3.is = is;
-      })(TextEdit2 = exports2.TextEdit || (exports2.TextEdit = {}));
+        TextEdit2.is = is;
+      })(TextEdit = exports2.TextEdit || (exports2.TextEdit = {}));
       var ChangeAnnotation;
       (function(ChangeAnnotation2) {
         function create(label, needsConfirmation, description) {
@@ -3662,7 +3662,7 @@ var require_main2 = __commonJS({
         AnnotatedTextEdit2.del = del;
         function is(value) {
           var candidate = value;
-          return TextEdit2.is(candidate) && (ChangeAnnotation.is(candidate.annotationId) || ChangeAnnotationIdentifier.is(candidate.annotationId));
+          return TextEdit.is(candidate) && (ChangeAnnotation.is(candidate.annotationId) || ChangeAnnotationIdentifier.is(candidate.annotationId));
         }
         AnnotatedTextEdit2.is = is;
       })(AnnotatedTextEdit = exports2.AnnotatedTextEdit || (exports2.AnnotatedTextEdit = {}));
@@ -3770,7 +3770,7 @@ var require_main2 = __commonJS({
             var edit;
             var id;
             if (annotation === void 0) {
-              edit = TextEdit2.insert(position, newText);
+              edit = TextEdit.insert(position, newText);
             } else if (ChangeAnnotationIdentifier.is(annotation)) {
               id = annotation;
               edit = AnnotatedTextEdit.insert(position, newText, annotation);
@@ -3788,7 +3788,7 @@ var require_main2 = __commonJS({
             var edit;
             var id;
             if (annotation === void 0) {
-              edit = TextEdit2.replace(range, newText);
+              edit = TextEdit.replace(range, newText);
             } else if (ChangeAnnotationIdentifier.is(annotation)) {
               id = annotation;
               edit = AnnotatedTextEdit.replace(range, newText, annotation);
@@ -3806,7 +3806,7 @@ var require_main2 = __commonJS({
             var edit;
             var id;
             if (annotation === void 0) {
-              edit = TextEdit2.del(range);
+              edit = TextEdit.del(range);
             } else if (ChangeAnnotationIdentifier.is(annotation)) {
               id = annotation;
               edit = AnnotatedTextEdit.del(range, annotation);
@@ -4096,52 +4096,52 @@ var require_main2 = __commonJS({
         }
         TextDocumentItem2.is = is;
       })(TextDocumentItem = exports2.TextDocumentItem || (exports2.TextDocumentItem = {}));
-      var MarkupKind2;
-      (function(MarkupKind3) {
-        MarkupKind3.PlainText = "plaintext";
-        MarkupKind3.Markdown = "markdown";
+      var MarkupKind3;
+      (function(MarkupKind4) {
+        MarkupKind4.PlainText = "plaintext";
+        MarkupKind4.Markdown = "markdown";
         function is(value) {
           var candidate = value;
-          return candidate === MarkupKind3.PlainText || candidate === MarkupKind3.Markdown;
+          return candidate === MarkupKind4.PlainText || candidate === MarkupKind4.Markdown;
         }
-        MarkupKind3.is = is;
-      })(MarkupKind2 = exports2.MarkupKind || (exports2.MarkupKind = {}));
+        MarkupKind4.is = is;
+      })(MarkupKind3 = exports2.MarkupKind || (exports2.MarkupKind = {}));
       var MarkupContent;
       (function(MarkupContent2) {
         function is(value) {
           var candidate = value;
-          return Is.objectLiteral(value) && MarkupKind2.is(candidate.kind) && Is.string(candidate.value);
+          return Is.objectLiteral(value) && MarkupKind3.is(candidate.kind) && Is.string(candidate.value);
         }
         MarkupContent2.is = is;
       })(MarkupContent = exports2.MarkupContent || (exports2.MarkupContent = {}));
-      var CompletionItemKind3;
-      (function(CompletionItemKind4) {
-        CompletionItemKind4.Text = 1;
-        CompletionItemKind4.Method = 2;
-        CompletionItemKind4.Function = 3;
-        CompletionItemKind4.Constructor = 4;
-        CompletionItemKind4.Field = 5;
-        CompletionItemKind4.Variable = 6;
-        CompletionItemKind4.Class = 7;
-        CompletionItemKind4.Interface = 8;
-        CompletionItemKind4.Module = 9;
-        CompletionItemKind4.Property = 10;
-        CompletionItemKind4.Unit = 11;
-        CompletionItemKind4.Value = 12;
-        CompletionItemKind4.Enum = 13;
-        CompletionItemKind4.Keyword = 14;
-        CompletionItemKind4.Snippet = 15;
-        CompletionItemKind4.Color = 16;
-        CompletionItemKind4.File = 17;
-        CompletionItemKind4.Reference = 18;
-        CompletionItemKind4.Folder = 19;
-        CompletionItemKind4.EnumMember = 20;
-        CompletionItemKind4.Constant = 21;
-        CompletionItemKind4.Struct = 22;
-        CompletionItemKind4.Event = 23;
-        CompletionItemKind4.Operator = 24;
-        CompletionItemKind4.TypeParameter = 25;
-      })(CompletionItemKind3 = exports2.CompletionItemKind || (exports2.CompletionItemKind = {}));
+      var CompletionItemKind4;
+      (function(CompletionItemKind5) {
+        CompletionItemKind5.Text = 1;
+        CompletionItemKind5.Method = 2;
+        CompletionItemKind5.Function = 3;
+        CompletionItemKind5.Constructor = 4;
+        CompletionItemKind5.Field = 5;
+        CompletionItemKind5.Variable = 6;
+        CompletionItemKind5.Class = 7;
+        CompletionItemKind5.Interface = 8;
+        CompletionItemKind5.Module = 9;
+        CompletionItemKind5.Property = 10;
+        CompletionItemKind5.Unit = 11;
+        CompletionItemKind5.Value = 12;
+        CompletionItemKind5.Enum = 13;
+        CompletionItemKind5.Keyword = 14;
+        CompletionItemKind5.Snippet = 15;
+        CompletionItemKind5.Color = 16;
+        CompletionItemKind5.File = 17;
+        CompletionItemKind5.Reference = 18;
+        CompletionItemKind5.Folder = 19;
+        CompletionItemKind5.EnumMember = 20;
+        CompletionItemKind5.Constant = 21;
+        CompletionItemKind5.Struct = 22;
+        CompletionItemKind5.Event = 23;
+        CompletionItemKind5.Operator = 24;
+        CompletionItemKind5.TypeParameter = 25;
+      })(CompletionItemKind4 = exports2.CompletionItemKind || (exports2.CompletionItemKind = {}));
       var InsertTextFormat3;
       (function(InsertTextFormat4) {
         InsertTextFormat4.PlainText = 1;
@@ -4159,7 +4159,7 @@ var require_main2 = __commonJS({
         InsertReplaceEdit2.create = create;
         function is(value) {
           var candidate = value;
-          return candidate && Is.string(candidate.newText) && Range3.is(candidate.insert) && Range3.is(candidate.replace);
+          return candidate && Is.string(candidate.newText) && Range2.is(candidate.insert) && Range2.is(candidate.replace);
         }
         InsertReplaceEdit2.is = is;
       })(InsertReplaceEdit = exports2.InsertReplaceEdit || (exports2.InsertReplaceEdit = {}));
@@ -4176,13 +4176,13 @@ var require_main2 = __commonJS({
         }
         CompletionItemLabelDetails2.is = is;
       })(CompletionItemLabelDetails = exports2.CompletionItemLabelDetails || (exports2.CompletionItemLabelDetails = {}));
-      var CompletionItem3;
-      (function(CompletionItem4) {
+      var CompletionItem;
+      (function(CompletionItem2) {
         function create(label) {
           return { label };
         }
-        CompletionItem4.create = create;
-      })(CompletionItem3 = exports2.CompletionItem || (exports2.CompletionItem = {}));
+        CompletionItem2.create = create;
+      })(CompletionItem = exports2.CompletionItem || (exports2.CompletionItem = {}));
       var CompletionList;
       (function(CompletionList2) {
         function create(items, isIncomplete) {
@@ -4206,7 +4206,7 @@ var require_main2 = __commonJS({
       (function(Hover2) {
         function is(value) {
           var candidate = value;
-          return !!candidate && Is.objectLiteral(candidate) && (MarkupContent.is(candidate.contents) || MarkedString.is(candidate.contents) || Is.typedArray(candidate.contents, MarkedString.is)) && (value.range === void 0 || Range3.is(value.range));
+          return !!candidate && Is.objectLiteral(candidate) && (MarkupContent.is(candidate.contents) || MarkedString.is(candidate.contents) || Is.typedArray(candidate.contents, MarkedString.is)) && (value.range === void 0 || Range2.is(value.range));
         }
         Hover2.is = is;
       })(Hover = exports2.Hover || (exports2.Hover = {}));
@@ -4327,7 +4327,7 @@ var require_main2 = __commonJS({
         DocumentSymbol2.create = create;
         function is(value) {
           var candidate = value;
-          return candidate && Is.string(candidate.name) && Is.number(candidate.kind) && Range3.is(candidate.range) && Range3.is(candidate.selectionRange) && (candidate.detail === void 0 || Is.string(candidate.detail)) && (candidate.deprecated === void 0 || Is.boolean(candidate.deprecated)) && (candidate.children === void 0 || Array.isArray(candidate.children)) && (candidate.tags === void 0 || Array.isArray(candidate.tags));
+          return candidate && Is.string(candidate.name) && Is.number(candidate.kind) && Range2.is(candidate.range) && Range2.is(candidate.selectionRange) && (candidate.detail === void 0 || Is.string(candidate.detail)) && (candidate.deprecated === void 0 || Is.boolean(candidate.deprecated)) && (candidate.children === void 0 || Array.isArray(candidate.children)) && (candidate.tags === void 0 || Array.isArray(candidate.tags));
         }
         DocumentSymbol2.is = is;
       })(DocumentSymbol = exports2.DocumentSymbol || (exports2.DocumentSymbol = {}));
@@ -4363,7 +4363,7 @@ var require_main2 = __commonJS({
         CodeActionContext2.create = create;
         function is(value) {
           var candidate = value;
-          return Is.defined(candidate) && Is.typedArray(candidate.diagnostics, Diagnostic3.is) && (candidate.only === void 0 || Is.typedArray(candidate.only, Is.string)) && (candidate.triggerKind === void 0 || candidate.triggerKind === CodeActionTriggerKind.Invoked || candidate.triggerKind === CodeActionTriggerKind.Automatic);
+          return Is.defined(candidate) && Is.typedArray(candidate.diagnostics, Diagnostic.is) && (candidate.only === void 0 || Is.typedArray(candidate.only, Is.string)) && (candidate.triggerKind === void 0 || candidate.triggerKind === CodeActionTriggerKind.Invoked || candidate.triggerKind === CodeActionTriggerKind.Automatic);
         }
         CodeActionContext2.is = is;
       })(CodeActionContext = exports2.CodeActionContext || (exports2.CodeActionContext = {}));
@@ -4388,7 +4388,7 @@ var require_main2 = __commonJS({
         CodeAction2.create = create;
         function is(value) {
           var candidate = value;
-          return candidate && Is.string(candidate.title) && (candidate.diagnostics === void 0 || Is.typedArray(candidate.diagnostics, Diagnostic3.is)) && (candidate.kind === void 0 || Is.string(candidate.kind)) && (candidate.edit !== void 0 || candidate.command !== void 0) && (candidate.command === void 0 || Command.is(candidate.command)) && (candidate.isPreferred === void 0 || Is.boolean(candidate.isPreferred)) && (candidate.edit === void 0 || WorkspaceEdit.is(candidate.edit));
+          return candidate && Is.string(candidate.title) && (candidate.diagnostics === void 0 || Is.typedArray(candidate.diagnostics, Diagnostic.is)) && (candidate.kind === void 0 || Is.string(candidate.kind)) && (candidate.edit !== void 0 || candidate.command !== void 0) && (candidate.command === void 0 || Command.is(candidate.command)) && (candidate.isPreferred === void 0 || Is.boolean(candidate.isPreferred)) && (candidate.edit === void 0 || WorkspaceEdit.is(candidate.edit));
         }
         CodeAction2.is = is;
       })(CodeAction = exports2.CodeAction || (exports2.CodeAction = {}));
@@ -4404,7 +4404,7 @@ var require_main2 = __commonJS({
         CodeLens2.create = create;
         function is(value) {
           var candidate = value;
-          return Is.defined(candidate) && Range3.is(candidate.range) && (Is.undefined(candidate.command) || Command.is(candidate.command));
+          return Is.defined(candidate) && Range2.is(candidate.range) && (Is.undefined(candidate.command) || Command.is(candidate.command));
         }
         CodeLens2.is = is;
       })(CodeLens = exports2.CodeLens || (exports2.CodeLens = {}));
@@ -4428,7 +4428,7 @@ var require_main2 = __commonJS({
         DocumentLink2.create = create;
         function is(value) {
           var candidate = value;
-          return Is.defined(candidate) && Range3.is(candidate.range) && (Is.undefined(candidate.target) || Is.string(candidate.target));
+          return Is.defined(candidate) && Range2.is(candidate.range) && (Is.undefined(candidate.target) || Is.string(candidate.target));
         }
         DocumentLink2.is = is;
       })(DocumentLink = exports2.DocumentLink || (exports2.DocumentLink = {}));
@@ -4440,7 +4440,7 @@ var require_main2 = __commonJS({
         SelectionRange2.create = create;
         function is(value) {
           var candidate = value;
-          return Is.objectLiteral(candidate) && Range3.is(candidate.range) && (candidate.parent === void 0 || SelectionRange2.is(candidate.parent));
+          return Is.objectLiteral(candidate) && Range2.is(candidate.range) && (candidate.parent === void 0 || SelectionRange2.is(candidate.parent));
         }
         SelectionRange2.is = is;
       })(SelectionRange = exports2.SelectionRange || (exports2.SelectionRange = {}));
@@ -4499,7 +4499,7 @@ var require_main2 = __commonJS({
         InlineValueText2.create = create;
         function is(value) {
           var candidate = value;
-          return candidate !== void 0 && candidate !== null && Range3.is(candidate.range) && Is.string(candidate.text);
+          return candidate !== void 0 && candidate !== null && Range2.is(candidate.range) && Is.string(candidate.text);
         }
         InlineValueText2.is = is;
       })(InlineValueText = exports2.InlineValueText || (exports2.InlineValueText = {}));
@@ -4511,7 +4511,7 @@ var require_main2 = __commonJS({
         InlineValueVariableLookup2.create = create;
         function is(value) {
           var candidate = value;
-          return candidate !== void 0 && candidate !== null && Range3.is(candidate.range) && Is.boolean(candidate.caseSensitiveLookup) && (Is.string(candidate.variableName) || candidate.variableName === void 0);
+          return candidate !== void 0 && candidate !== null && Range2.is(candidate.range) && Is.boolean(candidate.caseSensitiveLookup) && (Is.string(candidate.variableName) || candidate.variableName === void 0);
         }
         InlineValueVariableLookup2.is = is;
       })(InlineValueVariableLookup = exports2.InlineValueVariableLookup || (exports2.InlineValueVariableLookup = {}));
@@ -4523,7 +4523,7 @@ var require_main2 = __commonJS({
         InlineValueEvaluatableExpression2.create = create;
         function is(value) {
           var candidate = value;
-          return candidate !== void 0 && candidate !== null && Range3.is(candidate.range) && (Is.string(candidate.expression) || candidate.expression === void 0);
+          return candidate !== void 0 && candidate !== null && Range2.is(candidate.range) && (Is.string(candidate.expression) || candidate.expression === void 0);
         }
         InlineValueEvaluatableExpression2.is = is;
       })(InlineValueEvaluatableExpression = exports2.InlineValueEvaluatableExpression || (exports2.InlineValueEvaluatableExpression = {}));
@@ -4535,7 +4535,7 @@ var require_main2 = __commonJS({
         InlineValueContext2.create = create;
         function is(value) {
           var candidate = value;
-          return Is.defined(candidate) && Range3.is(value.stoppedLocation);
+          return Is.defined(candidate) && Range2.is(value.stoppedLocation);
         }
         InlineValueContext2.is = is;
       })(InlineValueContext = exports2.InlineValueContext || (exports2.InlineValueContext = {}));
@@ -4572,7 +4572,7 @@ var require_main2 = __commonJS({
         InlayHint2.create = create;
         function is(value) {
           var candidate = value;
-          return Is.objectLiteral(candidate) && Position3.is(candidate.position) && (Is.string(candidate.label) || Is.typedArray(candidate.label, InlayHintLabelPart.is)) && (candidate.kind === void 0 || InlayHintKind.is(candidate.kind)) && candidate.textEdits === void 0 || Is.typedArray(candidate.textEdits, TextEdit2.is) && (candidate.tooltip === void 0 || Is.string(candidate.tooltip) || MarkupContent.is(candidate.tooltip)) && (candidate.paddingLeft === void 0 || Is.boolean(candidate.paddingLeft)) && (candidate.paddingRight === void 0 || Is.boolean(candidate.paddingRight));
+          return Is.objectLiteral(candidate) && Position.is(candidate.position) && (Is.string(candidate.label) || Is.typedArray(candidate.label, InlayHintLabelPart.is)) && (candidate.kind === void 0 || InlayHintKind.is(candidate.kind)) && candidate.textEdits === void 0 || Is.typedArray(candidate.textEdits, TextEdit.is) && (candidate.tooltip === void 0 || Is.string(candidate.tooltip) || MarkupContent.is(candidate.tooltip)) && (candidate.paddingLeft === void 0 || Is.boolean(candidate.paddingLeft)) && (candidate.paddingRight === void 0 || Is.boolean(candidate.paddingRight));
         }
         InlayHint2.is = is;
       })(InlayHint = exports2.InlayHint || (exports2.InlayHint = {}));
@@ -4721,7 +4721,7 @@ var require_main2 = __commonJS({
             var lineOffsets = this.getLineOffsets();
             var low = 0, high = lineOffsets.length;
             if (high === 0) {
-              return Position3.create(0, offset);
+              return Position.create(0, offset);
             }
             while (low < high) {
               var mid = Math.floor((low + high) / 2);
@@ -4732,7 +4732,7 @@ var require_main2 = __commonJS({
               }
             }
             var line = low - 1;
-            return Position3.create(line, offset - lineOffsets[line]);
+            return Position.create(line, offset - lineOffsets[line]);
           };
           FullTextDocument2.prototype.offsetAt = function(position) {
             var lineOffsets = this.getLineOffsets();
@@ -8988,7 +8988,7 @@ function handleOnInitialize({ params, connection: connection3 }) {
   const capabilities = params.capabilities;
   hasConfigurationCapability = !!(capabilities.workspace != null && !!capabilities.workspace.configuration);
   hasWorkspaceFolderCapability = !!(capabilities.workspace != null && !!capabilities.workspace.workspaceFolders);
-  hasDiagnosticRelatedInformationCapability = !!(capabilities.textDocument && capabilities.textDocument.publishDiagnostics && capabilities.textDocument.publishDiagnostics.relatedInformation);
+  hasDiagnosticRelatedInformationCapability = !!(capabilities.textDocument?.publishDiagnostics && capabilities.textDocument.publishDiagnostics.relatedInformation);
   const result = {
     capabilities: {
       textDocumentSync: import_vscode_languageserver.TextDocumentSyncKind.Incremental,
@@ -9021,7 +9021,10 @@ function handleOnInitialize({ params, connection: connection3 }) {
   }
   return result;
 }
-function handleOnInitialized({ params, connection: connection3 }) {
+function handleOnInitialized({
+  params,
+  connection: connection3
+}) {
   connection3.console.log("Mlang Initialized correctly!");
   if (hasConfigurationCapability) {
     connection3.client.register(
@@ -9036,164 +9039,24 @@ function handleOnInitialized({ params, connection: connection3 }) {
   }
 }
 
-// src/data/completionKeywords.ts
+// src/data/getCompletionKeywords.ts
 var import_vscode_languageserver2 = __toESM(require_main4());
-function completionKeywords(position) {
+function getCompletionKeywords() {
   return [
     {
-      label: "quad",
-      kind: import_vscode_languageserver2.CompletionItemKind.Function,
-      documentation: {
-        kind: import_vscode_languageserver2.MarkupKind.Markdown,
-        value: ": q = quad (f, a, b)\n: q = quad (f, a, b, tol)\n: q = quad (f, a, b, tol, sing)\n: [q, ier, nfun, err] = quad (\u2026)\n    Numerically evaluate the integral of f from a to b using Fortran routines from QUADPACK.\n    f is a function handle, inline function, or a string containing the name of the function to evaluate. The function must have the form y = f (x) where y and x are scalars.\n    a and b are the lower and upper limits of integration. Either or both may be infinite.\n    The optional argument tol is a vector that specifies the desired accuracy of the result. The first element of the vector is the desired absolute tolerance, and the second element is the desired relative tolerance. To choose a relative test only, set the absolute tolerance to zero. To choose an absolute test only, set the relative tolerance to zero. Both tolerances default to sqrt (eps) or approximately 1.5e^{-8}.\n    The optional argument sing is a vector of values at which the integrand is known to be singular.\n    The result of the integration is returned in q.\n    ier contains an integer error code (0 indicates a successful integration).\n    nfun indicates the number of function evaluations that were made.\n    err contains an estimate of the error in the solution.\n    The function quad_options can set other optional parameters for quad.\n    Note: because quad is written in Fortran it cannot be called recursively. This prevents its use in integrating over more than one variable by routines dblquad and triplequad.\n    See also: quad_options, quadv, quadl, quadgk, quadcc, trapz, dblquad, triplequad. \n\n[quad function](https://octave.sourceforge.io/octave/function/quad.html)"
-      }
-    },
-    {
-      label: "inputParser",
-      kind: import_vscode_languageserver2.CompletionItemKind.Function,
-      documentation: {
-        kind: import_vscode_languageserver2.MarkupKind.Markdown,
-        value: "Not documented \n\n[inputParser function](https://octave.sourceforge.io/octave/function/inputParser.html)"
-      }
-    },
-    {
-      label: "pol2cart",
-      kind: import_vscode_languageserver2.CompletionItemKind.Function,
-      documentation: {
-        kind: import_vscode_languageserver2.MarkupKind.Markdown,
-        value: " __[x, y] = pol2cart (theta, r)__\n __[x, y, z] = pol2cart (theta, r, z)__\n __[x, y] = pol2cart (P)__\n __[x, y, z] = pol2cart (P)__\n __C = pol2cart (\u2026)__\n    Transform polar or cylindrical coordinates to Cartesian coordinates.\n    The inputs theta, r, (and z) must be the same shape, or scalar. If called with a single matrix argument then each row of P represents the polar/(cylindrical) coordinate (theta, r (, z)).\n    theta describes the angle relative to the positive x-axis.\n    r is the distance to the z-axis (0, 0, z).\n    If only a single return argument is requested then return a matrix C where each row represents one Cartesian coordinate (x, y (, z)).\n    See also: cart2pol, sph2cart, cart2sph. \n\n[pol2cart function](https://octave.sourceforge.io/octave/function/pol2cart.html)"
-      }
-    },
-    {
-      label: "deg2rad",
-      kind: import_vscode_languageserver2.CompletionItemKind.Function,
-      documentation: {
-        kind: import_vscode_languageserver2.MarkupKind.Markdown,
-        value: " __rad = deg2rad (deg)__\n    Convert degrees to radians.\n    The input deg must be a scalar, vector, or N-dimensional array of double or single floating point values. deg may be complex in which case the real and imaginary components are converted separately.\n    The output rad is the same size and shape as deg with degrees converted to radians using the conversion constant pi/180.\n    Example:\n    deg2rad ([0, 90, 180, 270, 360])\n      \u21D2  0.00000   1.57080   3.14159   4.71239   6.28319\n    See also: rad2deg. \n\n[deg2rad function](https://octave.sourceforge.io/octave/function/deg2rad.html)"
-      }
-    },
-    {
-      label: "length",
-      kind: import_vscode_languageserver2.CompletionItemKind.Function,
-      documentation: {
-        kind: import_vscode_languageserver2.MarkupKind.Markdown,
-        value: " __length (a)__\n    Return the length of the object a.\n    The length is 0 for empty objects, 1 for scalars, and the number of elements for vectors. For matrix or N-dimensional objects, the length is the number of elements along the largest dimension (equivalent to max (size (a))).\n    See also: numel, size. \n\n[length function](https://octave.sourceforge.io/octave/function/length.html)"
-      }
-    },
-    {
       label: "struct",
-      kind: import_vscode_languageserver2.CompletionItemKind.Function,
+      // eslint-disable-next-line no-template-curly-in-string
+      insertText: "struct(${1:var});",
+      insertTextFormat: import_vscode_languageserver2.InsertTextFormat.Snippet,
+      kind: import_vscode_languageserver2.CompletionItemKind.Keyword,
       documentation: {
         kind: import_vscode_languageserver2.MarkupKind.Markdown,
-        value: '  __s = struct ()__\n __s = struct (field1, value1, field2, value2, \u2026)__\n __s = struct (obj)__\n    Create a scalar or array structure and initialize its values.\n    The field1, field2, \u2026 variables are strings specifying the names of the fields and the value1, value2, \u2026 variables can be of any type.\n    If the values are cell arrays, create a structure array and initialize its values. The dimensions of each cell array of values must match. Singleton cells and non-cell values are repeated so that they fill the entire array. If the cells are empty, create an empty structure array with the specified field names.\n    If the argument is an object, return the underlying struct.\n    Observe that the syntax is optimized for struct arrays. Consider the following examples:\n    struct ("foo", 1)\n     \u21D2 scalar structure containing the fields:\n       foo =  1\n    struct ("foo", {})\n     \u21D2 0x0 struct array containing the fields:\n       foo\n    struct ("foo", { {} })\n     \u21D2 scalar structure containing the fields:\n       foo = {}(0x0)\n    struct ("foo", {1, 2, 3})\n     \u21D2 1x3 struct array containing the fields:\n       foo\n    The first case is an ordinary scalar struct\u2014one field, one value. The second produces an empty struct array with one field and no values, since being passed an empty cell array of struct array values. When the value is a cell array containing a single entry, this becomes a scalar struct with that single entry as the value of the field. That single entry happens to be an empty cell array.\n    Finally, if the value is a non-scalar cell array, then struct produces a struct array.\n    See also: cell2struct, fieldnames, getfield, setfield, rmfield, isfield, orderfields, isstruct, structfun. \n\n[struct function](https://octave.sourceforge.io/octave/function/struct.html)'
-      }
-    },
-    {
-      label: "addpath",
-      kind: import_vscode_languageserver2.CompletionItemKind.Function,
-      documentation: {
-        kind: import_vscode_languageserver2.MarkupKind.Markdown,
-        value: ' __addpath (dir1, \u2026)__\n __addpath (dir1, \u2026, option)__\n    Add named directories to the function search path.\n    If option is "-begin" or 0 (the default), prepend the directory name to the current path. If option is "-end" or 1, append the directory name to the current path. Directories added to the path must exist.\n    In addition to accepting individual directory arguments, lists of directory names separated by pathsep are also accepted. For example:\n    addpath ("dir1:/dir2:~/dir3")\n    For each directory that is added, and that was not already in the path, addpath checks for the existence of a file named PKG_ADD (note lack of .m extension) and runs it if it exists.\n    See also: path, rmpath, genpath, pathdef, savepath, pathsep. \n\n[addpath function](https://octave.sourceforge.io/octave/function/addpath.html)'
-      }
-    },
-    {
-      label: "argv",
-      kind: import_vscode_languageserver2.CompletionItemKind.Function,
-      documentation: {
-        kind: import_vscode_languageserver2.MarkupKind.Markdown,
-        value: "Return the command line arguments passed to Octave.\n\nFor example, if you invoked Octave using the command\n\noctave --no-line-editing --silent\n\nargv would return a cell array of strings with the elements --no-line-editing and --silent.\n\nIf you write an executable Octave script, argv will return the list of arguments passed to the script. See \u2018Executable Octave Programs\u2019, for an example of how to create an executable Octave script.\n\n[argv function](https://octave.sourceforge.io/octave/function/argv.html)"
-      }
-    },
-    {
-      label: "hold",
-      kind: import_vscode_languageserver2.CompletionItemKind.Function,
-      documentation: {
-        kind: import_vscode_languageserver2.MarkupKind.Markdown,
-        value: "[hold function](https://octave.sourceforge.io/octave/function/hold.html)"
-      }
-    },
-    {
-      label: "axis",
-      kind: import_vscode_languageserver2.CompletionItemKind.Function,
-      documentation: {
-        kind: import_vscode_languageserver2.MarkupKind.Markdown,
-        value: "[axis function](https://octave.sourceforge.io/octave/function/axis.html)"
-      }
-    },
-    {
-      label: "printf",
-      kind: import_vscode_languageserver2.CompletionItemKind.Function,
-      documentation: {
-        kind: import_vscode_languageserver2.MarkupKind.Markdown,
-        value: "[printf function](https://octave.sourceforge.io/octave/function/printf.html)"
-      }
-    },
-    {
-      label: "figure",
-      kind: import_vscode_languageserver2.CompletionItemKind.Function,
-      documentation: {
-        kind: import_vscode_languageserver2.MarkupKind.Markdown,
-        value: "[figure function](https://octave.sourceforge.io/octave/function/figure.html)"
-      }
-    },
-    {
-      label: "set",
-      kind: import_vscode_languageserver2.CompletionItemKind.Function,
-      documentation: {
-        kind: import_vscode_languageserver2.MarkupKind.Markdown,
-        value: "[set function](https://octave.sourceforge.io/octave/function/set.html)"
-      }
-    },
-    {
-      label: "grid",
-      kind: import_vscode_languageserver2.CompletionItemKind.Function,
-      documentation: {
-        kind: import_vscode_languageserver2.MarkupKind.Markdown,
-        value: "[grid function](https://octave.sourceforge.io/octave/function/grid.html)"
-      }
-    },
-    {
-      label: "clc",
-      kind: import_vscode_languageserver2.CompletionItemKind.Function,
-      documentation: {
-        kind: import_vscode_languageserver2.MarkupKind.Markdown,
-        value: "[clc function](https://octave.sourceforge.io/octave/function/clc.html)"
-      }
-    },
-    {
-      label: "quit",
-      kind: import_vscode_languageserver2.CompletionItemKind.Function,
-      documentation: {
-        kind: import_vscode_languageserver2.MarkupKind.Markdown,
-        value: "[quit function](https://docs.octave.org/interpreter/Quitting-Octave.html)"
-      }
-    },
-    {
-      label: "help",
-      kind: import_vscode_languageserver2.CompletionItemKind.Function,
-      documentation: {
-        kind: import_vscode_languageserver2.MarkupKind.Markdown,
-        value: "[help function](https://octave.sourceforge.io/octave/function/help.html)"
-      }
-    },
-    {
-      label: "stem",
-      kind: import_vscode_languageserver2.CompletionItemKind.Function,
-      documentation: {
-        kind: import_vscode_languageserver2.MarkupKind.Markdown,
-        value: "[stem function](https://octave.sourceforge.io/octave/function/stem.html)"
-      }
-    },
-    {
-      label: "plot",
-      kind: import_vscode_languageserver2.CompletionItemKind.Function,
-      documentation: {
-        kind: import_vscode_languageserver2.MarkupKind.Markdown,
-        value: "[plot function](https://octave.sourceforge.io/octave/function/plot.html)"
+        value: "[creating structures](https://docs.octave.org/v4.2.1/Creating-Structures.html#Creating-Structures)"
       }
     },
     {
       label: "for",
+      // eslint-disable-next-line no-template-curly-in-string
       insertText: "for (${1:var} = ${2})\n	${3}\n\nend",
       insertTextFormat: import_vscode_languageserver2.InsertTextFormat.Snippet,
       kind: import_vscode_languageserver2.CompletionItemKind.Keyword,
@@ -9212,6 +9075,7 @@ function completionKeywords(position) {
     },
     {
       label: "if",
+      // eslint-disable-next-line no-template-curly-in-string
       insertText: "if (${1:condition})\n	${2}\n\nend",
       insertTextFormat: import_vscode_languageserver2.InsertTextFormat.Snippet,
       kind: import_vscode_languageserver2.CompletionItemKind.Keyword,
@@ -9230,6 +9094,7 @@ function completionKeywords(position) {
     },
     {
       label: "elseif",
+      // eslint-disable-next-line no-template-curly-in-string
       insertText: "elseif (${1:condition})\n	${2}",
       insertTextFormat: import_vscode_languageserver2.InsertTextFormat.Snippet,
       kind: import_vscode_languageserver2.CompletionItemKind.Keyword,
@@ -9240,6 +9105,7 @@ function completionKeywords(position) {
     },
     {
       label: "switch",
+      // eslint-disable-next-line no-template-curly-in-string
       insertText: "switch (${1:variable})\n	case ${2}\notherwise\n\nend",
       insertTextFormat: import_vscode_languageserver2.InsertTextFormat.Snippet,
       kind: import_vscode_languageserver2.CompletionItemKind.Keyword,
@@ -9299,126 +9165,286 @@ function completionKeywords(position) {
     {
       label: "function",
       kind: import_vscode_languageserver2.CompletionItemKind.Keyword,
-      insertText: "function ${1}()\n\nend",
+      // eslint-disable-next-line no-template-curly-in-string
+      insertText: "function ${1:funcName}(${2:funcArgs})\n${3:funcBody}\nend",
       insertTextFormat: import_vscode_languageserver2.InsertTextFormat.Snippet,
       documentation: {
         kind: import_vscode_languageserver2.MarkupKind.Markdown,
         value: "[block end marker](https://docs.octave.org/v4.2.0/A-Sample-Function-Description.html#A-Sample-Function-Description)"
       }
+    }
+  ];
+}
+
+// src/data/completionNativeFunctions.ts
+var import_vscode_languageserver3 = __toESM(require_main4());
+function getCompletionNativeFunctions() {
+  return [
+    {
+      label: "quad",
+      kind: import_vscode_languageserver3.CompletionItemKind.Function,
+      documentation: {
+        kind: import_vscode_languageserver3.MarkupKind.Markdown,
+        value: ": q = quad (f, a, b)\n: q = quad (f, a, b, tol)\n: q = quad (f, a, b, tol, sing)\n: [q, ier, nfun, err] = quad (\u2026)\n    Numerically evaluate the integral of f from a to b using Fortran routines from QUADPACK.\n    f is a function handle, inline function, or a string containing the name of the function to evaluate. The function must have the form y = f (x) where y and x are scalars.\n    a and b are the lower and upper limits of integration. Either or both may be infinite.\n    The optional argument tol is a vector that specifies the desired accuracy of the result. The first element of the vector is the desired absolute tolerance, and the second element is the desired relative tolerance. To choose a relative test only, set the absolute tolerance to zero. To choose an absolute test only, set the relative tolerance to zero. Both tolerances default to sqrt (eps) or approximately 1.5e^{-8}.\n    The optional argument sing is a vector of values at which the integrand is known to be singular.\n    The result of the integration is returned in q.\n    ier contains an integer error code (0 indicates a successful integration).\n    nfun indicates the number of function evaluations that were made.\n    err contains an estimate of the error in the solution.\n    The function quad_options can set other optional parameters for quad.\n    Note: because quad is written in Fortran it cannot be called recursively. This prevents its use in integrating over more than one variable by routines dblquad and triplequad.\n    See also: quad_options, quadv, quadl, quadgk, quadcc, trapz, dblquad, triplequad. \n\n[quad function](https://octave.sourceforge.io/octave/function/quad.html)"
+      }
+    },
+    {
+      label: "inputParser",
+      kind: import_vscode_languageserver3.CompletionItemKind.Function,
+      documentation: {
+        kind: import_vscode_languageserver3.MarkupKind.Markdown,
+        value: "Not documented \n\n[inputParser function](https://octave.sourceforge.io/octave/function/inputParser.html)"
+      }
+    },
+    {
+      label: "pol2cart",
+      kind: import_vscode_languageserver3.CompletionItemKind.Function,
+      documentation: {
+        kind: import_vscode_languageserver3.MarkupKind.Markdown,
+        value: " __[x, y] = pol2cart (theta, r)__\n __[x, y, z] = pol2cart (theta, r, z)__\n __[x, y] = pol2cart (P)__\n __[x, y, z] = pol2cart (P)__\n __C = pol2cart (\u2026)__\n    Transform polar or cylindrical coordinates to Cartesian coordinates.\n    The inputs theta, r, (and z) must be the same shape, or scalar. If called with a single matrix argument then each row of P represents the polar/(cylindrical) coordinate (theta, r (, z)).\n    theta describes the angle relative to the positive x-axis.\n    r is the distance to the z-axis (0, 0, z).\n    If only a single return argument is requested then return a matrix C where each row represents one Cartesian coordinate (x, y (, z)).\n    See also: cart2pol, sph2cart, cart2sph. \n\n[pol2cart function](https://octave.sourceforge.io/octave/function/pol2cart.html)"
+      }
+    },
+    {
+      label: "deg2rad",
+      kind: import_vscode_languageserver3.CompletionItemKind.Function,
+      documentation: {
+        kind: import_vscode_languageserver3.MarkupKind.Markdown,
+        value: " __rad = deg2rad (deg)__\n    Convert degrees to radians.\n    The input deg must be a scalar, vector, or N-dimensional array of double or single floating point values. deg may be complex in which case the real and imaginary components are converted separately.\n    The output rad is the same size and shape as deg with degrees converted to radians using the conversion constant pi/180.\n    Example:\n    deg2rad ([0, 90, 180, 270, 360])\n      \u21D2  0.00000   1.57080   3.14159   4.71239   6.28319\n    See also: rad2deg. \n\n[deg2rad function](https://octave.sourceforge.io/octave/function/deg2rad.html)"
+      }
+    },
+    {
+      label: "length",
+      kind: import_vscode_languageserver3.CompletionItemKind.Function,
+      documentation: {
+        kind: import_vscode_languageserver3.MarkupKind.Markdown,
+        value: " __length (a)__\n    Return the length of the object a.\n    The length is 0 for empty objects, 1 for scalars, and the number of elements for vectors. For matrix or N-dimensional objects, the length is the number of elements along the largest dimension (equivalent to max (size (a))).\n    See also: numel, size. \n\n[length function](https://octave.sourceforge.io/octave/function/length.html)"
+      }
+    },
+    {
+      label: "struct",
+      kind: import_vscode_languageserver3.CompletionItemKind.Function,
+      documentation: {
+        kind: import_vscode_languageserver3.MarkupKind.Markdown,
+        value: '  __s = struct ()__\n __s = struct (field1, value1, field2, value2, \u2026)__\n __s = struct (obj)__\n    Create a scalar or array structure and initialize its values.\n    The field1, field2, \u2026 variables are strings specifying the names of the fields and the value1, value2, \u2026 variables can be of any type.\n    If the values are cell arrays, create a structure array and initialize its values. The dimensions of each cell array of values must match. Singleton cells and non-cell values are repeated so that they fill the entire array. If the cells are empty, create an empty structure array with the specified field names.\n    If the argument is an object, return the underlying struct.\n    Observe that the syntax is optimized for struct arrays. Consider the following examples:\n    struct ("foo", 1)\n     \u21D2 scalar structure containing the fields:\n       foo =  1\n    struct ("foo", {})\n     \u21D2 0x0 struct array containing the fields:\n       foo\n    struct ("foo", { {} })\n     \u21D2 scalar structure containing the fields:\n       foo = {}(0x0)\n    struct ("foo", {1, 2, 3})\n     \u21D2 1x3 struct array containing the fields:\n       foo\n    The first case is an ordinary scalar struct\u2014one field, one value. The second produces an empty struct array with one field and no values, since being passed an empty cell array of struct array values. When the value is a cell array containing a single entry, this becomes a scalar struct with that single entry as the value of the field. That single entry happens to be an empty cell array.\n    Finally, if the value is a non-scalar cell array, then struct produces a struct array.\n    See also: cell2struct, fieldnames, getfield, setfield, rmfield, isfield, orderfields, isstruct, structfun. \n\n[struct function](https://octave.sourceforge.io/octave/function/struct.html)'
+      }
+    },
+    {
+      label: "addpath",
+      kind: import_vscode_languageserver3.CompletionItemKind.Function,
+      documentation: {
+        kind: import_vscode_languageserver3.MarkupKind.Markdown,
+        value: ' __addpath (dir1, \u2026)__\n __addpath (dir1, \u2026, option)__\n    Add named directories to the function search path.\n    If option is "-begin" or 0 (the default), prepend the directory name to the current path. If option is "-end" or 1, append the directory name to the current path. Directories added to the path must exist.\n    In addition to accepting individual directory arguments, lists of directory names separated by pathsep are also accepted. For example:\n    addpath ("dir1:/dir2:~/dir3")\n    For each directory that is added, and that was not already in the path, addpath checks for the existence of a file named PKG_ADD (note lack of .m extension) and runs it if it exists.\n    See also: path, rmpath, genpath, pathdef, savepath, pathsep. \n\n[addpath function](https://octave.sourceforge.io/octave/function/addpath.html)'
+      }
+    },
+    {
+      label: "argv",
+      kind: import_vscode_languageserver3.CompletionItemKind.Function,
+      documentation: {
+        kind: import_vscode_languageserver3.MarkupKind.Markdown,
+        value: "Return the command line arguments passed to Octave.\n\nFor example, if you invoked Octave using the command\n\noctave --no-line-editing --silent\n\nargv would return a cell array of strings with the elements --no-line-editing and --silent.\n\nIf you write an executable Octave script, argv will return the list of arguments passed to the script. See \u2018Executable Octave Programs\u2019, for an example of how to create an executable Octave script.\n\n[argv function](https://octave.sourceforge.io/octave/function/argv.html)"
+      }
+    },
+    {
+      label: "hold",
+      kind: import_vscode_languageserver3.CompletionItemKind.Function,
+      documentation: {
+        kind: import_vscode_languageserver3.MarkupKind.Markdown,
+        value: "[hold function](https://octave.sourceforge.io/octave/function/hold.html)"
+      }
+    },
+    {
+      label: "axis",
+      kind: import_vscode_languageserver3.CompletionItemKind.Function,
+      documentation: {
+        kind: import_vscode_languageserver3.MarkupKind.Markdown,
+        value: "[axis function](https://octave.sourceforge.io/octave/function/axis.html)"
+      }
+    },
+    {
+      label: "printf",
+      kind: import_vscode_languageserver3.CompletionItemKind.Function,
+      documentation: {
+        kind: import_vscode_languageserver3.MarkupKind.Markdown,
+        value: "[printf function](https://octave.sourceforge.io/octave/function/printf.html)"
+      }
+    },
+    {
+      label: "figure",
+      kind: import_vscode_languageserver3.CompletionItemKind.Function,
+      documentation: {
+        kind: import_vscode_languageserver3.MarkupKind.Markdown,
+        value: "[figure function](https://octave.sourceforge.io/octave/function/figure.html)"
+      }
+    },
+    {
+      label: "set",
+      kind: import_vscode_languageserver3.CompletionItemKind.Function,
+      documentation: {
+        kind: import_vscode_languageserver3.MarkupKind.Markdown,
+        value: "[set function](https://octave.sourceforge.io/octave/function/set.html)"
+      }
+    },
+    {
+      label: "grid",
+      kind: import_vscode_languageserver3.CompletionItemKind.Function,
+      documentation: {
+        kind: import_vscode_languageserver3.MarkupKind.Markdown,
+        value: "[grid function](https://octave.sourceforge.io/octave/function/grid.html)"
+      }
+    },
+    {
+      label: "clc",
+      kind: import_vscode_languageserver3.CompletionItemKind.Function,
+      documentation: {
+        kind: import_vscode_languageserver3.MarkupKind.Markdown,
+        value: "[clc function](https://octave.sourceforge.io/octave/function/clc.html)"
+      }
+    },
+    {
+      label: "quit",
+      kind: import_vscode_languageserver3.CompletionItemKind.Function,
+      documentation: {
+        kind: import_vscode_languageserver3.MarkupKind.Markdown,
+        value: "[quit function](https://docs.octave.org/interpreter/Quitting-Octave.html)"
+      }
+    },
+    {
+      label: "help",
+      kind: import_vscode_languageserver3.CompletionItemKind.Function,
+      documentation: {
+        kind: import_vscode_languageserver3.MarkupKind.Markdown,
+        value: "[help function](https://octave.sourceforge.io/octave/function/help.html)"
+      }
+    },
+    {
+      label: "stem",
+      kind: import_vscode_languageserver3.CompletionItemKind.Function,
+      documentation: {
+        kind: import_vscode_languageserver3.MarkupKind.Markdown,
+        value: "[stem function](https://octave.sourceforge.io/octave/function/stem.html)"
+      }
+    },
+    {
+      label: "plot",
+      kind: import_vscode_languageserver3.CompletionItemKind.Function,
+      documentation: {
+        kind: import_vscode_languageserver3.MarkupKind.Markdown,
+        value: "[plot function](https://octave.sourceforge.io/octave/function/plot.html)"
+      }
     },
     {
       label: "abs",
-      kind: import_vscode_languageserver2.CompletionItemKind.Function,
+      kind: import_vscode_languageserver3.CompletionItemKind.Function,
       documentation: "Return the absolute value of a number"
     },
     {
       label: "acos",
-      kind: import_vscode_languageserver2.CompletionItemKind.Function,
+      kind: import_vscode_languageserver3.CompletionItemKind.Function,
       documentation: "Return the arccosine of a number"
     },
     {
       label: "acosh",
-      kind: import_vscode_languageserver2.CompletionItemKind.Function,
+      kind: import_vscode_languageserver3.CompletionItemKind.Function,
       documentation: "Return the hyperbolic arccosine of a number"
     },
     {
       label: "angle",
-      kind: import_vscode_languageserver2.CompletionItemKind.Function,
+      kind: import_vscode_languageserver3.CompletionItemKind.Function,
       documentation: "Return the angle (in radians) of a complex number"
     },
     {
       label: "arg",
-      kind: import_vscode_languageserver2.CompletionItemKind.Function,
+      kind: import_vscode_languageserver3.CompletionItemKind.Function,
       documentation: "Return the argument (in radians) of a complex number"
     },
     {
       label: "asin",
-      kind: import_vscode_languageserver2.CompletionItemKind.Function,
+      kind: import_vscode_languageserver3.CompletionItemKind.Function,
       documentation: "Return the arcsine of a number"
     },
     {
       label: "asinh",
-      kind: import_vscode_languageserver2.CompletionItemKind.Function,
+      kind: import_vscode_languageserver3.CompletionItemKind.Function,
       documentation: "Return the hyperbolic arcsine of a number"
     },
     {
       label: "atan",
-      kind: import_vscode_languageserver2.CompletionItemKind.Function,
+      kind: import_vscode_languageserver3.CompletionItemKind.Function,
       documentation: "Return the arctangent of a number"
     },
     {
       label: "atanh",
-      kind: import_vscode_languageserver2.CompletionItemKind.Function,
+      kind: import_vscode_languageserver3.CompletionItemKind.Function,
       documentation: "Return the hyperbolic arctangent of a number"
     },
     {
       label: "ceil",
-      kind: import_vscode_languageserver2.CompletionItemKind.Function,
+      kind: import_vscode_languageserver3.CompletionItemKind.Function,
       documentation: "Round up to the nearest integer"
     },
     {
       label: "conj",
-      kind: import_vscode_languageserver2.CompletionItemKind.Function,
+      kind: import_vscode_languageserver3.CompletionItemKind.Function,
       documentation: "Return the complex conjugate of a number"
     },
     {
       label: "cos",
-      kind: import_vscode_languageserver2.CompletionItemKind.Function,
+      kind: import_vscode_languageserver3.CompletionItemKind.Function,
       documentation: "Return the cosine of a number"
     },
     {
       label: "cosh",
-      kind: import_vscode_languageserver2.CompletionItemKind.Function,
+      kind: import_vscode_languageserver3.CompletionItemKind.Function,
       documentation: "Return the hyperbolic cosine of a number"
     },
     {
       label: "cot",
-      kind: import_vscode_languageserver2.CompletionItemKind.Function,
+      kind: import_vscode_languageserver3.CompletionItemKind.Function,
       documentation: "Return the cotangent of a number"
     },
     {
       label: "csc",
-      kind: import_vscode_languageserver2.CompletionItemKind.Function,
+      kind: import_vscode_languageserver3.CompletionItemKind.Function,
       documentation: "Return the cosecant of a number"
     },
     {
       label: "det",
-      kind: import_vscode_languageserver2.CompletionItemKind.Function,
+      kind: import_vscode_languageserver3.CompletionItemKind.Function,
       documentation: "Compute the determinant of a matrix"
     },
     {
       label: "diag",
-      kind: import_vscode_languageserver2.CompletionItemKind.Function,
+      kind: import_vscode_languageserver3.CompletionItemKind.Function,
       documentation: "Extract or construct a diagonal matrix"
     },
     {
       label: "diff",
-      kind: import_vscode_languageserver2.CompletionItemKind.Function,
+      kind: import_vscode_languageserver3.CompletionItemKind.Function,
       documentation: "Compute the difference between adjacent elements of a matrix"
     },
     {
       label: "disp",
-      kind: import_vscode_languageserver2.CompletionItemKind.Function,
+      kind: import_vscode_languageserver3.CompletionItemKind.Function,
       documentation: "Display the value of an expression"
     },
     {
       label: "eig",
-      kind: import_vscode_languageserver2.CompletionItemKind.Function,
+      kind: import_vscode_languageserver3.CompletionItemKind.Function,
       documentation: "Compute the eigenvalues and eigenvectors of a matrix"
     },
     {
       label: "eps",
-      kind: import_vscode_languageserver2.CompletionItemKind.Constant,
+      kind: import_vscode_languageserver3.CompletionItemKind.Constant,
       documentation: "Return the machine epsilon (smallest number representable in floating point arithmetic)"
     },
     {
       label: "erf",
-      kind: import_vscode_languageserver2.CompletionItemKind.Function,
+      kind: import_vscode_languageserver3.CompletionItemKind.Function,
       documentation: "Return the error function of a number"
     },
     {
       label: "erfc",
-      kind: import_vscode_languageserver2.CompletionItemKind.Function,
+      kind: import_vscode_languageserver3.CompletionItemKind.Function,
       documentation: "Return the complementary error function of a number"
     }
   ];
@@ -9448,7 +9474,7 @@ var defaultSettings = {
 
 // src/utils/getKeywordsFromCompletion.ts
 function getKeywordsFromCompletion() {
-  return completionKeywords().map((keyword) => keyword.label);
+  return getCompletionKeywords().map((keyword) => keyword.label);
 }
 
 // src/utils/isLetter.ts
@@ -9465,17 +9491,35 @@ function isNumber(str) {
 var import_vscode_languageserver_textdocument = __toESM(require_main5());
 
 // src/utils/getRowsAndColsInCursor.ts
-function getRowsAndColsInCursor({ text, characterPosition }) {
-  const position = characterPosition > text.length ? text.length - 1 : characterPosition;
-  const textUntilCurrentPosition = text.slice(0, position);
-  const rows = textUntilCurrentPosition.split("\n");
-  const currentRow = rows.length;
-  const currentColumn = position - textUntilCurrentPosition.lastIndexOf("\n");
-  return [currentRow - 1, currentColumn - 1];
+function getRowsAndColsInCursor({
+  text,
+  characterPosition
+}) {
+  let currentRow = 0;
+  let currentColumn = 0;
+  let insideSingleQuotes = false;
+  let insideDoubleQuotes = false;
+  if (characterPosition > text.length) {
+    return [0, text.length - 1];
+  }
+  for (let i = 0; i < characterPosition; i++) {
+    const char = text[i];
+    if (char === "\n" && !insideSingleQuotes && !insideDoubleQuotes) {
+      currentRow++;
+      currentColumn = 0;
+    } else if (char === "'") {
+      insideSingleQuotes = !insideSingleQuotes;
+    } else if (char === '"') {
+      insideDoubleQuotes = !insideDoubleQuotes;
+    } else {
+      currentColumn++;
+    }
+  }
+  return [currentRow, currentColumn];
 }
 
 // src/utils/getWordRangeAtPosition.ts
-var import_vscode_languageserver3 = __toESM(require_main4());
+var import_vscode_languageserver4 = __toESM(require_main4());
 function getWordRangeAtPosition(document, position) {
   const text = document.getText();
   const wordRegex = /[\w]+/g;
@@ -9483,7 +9527,10 @@ function getWordRangeAtPosition(document, position) {
   while (match = wordRegex.exec(text)) {
     const startPos = match.index;
     const endPos = match.index + match[0].length;
-    const range = import_vscode_languageserver3.Range.create(document.positionAt(startPos), document.positionAt(endPos));
+    const range = import_vscode_languageserver4.Range.create(
+      document.positionAt(startPos),
+      document.positionAt(endPos)
+    );
     if (position.line === range.start.line && position.character >= range.start.character && position.character <= range.end.character) {
       return range;
     }
@@ -9493,9 +9540,49 @@ function getWordRangeAtPosition(document, position) {
 
 // src/utils/getDiagnosticFromLitingMessage.ts
 var import_node = __toESM(require_node3());
+
+// src/constants/errors_codes.ts
+var ERROR_CODES = {
+  OUTPUT_VECTOR: 1,
+  EXPECTED_FN_IDENT: 2,
+  AST_MAX_STMNT_REACHED: 3,
+  FN_CALL_EXCEEDED_CALLS: 4,
+  FN_DEF_MISSING_END: 5,
+  MISSING_PAREN: 6,
+  EXPECTED_COMMA_PAREN: 7,
+  UNEXPECTED_NL: 50,
+  TOO_MANY_NL: 60,
+  STRUCT_BAD_ARGS: 140,
+  STRUCT_BAD_COMMA: 141,
+  MAX_ITERATION_COMMENTS_BEFORE: 2e3,
+  MAX_ITERATION_COMMENTS_AFTER: 2001,
+  MAX_ITERATION_PARSING_COMMENT_BEFORE: 3001,
+  EXPECTED_LPAREN_IF_STMNT: 4e3,
+  EXCEEDED_CALLS_RPAREN_IF_STMNT: 4001,
+  EXPECTED_VALID_IF_STMNT: 4002,
+  EXPECTED_VALID_SYMBOL_IF_STMNT: 4003,
+  EXCEEDED_CALLS_PARSING_STMNTS_IF_STMNT: 4004,
+  MISSING_END_IF_STMNT: 4005,
+  EXPECTED_VALID_DATA_TYPE_IF_STMNT: 4006
+};
+
+// src/constants/cero_position.ts
+var CERO_POSITION = {
+  start: {
+    line: 1,
+    character: 1
+  },
+  end: {
+    line: 1,
+    character: 2
+  }
+};
+
+// src/utils/getDiagnosticFromLitingMessage.ts
 function getDiagnosticFromLitingMessage(lintingMessage, severity) {
   return {
-    range: lintingMessage.range,
+    range: lintingMessage?.range ?? CERO_POSITION,
+    // TODO: think how to better handle this, because this should never happen
     message: lintingMessage.message,
     severity: severity === "error" ? import_node.DiagnosticSeverity.Error : import_node.DiagnosticSeverity.Warning,
     source: "mlang"
@@ -9514,16 +9601,20 @@ function getRandomStringID() {
   return result;
 }
 
+// src/utils/getNativeFunctionsList.ts
+function getNataiveFunctionsList() {
+  return getCompletionNativeFunctions().map((keyword) => keyword.label);
+}
+
 // src/handlers/handleReferences.ts
 function handleReferences(document, position) {
   const locations = [];
   const uri = document.uri;
   const wordRange = getWordRangeAtPosition(document, position);
-  if (!wordRange) {
-    return null;
-  }
+  if (wordRange === void 0)
+    return [];
   const visitor = visitors.get(uri);
-  if (!visitor || !visitor?.definitions)
+  if (visitor?.definitions === void 0)
     return [];
   const { references } = visitor;
   const word = document.getText(wordRange);
@@ -9539,40 +9630,42 @@ function handleReferences(document, position) {
 }
 
 // src/handlers/handleCompletion.ts
-var import_vscode_languageserver4 = __toESM(require_main4());
+var import_vscode_languageserver5 = __toESM(require_main4());
 function handleCompletion({
   params
 }) {
-  const items = completionKeywords(params.position);
+  const items = getCompletionKeywords();
   const visitor = visitors.get(params.textDocument.uri);
-  if (!visitor || !visitor?.definitions)
+  if (visitor?.definitions === void 0)
     return items;
   const { definitions } = visitor;
-  const document = documents.get(params.textDocument.uri);
-  if (!document)
-    return items;
   items.push(
     ...definitions.map((def) => {
-      const args = def?.arguments?.length > 0 ? def.arguments.map((d, i) => {
+      const args = def?.arguments?.length !== void 0 && def?.arguments?.length > 0 ? def.arguments.map((d, i) => {
         return `${i !== 0 ? " " : ""}\${${i + 1}:${d.name}${d.type !== "DEFAULT_ARGUMENT" ? "" : ` = ${d.content}`}}`;
       }) : "";
-      const insertText = def.type !== "FUNCTION" ? def.name : `${def.name}(${args});`;
+      const insertText = def.type !== "FUNCTION" ? def.name : `${def.name}(${Array.isArray(args) ? args.map((a) => a) : args});`;
       const item = {
         label: def.name,
-        kind: def.type === "FUNCTION" ? import_vscode_languageserver4.CompletionItemKind.Function : import_vscode_languageserver4.CompletionItemKind.Variable,
+        kind: def.type === "FUNCTION" ? import_vscode_languageserver5.CompletionItemKind.Function : import_vscode_languageserver5.CompletionItemKind.Variable,
         documentation: def.documentation,
         data: def.arguments,
         insertText,
-        insertTextFormat: import_vscode_languageserver4.InsertTextFormat.Snippet
+        insertTextFormat: import_vscode_languageserver5.InsertTextFormat.Snippet
       };
       return item;
-    }).filter((item, index, self) => index === self.findIndex((i) => i.label === item.label))
+    }).filter(
+      (item, index, self) => index === self.findIndex((i) => i.label === item.label)
+    )
   );
   return items;
 }
 
 // src/handlers/handleDefinitions.ts
-async function handleDefinitions({ params, documents: documents2 }) {
+async function handleDefinitions({
+  params,
+  documents: documents2
+}) {
   const uri = params.textDocument.uri;
   const position = params.position;
   const document = documents2.get(uri);
@@ -9599,6 +9692,7 @@ async function handleDefinitions({ params, documents: documents2 }) {
 }
 
 // src/parser/parser.ts
+var MAX_STATEMENTS = 5e3;
 var Parser = class {
   constructor(tokens) {
     this.tokens = tokens;
@@ -9620,9 +9714,9 @@ var Parser = class {
     return this.contextDepth[this.contextDepth.length - 1];
   }
   /**
-  * Helper function to go deeper into a context
-  * @returns [previousContext, newContext]
-  */
+   * Helper function to go deeper into a context
+   * @returns [previousContext, newContext]
+   */
   getIntoNewContext() {
     const prevContext = this.getCurrentContext();
     const newContext = getRandomStringID();
@@ -9636,17 +9730,19 @@ var Parser = class {
   getBackOfContext() {
     const prevContext = this.getCurrentContext();
     const newContext = this.contextDepth.pop();
+    if (newContext === void 0)
+      throw new Error("Expected newContext to be defined");
     return [prevContext, newContext];
   }
   /*
-  *Helper function to get the current token
-  */
+   *Helper function to get the current token
+   */
   getCurrentToken() {
     return this.tokens[this.currentTokenIndex];
   }
   /*
-  * Helper function to advance to the next token
-  */
+   * Helper function to advance to the next token
+   */
   getNextToken() {
     if (this.currentTokenIndex >= this.tokens.length - 1) {
       return void 0;
@@ -9656,8 +9752,8 @@ var Parser = class {
     }
   }
   /*
-  * Helper function to advance to the next token
-  */
+   * Helper function to advance to the prev token
+   */
   getPrevToken() {
     if (this.currentTokenIndex <= 0) {
       return void 0;
@@ -9670,22 +9766,24 @@ var Parser = class {
    * Parses an statement
    */
   parseStatement() {
-    while (this.getCurrentToken().type === "COMMENT") {
+    while (this.getCurrentToken().type === "COMMENT" || this.getCurrentToken().type === "NL") {
       this.getNextToken();
     }
     const currToken = this.getCurrentToken();
     const nextToken = this.getNextToken();
-    if (currToken.content === "end" || currToken.content === "endfunction" || currToken.type === "EOF" || !nextToken) {
+    if (nextToken === void 0)
+      return null;
+    if (currToken.content === "end" || currToken.content === "endfunction" || currToken.content === "endif" || currToken.type === "EOF") {
       this.getPrevToken();
-      return;
+      return null;
     }
-    if ((currToken.type === "IDENTIFIER" || currToken.type === "KEYWORD") && nextToken.type === "LPARENT") {
+    if ((currToken.type === "IDENTIFIER" || currToken.type === "NATIVE_FUNCTION") && nextToken.type === "LPARENT") {
+      this.getPrevToken();
+      const position = this.getCurrentPosition();
+      this.getNextToken();
       const args = this.getFunctionArguments();
       this.getNextToken();
       const supressOutput = this.isOutputSupressed();
-      if (supressOutput) {
-        this.getNextToken();
-      }
       return {
         type: "FUNCTION_CALL",
         supressOutput,
@@ -9693,6 +9791,7 @@ var Parser = class {
         LHE: {
           type: "IDENTIFIER",
           value: currToken.content,
+          position,
           functionData: {
             args
           }
@@ -9702,9 +9801,6 @@ var Parser = class {
       this.getNextToken();
       const RHE = this.parseExpression();
       const supressOutput = this.isOutputSupressed();
-      if (supressOutput) {
-        this.getNextToken();
-      }
       return {
         type: "ASSIGNMENT",
         operator: nextToken.content,
@@ -9713,7 +9809,7 @@ var Parser = class {
         LHE: {
           type: "IDENTIFIER",
           value: currToken.content,
-          position: currToken.position
+          position: this.getCurrentPosition(currToken)
         },
         RHE
       };
@@ -9722,27 +9818,28 @@ var Parser = class {
       if (vectorType === "COMMA" && vectorArgs.every((a) => a.type === "IDENTIFIER") && this.getCurrentToken().type === "EQUALS") {
         if (this.getCurrentToken().type !== "EQUALS") {
           this.errors.push({
-            message: `Unexpected token ${this.getCurrentToken().content}`,
-            range: this.getCurrentToken().position
+            message: `Unexpected token ${this.stringifyTokenContent()}`,
+            range: this.getCurrentPosition(),
+            code: ERROR_CODES.OUTPUT_VECTOR
           });
-          return;
+          return null;
         }
         const functionIdentifier = this.getNextToken();
+        if (functionIdentifier === void 0)
+          throw new Error("Unexpected undefined token. Code 50");
         if (functionIdentifier.type !== "IDENTIFIER" && functionIdentifier.type !== "KEYWORD") {
           this.errors.push({
-            message: `Expected a function call. Got ${this.getCurrentToken().content}`,
-            range: this.getCurrentToken().position
+            message: `Expected a function call. Got ${this.stringifyTokenContent()}`,
+            range: this.getCurrentPosition(),
+            code: ERROR_CODES.EXPECTED_FN_IDENT
           });
-          return;
+          return null;
         }
         this.getNextToken();
         const args = this.getFunctionArguments();
         this.validateFnCallArgs(args);
         this.getNextToken();
         const supressOutput = this.isOutputSupressed();
-        if (supressOutput) {
-          this.getNextToken();
-        }
         return {
           type: "MO_ASSIGNMENT",
           operator: "=",
@@ -9754,6 +9851,7 @@ var Parser = class {
           },
           RHE: {
             type: "FUNCTION_CALL",
+            position: this.getCurrentPosition(functionIdentifier),
             value: functionIdentifier.content,
             functionData: {
               args
@@ -9761,12 +9859,14 @@ var Parser = class {
           }
         };
       }
-      return;
+      return null;
     } else if (currToken.type === "KEYWORD" && currToken.content === "function") {
       const nextToken2 = this.getCurrentToken();
       const next2Token = this.getNextToken();
       this.getPrevToken();
       this.getPrevToken();
+      if (next2Token === void 0)
+        throw new Error("Unexpected undefined token. Code 60");
       if (nextToken2.type === "IDENTIFIER" && next2Token.type === "EQUALS") {
         return this.getFunctionDefintionWithOutput(true);
       } else if (nextToken2.type === "LBRACKET") {
@@ -9774,18 +9874,316 @@ var Parser = class {
       } else {
         return this.getFunctionDefintionWithoutOutput();
       }
-    } else if (currToken.type === "IDENTIFIER" && (nextToken.type === "IDENTIFIER" || nextToken.type === "EOF" || nextToken.type === "NUMBER" || nextToken.type === "STRING")) {
-      this.warnings.push({
-        message: "This is considered as a function call",
-        range: nextToken.position
-      });
-      return;
+    } else if (currToken.type === "IDENTIFIER" && (nextToken.type === "NL" || nextToken.type === "EOF" || this.isTokenValidBasicDataType(nextToken))) {
+      let counter = 0;
+      while (this.getCurrentToken().type !== "NL" && this.getCurrentToken().type !== "EOF" && this.isTokenValidBasicDataType(this.getCurrentToken()) && counter < MAX_STATEMENTS) {
+        this.getNextToken();
+        counter++;
+      }
+      this.logErrorMaxCallsReached(
+        counter,
+        "Could not parse function call",
+        ERROR_CODES.FN_CALL_EXCEEDED_CALLS
+      );
+    } else if (currToken.type === "KEYWORD" && currToken.content === "if") {
+      return this.parseIfStatement();
     } else {
+      if (currToken === void 0)
+        throw new Error("Unexpected undefined token. Code 70");
       this.errors.push({
-        message: "Expected a valid token for a statement",
-        range: this.getCurrentToken().position
+        message: `Unexpected token. Got: "${this.stringifyTokenContent(
+          currToken
+        )}"`,
+        range: currToken?.position ?? {
+          start: { line: 0, character: 0 },
+          end: { line: 0, character: 0 }
+        },
+        code: 24
+      });
+      return null;
+    }
+    return null;
+  }
+  /**
+   * Parses an If Statement
+   * IMPORTANT: Expects the current token to be '('
+   */
+  parseIfStatement() {
+    const startingPosition = this.getPrevToken()?.position;
+    this.getNextToken();
+    if (this.getCurrentToken().type !== "LPARENT") {
+      this.errors.push({
+        message: `Expected '('. Got ${this.stringifyTokenContent()}`,
+        range: this.getCurrentPosition(),
+        code: ERROR_CODES.EXPECTED_LPAREN_IF_STMNT
       });
     }
+    let endToken;
+    let counter = 0;
+    do {
+      this.skipNL(true);
+      if (!this.isValidConditionDataType()) {
+        this.errors.push({
+          code: ERROR_CODES.EXPECTED_VALID_IF_STMNT,
+          range: this.getCurrentPosition(),
+          message: `Unexpected token: "${JSON.stringify(
+            this.getCurrentToken().content
+          )}"`
+        });
+        endToken = this.getCurrentToken();
+        this.skipNL(true);
+        break;
+      }
+      this.skipNL(true);
+      const [isValidCondition, conditionsEnded] = this.isValidCondition();
+      if (!isValidCondition) {
+        this.errors.push({
+          message: `Unexpected token in condition. Got ${this.getCurrentContent()}`,
+          code: ERROR_CODES.EXPECTED_VALID_SYMBOL_IF_STMNT,
+          range: this.getCurrentPosition()
+        });
+      }
+      if (conditionsEnded) {
+        endToken = this.getCurrentToken();
+        this.skipNL(true);
+        break;
+      }
+      this.skipNL(true);
+      counter++;
+    } while (endToken !== void 0 && counter < MAX_STATEMENTS && endToken.type !== "RPARENT");
+    this.logErrorMaxCallsReached(
+      counter,
+      "Maximum tries reached when parsing if statement",
+      ERROR_CODES.EXCEEDED_CALLS_RPAREN_IF_STMNT
+    );
+    const statements = [];
+    let maxCalls = 0;
+    while (!this.isEndIfToken() && !this.isEOF() && maxCalls < MAX_STATEMENTS) {
+      const statement = this.parseStatement();
+      if (statement !== null)
+        statements.push(statement);
+      maxCalls++;
+    }
+    this.logErrorMaxCallsReached(
+      maxCalls,
+      "Could not find closing keyword 'end' or 'endif'",
+      ERROR_CODES.MISSING_END_IF_STMNT
+    );
+    const context = this.getIntoNewContext()[1];
+    const position = {
+      ...startingPosition,
+      end: this.getCurrentPosition().start
+    };
+    this.skipNL(true);
+    return {
+      type: "IF_STMNT",
+      supressOutput: true,
+      context,
+      LHE: {
+        type: "IF_STMNT",
+        value: "if",
+        // TODO: here should maybe be all the conditions???
+        position
+      },
+      RHE: statements
+    };
+  }
+  /**
+   * Helper that returns the content of the current token as string
+   */
+  getCurrentContent() {
+    return JSON.stringify(this.getCurrentToken().content);
+  }
+  /**
+   * Check if the current token and the next one are valid
+   * concatenators
+   * (concatenators: && and ||)
+   * IMPORTANT: expects that the current token it's the first one to be checked
+   * @returns boolean - true if it's valid
+   */
+  isValidConditionConcat() {
+    if (this.getCurrentToken().type === "AND") {
+      if (this.getNextToken()?.type !== "AND") {
+        this.errors.push({
+          message: `Expected a "&" symbol. Got ${JSON.stringify(
+            this.getCurrentToken().content
+          )}`,
+          code: ERROR_CODES.EXPECTED_VALID_SYMBOL_IF_STMNT,
+          range: this.getCurrentPosition()
+        });
+        return false;
+      }
+      return true;
+    } else if (this.getCurrentToken().type === "OR") {
+      if (this.getNextToken()?.type !== "OR") {
+        this.errors.push({
+          message: `Expected a "|" symbol. Got ${JSON.stringify(
+            this.getCurrentToken().content
+          )}`,
+          code: ERROR_CODES.EXPECTED_VALID_SYMBOL_IF_STMNT,
+          range: this.getCurrentPosition()
+        });
+        return false;
+      }
+      return true;
+    }
+    return false;
+  }
+  /**
+   * Helper that check weather the current token and the following ones
+   * make a valid condition.
+   * finishedConditions it's weather it found a ')' at the end or not
+   * IMPORTANT: it expects that the current token it's the first data type
+   * IMPORTANT: it ends in the condition concatenators or ')'
+   * TODO: better check the recursion here. It may cause problems
+   * @returns [boolean, boolean] - [isValidCondition, finishedConditions]
+   */
+  isValidCondition() {
+    switch (this.getCurrentToken().type) {
+      case "RPARENT":
+        return [true, true];
+      case "AND":
+      case "OR":
+        this.skipNL(true);
+        this.isValidComparingSymbol();
+        this.skipNL(true);
+        if (!this.isValidConditionDataType())
+          return [false, false];
+        if (this.skipNL(true).type === "RPARENT")
+          return [true, true];
+        if (!this.isValidConditionConcat())
+          return [false, false];
+        return [true, false];
+      default: {
+        if (!this.isValidComparingSymbol())
+          return [false, false];
+        this.skipNL(true);
+        if (!this.isValidConditionDataType()) {
+          this.errors.push({
+            message: `Expected a valid data type. Got ${this.getCurrentContent()}`,
+            code: ERROR_CODES.EXPECTED_VALID_DATA_TYPE_IF_STMNT,
+            range: this.getCurrentPosition()
+          });
+        }
+        this.skipNL(true);
+        const [isValidCondition, finishedConditions] = this.isValidCondition();
+        if (finishedConditions)
+          return [true, true];
+        if (!isValidCondition)
+          return [false, true];
+        break;
+      }
+    }
+    return [true, false];
+  }
+  /**
+   * Helper that returns weather current token it's a valid data type
+   * for a condition
+   * IMPORTANT: expects that the current token it's the one being checked
+   * @returns boolean - true if the data type it's valid
+   */
+  isValidConditionDataType() {
+    return this.isTokenValidBasicDataType(this.getCurrentToken()) || this.getCurrentToken().type === "VECTOR";
+  }
+  /**
+   * Helper that check weather the current and the next symbol
+   * are valid comparing symbols (==, <, >, <=, >=)
+   * IMPORTANT: expects that the current symbol it's the one to check
+   * @returns boolean - true if it is a valid comparing symbol
+   */
+  isValidComparingSymbol() {
+    if (this.getCurrentToken().type === "EQUALS") {
+      const nextToken = this.getNextToken();
+      if (nextToken?.type !== "EQUALS") {
+        this.errors.push({
+          code: ERROR_CODES.EXPECTED_VALID_IF_STMNT,
+          range: this.getCurrentPosition(nextToken),
+          message: `Unexpected token: "${JSON.stringify(
+            nextToken?.content
+          )}". Was expecting '='`
+        });
+        this.getPrevToken();
+        return false;
+      }
+      return true;
+    } else if (this.getCurrentToken().type === "GRATER_THAN" || this.getCurrentToken().type === "LESS_THAN") {
+      if (this.getNextToken()?.type !== "EQUALS") {
+        this.getPrevToken();
+      }
+      return true;
+    } else {
+      this.errors.push({
+        code: ERROR_CODES.EXPECTED_VALID_IF_STMNT,
+        range: this.getCurrentPosition(),
+        message: `Unexpected token: "${JSON.stringify(
+          this.getCurrentToken().content
+        )}. Was expecting '<' or '>'"`
+      });
+    }
+    return false;
+  }
+  /**
+   * Returns true if the current token or the given token
+   * it's 'end' or 'endif'
+   */
+  isEndIfToken(token) {
+    if (token !== void 0) {
+      return token.content === "end" || token.content === "endif";
+    }
+    return this.getCurrentToken().content === "end" || this.getCurrentToken().content === "endif";
+  }
+  /**
+   * Helper that returns a 'struct' Token if the grammar it's correct
+   * else it returns null
+   * WARN: assumes that the first token it's 'LSQUIRLY'
+   * WARN: Leaves the current token to the next after the '}'
+   */
+  parseStruct() {
+    const args = [];
+    const initPos = this.getCurrentToken().position?.start ?? CERO_POSITION.start;
+    let counter = 0;
+    do {
+      const arg = this.skipNL(true);
+      if (arg !== void 0 && this.isValidStructType(arg)) {
+        args.push(arg);
+      } else {
+        return null;
+      }
+      const comma = this.skipNL(true);
+      if (comma === void 0 || comma.type !== "COMMA" && comma.type !== "RSQUIRLY") {
+        this.errors.push({
+          message: `Unexpected struct value. Got "${comma?.type ?? "UNDEFINED"}". Code ${ERROR_CODES.STRUCT_BAD_COMMA.toString()}`,
+          code: ERROR_CODES.STRUCT_BAD_ARGS,
+          range: this.getCurrentPosition()
+        });
+      }
+      counter++;
+    } while (this.getCurrentToken().type !== "RSQUIRLY" && this.getCurrentToken().type !== "EOF" && this.currentTokenIndex < this.tokens.length && counter < MAX_STATEMENTS);
+    this.getNextToken();
+    return {
+      type: "STRUCT",
+      content: args,
+      position: {
+        start: initPos,
+        end: this.getCurrentPosition().end
+      }
+    };
+  }
+  /**
+   * Helper that returns weather the current Token it's
+   * a valid struct argument or not.
+   * WARN: COMMAs don't count
+   */
+  isValidStructType(token) {
+    if (!this.isTokenValidBasicDataType(token) && token.type !== "VECTOR" && token.type !== "STRUCT") {
+      this.errors.push({
+        message: `Unexpected struct value. Got "${token.type}". Code ${ERROR_CODES.STRUCT_BAD_ARGS.toString()}`,
+        code: ERROR_CODES.STRUCT_BAD_ARGS,
+        range: this.getCurrentPosition()
+      });
+      return false;
+    }
+    return true;
   }
   /**
    * Helper that sends an error if the arguments of a funcion call are wrong
@@ -9795,14 +10193,15 @@ var Parser = class {
       if (arg.type === "DEFAULT_VALUE_ARGUMENT") {
         this.errors.push({
           message: "Unexpected default value argument in function call",
-          range: arg.position
+          range: this.getCurrentPosition(arg),
+          code: 23
         });
       }
     }
   }
   /**
    * Returns the list of tokens that are contained in an vector
-   * Also returns weather the vector it's declared with ':' or just ','
+   * Also returns weather the vector it's declared with ': ' or just ', '
    */
   getVectorArgs() {
     const tokens = [];
@@ -9818,17 +10217,14 @@ var Parser = class {
     } else if (this.isTokenValidBasicDataType(this.getCurrentToken())) {
       tokens.push(this.getCurrentToken());
     }
-    const itsCommaSeparated = this.getNextToken().type === "COMMA";
+    const itsCommaSeparated = this.getNextToken()?.type === "COMMA";
     if (itsCommaSeparated) {
       tokens.push(...this.getVectorValuesCommaSeparated());
     } else {
       tokens.push(...this.getVectorValuesColonSeparated());
     }
     this.getNextToken();
-    return [
-      tokens,
-      itsCommaSeparated ? "COMMA" : "COLON"
-    ];
+    return [tokens, itsCommaSeparated ? "COMMA" : "COLON"];
   }
   /**
    * Helper that returns the value of a vector ':' separated
@@ -9837,6 +10233,8 @@ var Parser = class {
     const tokens = [];
     while (this.getCurrentToken().type === "COLON" && tokens.length < 2) {
       const nextValue = this.getNextToken();
+      if (nextValue === void 0)
+        throw new Error("Unexpected undefined token. Code 80");
       if (nextValue.type === "LBRACKET") {
         tokens.push(this.getVector(nextValue));
         this.getPrevToken();
@@ -9848,7 +10246,8 @@ var Parser = class {
     if (this.getCurrentToken().type !== "RBRACKET") {
       this.errors.push({
         message: "Unexpected vector value",
-        range: this.getCurrentToken().position
+        range: this.getCurrentPosition(),
+        code: 22
       });
     }
     return tokens;
@@ -9857,14 +10256,17 @@ var Parser = class {
    * Helper that returns a vector once a bracket it's found
    */
   getVector(token) {
-    const [vectorArgs, _] = this.getVectorArgs();
-    const referenceToken = token ? token : this.getCurrentToken();
+    const [vectorArgs] = this.getVectorArgs();
+    const referenceToken = token ?? this.getCurrentToken();
+    if (referenceToken === void 0)
+      throw new Error("Unexpected undefined token. Code 130");
+    const referenceTokenPos = this.getCurrentPosition(referenceToken);
     return {
       type: "VECTOR",
       content: vectorArgs,
       position: {
-        start: referenceToken.position.start,
-        end: vectorArgs[vectorArgs.length - 1]?.position?.end ? vectorArgs[vectorArgs.length - 1]?.position?.end : referenceToken.position.end
+        start: referenceTokenPos.start,
+        end: vectorArgs[vectorArgs.length - 1]?.position?.end ?? referenceTokenPos.end
       }
     };
   }
@@ -9876,6 +10278,8 @@ var Parser = class {
     const tokens = [];
     while (this.getCurrentToken().type === "COMMA") {
       const nextValue = this.getNextToken();
+      if (nextValue === void 0)
+        throw new Error("Unexpected undefined token. Code 120");
       if (nextValue.type === "LBRACKET") {
         tokens.push(this.getVector(nextValue));
         this.getPrevToken();
@@ -9889,87 +10293,121 @@ var Parser = class {
     if (this.getCurrentToken().type !== "RBRACKET") {
       this.errors.push({
         message: "Unexpected vector value",
-        range: this.getCurrentToken().position
+        range: this.getCurrentPosition(),
+        code: 21
       });
     }
     return tokens;
   }
   /**
-   * Helper that extracts the statement of a function definition with output/outputs
+   * Helper that extracts the statement of a function definition with output / outputs
    * @args isSingleOutput - Weather the statement returns one or more outputs.
    */
   getFunctionDefintionWithOutput(isSingleOutput) {
     const [prevContext, newContext] = this.getIntoNewContext();
     let description = this.getFunctionDefinitionDescription(true);
     let output;
-    let outputs;
+    const outputs = [];
     if (isSingleOutput) {
       output = this.getNextToken();
       this.getNextToken();
     } else {
       this.getNextToken();
       this.getNextToken();
-      outputs = this.getVariableVector();
+      outputs.push(...this.getVariableVector());
     }
     const functionName = this.getNextToken();
+    if (functionName === void 0)
+      throw new Error("Unexpected undefined token. Code 110");
     if (functionName.type !== "IDENTIFIER") {
       this.errors.push({
-        message: `Expected IDENTIFIER. Got: ${functionName.content}`,
-        range: this.getCurrentToken().position
+        message: `Expected IDENTIFIER. Got: ${this.stringifyTokenContent(
+          functionName
+        )}`,
+        range: this.getCurrentPosition(),
+        code: 20
       });
-      return;
+      return null;
     }
     this.getNextToken();
     const args = this.getFunctionArguments();
+    this.checkValidFunctionDefinitionArguments(args);
     if (description === "") {
       description = this.getFunctionDefinitionDescription(false);
     }
     this.getNextToken();
     const statements = [];
-    while (!this.isEndFunctionToken() && !this.isEOF()) {
+    let maxCalls = 0;
+    while (!this.isEndFunctionToken() && !this.isEOF() && maxCalls < MAX_STATEMENTS) {
       const statement = this.parseStatement();
-      if (statement)
+      if (statement !== null)
         statements.push(statement);
+      maxCalls++;
     }
+    this.logErrorMaxCallsReached(
+      maxCalls,
+      "Could not find closing keyword 'end'",
+      ERROR_CODES.FN_DEF_MISSING_END
+    );
     const endToken = this.getCurrentToken();
     if (endToken.type === "EOF") {
       this.errors.push({
         message: "Expected closing function 'end' or 'endfunction'",
         range: {
-          start: functionName.position.start,
-          end: endToken.position.end
-        }
+          start: this.getCurrentPosition(functionName).start,
+          end: this.getCurrentPosition(functionName).end
+        },
+        code: 19
       });
-      return;
+      return null;
     }
     this.getNextToken();
     this.getBackOfContext();
+    const RHE = {
+      type: "FUNCTION_DEFINITION",
+      value: "function",
+      LHO: {
+        type: "IDENTIFIER",
+        value: functionName.content,
+        position: this.getCurrentPosition(functionName),
+        functionData: {
+          args,
+          description,
+          closingToken: endToken,
+          contextCreated: newContext
+        }
+      },
+      RHO: statements
+    };
     return {
       type: "ASSIGNMENT",
       supressOutput: true,
       context: prevContext,
       LHE: {
         type: isSingleOutput ? "IDENTIFIER" : "VARIABLE_VECTOR",
-        value: isSingleOutput ? output.content : outputs,
-        position: isSingleOutput ? output.position : null
+        value: isSingleOutput && output !== void 0 ? output.content : outputs,
+        position: isSingleOutput && output !== void 0 ? this.getCurrentPosition(output) : void 0
       },
-      RHE: {
-        type: "FUNCTION_DEFINITION",
-        value: "function",
-        LHO: {
-          type: "IDENTIFIER",
-          value: functionName.content,
-          position: functionName.position,
-          functionData: {
-            args,
-            description,
-            closingToken: endToken,
-            contextCreated: newContext
-          }
-        },
-        RHO: statements
-      }
+      RHE
     };
+  }
+  /**
+   * Helper that sends error if the arguments of a function defintion are not correct
+   * The arguments in a function definition should be IDENTIFIERs and default values(ASSIGNMENTs)
+   */
+  checkValidFunctionDefinitionArguments(args) {
+    let isValidFlag = true;
+    args.forEach((a) => {
+      if (a.type === "IDENTIFIER" || a.type === "DEFAULT_VALUE_ARGUMENT")
+        return;
+      isValidFlag = false;
+      this.errors.push({
+        message: "Invalid function definition argument. ",
+        range: this.getCurrentPosition(a),
+        code: 200
+      });
+    });
+    return isValidFlag;
   }
   /**
    * Helper that extracts the statement of a function definition without output
@@ -9978,15 +10416,21 @@ var Parser = class {
     const [prevContext, newContext] = this.getIntoNewContext();
     let description = this.getFunctionDefinitionDescription(true);
     const functionName = this.getNextToken();
+    if (functionName === void 0)
+      throw new Error("Unexpected undefined token. Code 100");
     if (functionName.type !== "IDENTIFIER") {
       this.errors.push({
-        message: `Expected IDENTIFIER. Got: ${functionName.content}`,
-        range: this.getCurrentToken().position
+        message: `Expected IDENTIFIER. Got: ${this.stringifyTokenContent(
+          functionName
+        )}`,
+        range: this.getCurrentPosition(),
+        code: 18
       });
-      return;
+      return null;
     }
     this.getNextToken();
     const args = this.getFunctionArguments();
+    this.checkValidFunctionDefinitionArguments(args);
     this.getNextToken();
     if (description === "") {
       this.getPrevToken();
@@ -9994,21 +10438,31 @@ var Parser = class {
       this.getNextToken();
     }
     const statements = [];
-    while (!this.isEndFunctionToken() && !this.isEOF()) {
+    let maxCalls = 0;
+    while (!this.isEndFunctionToken() && !this.isEOF() && maxCalls < MAX_STATEMENTS) {
       const statement = this.parseStatement();
-      if (statement)
+      if (statement !== null)
         statements.push(statement);
+      maxCalls++;
+    }
+    if (maxCalls >= MAX_STATEMENTS) {
+      this.errors.push({
+        message: "Max calls for statements in a function definition",
+        range: this.getCurrentPosition(),
+        code: 16
+      });
     }
     const endToken = this.getCurrentToken();
     if (endToken.type === "EOF") {
       this.errors.push({
         message: "Expected closing function 'end' or 'endfunction'",
         range: {
-          start: functionName.position.start,
-          end: endToken.position.end
-        }
+          start: this.getCurrentPosition(functionName).start,
+          end: this.getCurrentPosition(functionName).end
+        },
+        code: 17
       });
-      return;
+      return null;
     }
     this.getNextToken();
     this.getBackOfContext();
@@ -10019,7 +10473,7 @@ var Parser = class {
       LHE: {
         type: "IDENTIFIER",
         value: functionName.content,
-        position: functionName.position,
+        position: this.getCurrentPosition(functionName),
         functionData: {
           args,
           description,
@@ -10038,27 +10492,58 @@ var Parser = class {
     const comments = [];
     const currentIndex = this.currentTokenIndex;
     if (beforeFunction) {
+      let maxIterations = 0;
       do {
+        maxIterations++;
         if (this.currentTokenIndex === 0) {
           break;
         }
-        const prevToken = this.getPrevToken();
-        if (prevToken.type === "COMMENT") {
+        const prevToken = this.getPrevTokenSkipNL();
+        if (prevToken?.type === "COMMENT") {
           comments.push(prevToken);
         }
-      } while (this.getCurrentToken().type === "COMMENT");
+      } while (this.getCurrentToken().type === "COMMENT" && maxIterations <= MAX_STATEMENTS);
+      this.logErrorMaxCallsReached(
+        maxIterations,
+        "Iterations exceeded trying to find function comments",
+        ERROR_CODES.MAX_ITERATION_COMMENTS_BEFORE
+      );
       comments.reverse();
     } else {
+      let maxIterations = 0;
       do {
-        const nextToken = this.getNextToken();
+        maxIterations++;
+        const nextToken = this.skipNL(true);
         if (nextToken.type === "COMMENT") {
           comments.push(nextToken);
         }
-      } while (this.getCurrentToken().type === "COMMENT");
+      } while (this.getCurrentToken().type === "COMMENT" && maxIterations <= MAX_STATEMENTS);
+      this.logErrorMaxCallsReached(
+        maxIterations,
+        "Iterations exceeded trying to find function comments",
+        ERROR_CODES.MAX_ITERATION_COMMENTS_AFTER
+      );
     }
     this.currentTokenIndex = currentIndex;
     const ret = comments.map((t) => t.content).join("\n");
     return ret;
+  }
+  /**
+   * Helper that returns the previous Token skipping new lines tokens
+   */
+  getPrevTokenSkipNL() {
+    let token;
+    let counter = 0;
+    do {
+      token = this.getPrevToken();
+      counter++;
+    } while (token?.type === "NL" && counter < MAX_STATEMENTS);
+    this.logErrorMaxCallsReached(
+      counter,
+      "Max statement parsing reached while parsing comment",
+      ERROR_CODES.MAX_ITERATION_PARSING_COMMENT_BEFORE
+    );
+    return token;
   }
   /**
    * Helper that checks if the last token of the current statement it's a SEMICOLON
@@ -10068,32 +10553,38 @@ var Parser = class {
   isOutputSupressed() {
     const isSupressed = this.getCurrentToken().type === "SEMICOLON";
     if (!isSupressed) {
-      this.getPrevToken();
       this.warnings.push({
         message: "Will output to the console",
-        range: this.getPrevToken().position
+        range: this.getCurrentPosition(this.getPrevToken()),
+        code: 15
       });
       this.getNextToken();
-      this.getNextToken();
+      return false;
     }
+    this.getNextToken();
     return isSupressed;
   }
   /**
-   * Helper that returns a list of identifiers of a list of variables 
-   * i.e [a,b,c,d,...,N] = FUNCTION_CALL(), it returns a through N
+   * Helper that returns a list of identifiers of a list of variables
+   * i.e[a, b, c, d,...,N] = FUNCTION_CALL(), it returns a through N
    */
   getVariableVector() {
     const tokens = [];
     do {
       if (this.getCurrentToken().type !== "IDENTIFIER") {
-        return;
+        return [];
       }
       tokens.push(this.getCurrentToken());
-      const nextTokenType = this.getNextToken().type;
+      const nextTokenType = this.getNextToken()?.type;
+      if (nextTokenType === void 0)
+        throw new Error("Unexpected undefined token. Code 30");
       if (nextTokenType !== "COMMA" && nextTokenType !== "RBRACKET") {
         this.errors.push({
-          message: `Expected COMMA. Got: '${this.getCurrentToken().content}'`,
-          range: this.getCurrentToken().position
+          message: `Expected COMMA. Got: '${this.stringifyTokenContent(
+            this.getCurrentToken()
+          )}'`,
+          range: this.getCurrentPosition(),
+          code: 14
         });
         return tokens;
       }
@@ -10101,16 +10592,16 @@ var Parser = class {
       if (nextTokenType === "RBRACKET") {
         break;
       }
-    } while (tokens[tokens.length - 1].type !== "RBRACKET");
+    } while (tokens[tokens.length - 1].type !== "RBRACKET" && this.currentTokenIndex < this.tokens.length);
     return tokens;
   }
   /**
-  * Helper that parses an expression
-  * @throws error
-  */
+   * Helper that parses an expression
+   * @throws error
+   */
   parseExpression() {
     const currToken = this.getCurrentToken();
-    let lho = void 0;
+    let lho;
     let isValidBinary = true;
     switch (currToken.type) {
       case "STRING":
@@ -10140,7 +10631,7 @@ var Parser = class {
         return {
           type: "ANONYMOUS_FUNCTION_DEFINITION",
           value: "@",
-          position: currToken.position,
+          position: this.getCurrentPosition(currToken),
           functionData: {
             args
           },
@@ -10153,7 +10644,8 @@ var Parser = class {
         if (this.getCurrentToken().type !== "RPARENT") {
           this.errors.push({
             message: "Expected closing parenthesis ')'",
-            range: this.getCurrentToken().position
+            range: this.getCurrentPosition(),
+            code: 13
           });
           return;
         }
@@ -10163,19 +10655,38 @@ var Parser = class {
           type: "VARIABLE_VECTOR",
           value: this.getVectorArgs()[0]
         };
+      case "LSQUIRLY": {
+        const struct = this.parseStruct();
+        if (struct === null)
+          return;
+        return {
+          type: "STRUCT",
+          value: struct?.content
+        };
+      }
+      case "NL":
+        this.errors.push({
+          message: `Unexpected new line in expression.`,
+          range: this.getCurrentPosition(),
+          code: ERROR_CODES.UNEXPECTED_NL
+        });
+        return;
       default:
         this.errors.push({
-          message: `Unexpected token. ${currToken.content}`,
-          range: this.getCurrentToken().position
+          message: `Unexpected token. ${this.stringifyTokenContent(currToken)}`,
+          range: this.getCurrentPosition(),
+          code: 12
         });
         return;
     }
     const nextToken = this.getNextToken();
+    if (nextToken === void 0)
+      throw new Error("Unexpected undefined token. Code 40");
     if (isValidBinary && this.isBinaryOperator(nextToken.type)) {
       this.getNextToken();
       return {
         type: "BINARY_OPERATION",
-        value: nextToken.content,
+        value: nextToken?.content ?? "",
         RHO: this.parseExpression(),
         LHO: lho
       };
@@ -10192,22 +10703,23 @@ var Parser = class {
     const isValid = token.type === "IDENTIFIER" || token.type === "NUMBER" || token.type === "STRING";
     if (!isValid) {
       this.errors.push({
-        message: `Expected a valid data type. Got ${token.content}`,
-        range: this.getCurrentToken().position
+        message: `Expected a valid data type. Got ${this.stringifyTokenContent()}`,
+        range: this.getCurrentPosition(),
+        code: 11
       });
     }
     return isValid;
   }
   parseFunctionCall() {
     const currToken = this.getCurrentToken();
-    if (this.getNextToken().type === "LPARENT") {
+    if (this.getNextToken()?.type === "LPARENT") {
       const args = this.getFunctionArguments();
       this.validateFnCallArgs(args);
       this.getNextToken();
       return {
         type: "FUNCTION_CALL",
         value: currToken.content,
-        position: currToken.position,
+        position: this.getCurrentPosition(currToken),
         functionData: {
           args
         }
@@ -10216,7 +10728,7 @@ var Parser = class {
       return {
         type: currToken.type,
         value: currToken.content,
-        position: currToken.position
+        position: this.getCurrentPosition(currToken)
       };
     }
   }
@@ -10229,22 +10741,26 @@ var Parser = class {
     const tokens = [];
     if (this.getCurrentToken().type !== "LPARENT") {
       this.errors.push({
-        message: `Expected '(' for function call. Got: ${this.getCurrentToken().content}`,
-        range: this.getCurrentToken().position
+        message: `Expected '(' for function call. Got: ${this.getCurrentToken().type}`,
+        range: this.getCurrentPosition(),
+        code: 10
       });
       return tokens;
     }
     do {
-      let arg = this.getNextToken();
-      const nextToken = this.getNextToken();
+      let arg = this.skipNL(true);
+      const nextToken = this.skipNL(true);
       this.getPrevToken();
       if (arg.type === "IDENTIFIER" && nextToken.type === "EQUALS") {
         this.getNextToken();
-        const defaultValue = this.getNextToken();
+        const defaultValue = this.skipNL(true);
         if (!this.isTokenDataType(defaultValue)) {
           this.errors.push({
-            message: `Expected a valid default value. Got ${defaultValue.content}`,
-            range: defaultValue.position
+            message: `Expected a valid default value. Got ${this.stringifyTokenContent(
+              defaultValue
+            )}`,
+            range: this.getCurrentPosition(defaultValue),
+            code: 9
           });
         }
         tokens.push({
@@ -10256,7 +10772,7 @@ var Parser = class {
         this.getNextToken();
         arg = null;
       } else if (arg.type === "IDENTIFIER") {
-        if (this.getNextToken().type === "LPARENT") {
+        if (this.skipNL(true).type === "LPARENT") {
           const fnCallArgs = this.getFunctionArguments();
           this.validateFnCallArgs(fnCallArgs);
         }
@@ -10265,23 +10781,33 @@ var Parser = class {
       } else if (arg.type === "LBRACKET") {
         tokens.push(this.getVector(arg));
         arg = null;
+      } else if (arg.type === "LSQUIRLY") {
+        const struct = this.parseStruct();
+        arg = null;
+        if (struct === null)
+          return tokens;
+        tokens.push(struct);
       } else if (this.isTokenValidBasicDataType(arg)) {
         this.getNextToken();
       } else {
         this.errors.push({
-          message: `Expected valid argument. Got ${arg}`,
-          range: this.getCurrentToken().position
+          message: `Expected valid argument. Got ${this.stringifyTokenContent(
+            arg
+          )}`,
+          range: this.getCurrentPosition(),
+          code: 8
         });
         return tokens;
       }
-      if (arg) {
+      if (arg !== null) {
         tokens.push(arg);
       }
-      const commaOrRParen = this.getCurrentToken();
+      const commaOrRParen = this.skipNL();
       if (commaOrRParen.type !== "COMMA" && commaOrRParen.type !== "RPARENT") {
         this.errors.push({
-          message: `Expected ',' or ')'. Got '${commaOrRParen.content}'`,
-          range: this.getCurrentToken().position
+          message: `Expected ',' or ')'. Got '${commaOrRParen.type}'`,
+          range: this.getCurrentPosition(),
+          code: ERROR_CODES.EXPECTED_COMMA_PAREN
         });
         return tokens;
       }
@@ -10289,15 +10815,49 @@ var Parser = class {
     if (this.getCurrentToken().type === "EOF") {
       this.errors.push({
         message: "Expected closing parenthesis ')' for function call",
-        range: this.getCurrentToken().position
+        range: this.getCurrentPosition(),
+        code: ERROR_CODES.MISSING_PAREN
       });
       return tokens;
     }
     return tokens;
   }
   /**
-  * Helper that returns weather a token type is a BinaryOperator
-  */
+   * Helper that returns the content of a token as a string
+   */
+  stringifyTokenContent(token) {
+    if (token === void 0)
+      token = this.getCurrentToken();
+    if (Array.isArray(token.content))
+      return `[${token.content.map((t) => t.content).join(", ")}]`;
+    return token.content;
+  }
+  /**
+   * Helper that advances to the next token that's not a NL (new line)
+   * @param next if true it starts by grabbing the next token
+   * TODO: maybe have a separated constant for the max of the counter ??
+   */
+  skipNL(next = false) {
+    let counter = 0;
+    let tok = this.getCurrentToken();
+    if (next)
+      tok = this.getNextToken();
+    while (this.getCurrentToken().type === "NL" && counter <= MAX_STATEMENTS) {
+      tok = this.getNextToken();
+      counter++;
+    }
+    this.logErrorMaxCallsReached(
+      counter,
+      "Found too many new lines",
+      ERROR_CODES.TOO_MANY_NL
+    );
+    if (tok === void 0)
+      throw new Error("EOF was never found");
+    return tok;
+  }
+  /**
+   * Helper that returns weather a token type is a BinaryOperator
+   */
   isBinaryOperator(type) {
     return type === "SUBTRACTION" || type === "DIVISION" || type === "ADDITION" || type === "MULTIPLICATION";
   }
@@ -10305,52 +10865,101 @@ var Parser = class {
    * Helper that returns weather the current Token it's an EOF or not
    */
   isEOF(token) {
-    if (token) {
+    if (token !== null && token !== void 0) {
       return token.type === "EOF";
     }
     return this.getCurrentToken().type === "EOF";
   }
   /**
-   * Helper that returns weather the current Token it's an 
+   * Helper that returns weather the current Token it's an
    * end or endfunction keyword
    */
   isEndFunctionToken(token) {
-    if (token) {
+    if (token !== null && token !== void 0) {
       return token.type === "KEYWORD" && (token.content === "end" || token.content === "endfunction");
     }
     return this.getCurrentToken().type === "KEYWORD" && (this.getCurrentToken().content === "end" || this.getCurrentToken().content === "endfunction");
   }
   /**
    * Helper that returns weather the current token or
-   * a provided one is a basic data type (IDENTIFIER, STRING, DATA_VECTOR or NUMBER)
-   * TODO consider structs {}
+   * a provided one is a basic data type(IDENTIFIER, STRING, DATA_VECTOR or NUMBER)
+   * TODO consider structs { }
    */
   isTokenDataType(token) {
-    if (token) {
-      return token.type === "IDENTIFIER" || token.type === "VECTOR" || token.type === "STRING" || token.type === "NUMBER";
+    if (token !== null && token !== void 0) {
+      return token.type === "IDENTIFIER" || token.type === "VECTOR" || token.type === "STRING" || token.type === "NUMBER" || token.type === "STRUCT";
     }
-    return this.getCurrentToken().type === "IDENTIFIER" || this.getCurrentToken().type === "VECTOR" || this.getCurrentToken().type === "STRING" || this.getCurrentToken().type === "NUMBER";
+    return this.getCurrentToken().type === "IDENTIFIER" || this.getCurrentToken().type === "VECTOR" || this.getCurrentToken().type === "STRING" || this.getCurrentToken().type === "STRUCT" || this.getCurrentToken().type === "NUMBER";
   }
   /**
-  * Makes the Abstract Syntax Tree with the given tokens.
-  * @returns Program - AST.
-  */
+   * Helper that adds the error of max statements reached
+   */
+  logErrorMaxCallsReached(counter, message, errorCode) {
+    if (counter >= MAX_STATEMENTS) {
+      this.errors.push({
+        message,
+        range: this.getCurrentPosition(),
+        code: errorCode
+      });
+    }
+  }
+  /**
+   * Returns the parsed statements in the provided text
+   */
+  getStatements() {
+    return this.statements;
+  }
+  /**
+   * Makes the Abstract Syntax Tree with the given tokens.
+   * @returns Program - AST.
+   */
   makeAST() {
+    if (this.tokens.length < 4)
+      return {
+        type: "Program",
+        body: this.statements
+      };
+    let statementsCounter = 0;
     do {
       const statement = this.parseStatement();
-      if (statement) {
+      if (statement !== null) {
         this.statements.push(statement);
       }
-    } while (this.getCurrentToken().type !== "EOF");
+      statementsCounter++;
+    } while (this.getCurrentToken().type !== "EOF" && statementsCounter < MAX_STATEMENTS);
+    if (statementsCounter >= MAX_STATEMENTS) {
+      this.errors.push({
+        message: "Maximum amount of statements reached.",
+        range: this.getCurrentPosition(),
+        code: ERROR_CODES.AST_MAX_STMNT_REACHED
+      });
+    }
     return {
       type: "Program",
       body: this.statements
     };
   }
   /**
+   * Helper that returns the current token position if it exists
+   */
+  getCurrentPosition(token) {
+    if (token === void 0 && this.getCurrentToken() !== void 0) {
+      return this.getCurrentToken().position;
+    } else if (token === void 0 && this.getCurrentToken() === void 0) {
+      return CERO_POSITION;
+    } else if (token?.position !== null && token?.position !== void 0) {
+      return token.position;
+    }
+    return CERO_POSITION;
+  }
+  /**
    * Returns the list of errors found during parsing.
    */
   getErrors() {
+    this.errors.forEach((e) => {
+      if (e?.range === void 0)
+        throw new Error("Unexpected undefined Range. " + JSON.stringify(e));
+    });
     return this.errors;
   }
   /**
@@ -10363,11 +10972,17 @@ var Parser = class {
 
 // src/types/symbols.ts
 var Symbols = {
+  NL: "\n",
   EOF: "\0",
   AT: "@",
   COLON: ":",
   COMMA: ",",
   EQUALS: "=",
+  GRATER_THAN: ">",
+  LESS_THAN: "<",
+  AND: "&",
+  OR: "|",
+  EXCLAMATION: "!",
   SUBTRACTION: "-",
   ADDITION: "+",
   MULTIPLICATION: "*",
@@ -10397,12 +11012,30 @@ function getTokenFromSymbols(char) {
 }
 
 // src/parser/tokenizer.ts
+var MAX_TOKENS_CALLS = 1e4;
 var Tokenizer = class {
-  constructor(text) {
-    this.text = text;
+  constructor(text = "") {
     this.currPos = 0;
     this.nextPos = 0;
     this.tokens = [];
+    this.keywords = getKeywordsFromCompletion();
+    this.nativeFunctions = getNataiveFunctionsList();
+    this.text = text;
+    this.readChar();
+  }
+  setInitialConditions() {
+    this.currPos = 0;
+    this.nextPos = 0;
+    this.currChar = "";
+    this.nextChar = "";
+    this.tokens.length = 0;
+  }
+  /**
+   * Updates the current text to the provided one.
+   */
+  updateText(text) {
+    this.text = text;
+    this.setInitialConditions();
     this.readChar();
   }
   /**
@@ -10411,24 +11044,33 @@ var Tokenizer = class {
    */
   getAllTokens() {
     const tokens = [];
+    let counter = 0;
     do {
       tokens.push(this.getNextToken());
-    } while (tokens[tokens.length - 1].type !== "EOF");
+      counter++;
+    } while (tokens[tokens.length - 1].type !== "EOF" && counter <= MAX_TOKENS_CALLS);
+    if (counter >= MAX_TOKENS_CALLS) {
+      throw new Error(
+        "Tokens calls exeeded. " + JSON.stringify(this.text) + " -> " + JSON.stringify(this.tokens.map((t) => t.type))
+      );
+    }
     return tokens;
   }
   /**
    * Gets the next token
    */
   getNextToken() {
-    while (/\s/.test(this.currChar)) {
+    while (this.currChar === " ") {
       this.readChar();
     }
     const token = getTokenFromSymbols(this.currChar);
-    if (token && this.isValidStartingToken(token)) {
+    if (token !== void 0 && this.isValidStartingToken(token)) {
       this.readChar();
       return this.addToken({
         ...token,
-        position: this.getPosition(token.type !== "EOF" ? token.content : "")
+        position: this.getPositionAfterCursor(
+          token.type !== "EOF" ? token.content : ""
+        )
       });
     }
     if (this.currChar === "#" || this.currChar === "%") {
@@ -10436,41 +11078,59 @@ var Tokenizer = class {
       return this.addToken({
         type: "COMMENT",
         content: comment,
-        position: this.getPosition(comment)
+        position: this.getPositionAfterCursor(comment)
       });
     } else if (isLetter(this.currChar)) {
-      const intialPos = this.currPos;
       const literal = this.readLiteral();
-      const postPos = this.currPos;
-      this.currPos = intialPos - 1;
-      const position = this.getPosition(literal);
-      this.currPos = postPos;
       return this.addToken({
         ...this.tokenFromLiteral(literal),
-        position
+        position: this.getPositionAfterCursor(literal)
       });
     } else if (isNumber(this.currChar)) {
       const number = this.readNumber();
       return this.addToken({
         type: "NUMBER",
         content: number,
-        position: this.getPosition(number)
+        position: this.getPositionAfterCursor(number)
       });
     } else if (this.currChar === '"' || this.currChar === "'") {
       const str = this.readLiteralString();
       return this.addToken({
         type: "STRING",
         content: str,
-        position: this.getPosition(str)
+        position: this.getPositionAfterCursor(str)
       });
     } else {
       this.readChar();
       return this.addToken({
         type: "ILLEGAL",
         content: "illegal",
-        position: null
+        position: this.getPositionAfterCursor(this.currChar)
       });
     }
+  }
+  /**
+   * Returns the Range of a character in the text
+   * considering that it starts after the token content has been read
+   */
+  getPositionAfterCursor(content) {
+    const initialPosition = this.currPos - content.length;
+    const finalPosition = this.currPos;
+    this.currPos = initialPosition;
+    const [line, character] = this.getRowsColsCursor();
+    const [lineEndPoint, characterEndPoint] = this.getRowsColsCursor(content);
+    const range = {
+      start: {
+        line,
+        character
+      },
+      end: {
+        line: lineEndPoint,
+        character: characterEndPoint
+      }
+    };
+    this.currPos = finalPosition;
+    return range;
   }
   /**
    * Helper that checks that the current character can be a single token
@@ -10481,7 +11141,7 @@ var Tokenizer = class {
     if (token.type !== "MODULUS")
       return true;
     const lastToken = this.tokens[this.tokens.length - 1];
-    return lastToken && (lastToken.type === "IDENTIFIER" || lastToken.type === "NUMBER");
+    return lastToken !== void 0 && (lastToken.type === "IDENTIFIER" || lastToken.type === "NUMBER");
   }
   /**
    * Helper that reads a comment and returns the content
@@ -10502,15 +11162,18 @@ var Tokenizer = class {
    * Returns the Token corresponding to keywords or literals.
    */
   tokenFromLiteral(literal) {
-    const keywords = getKeywordsFromCompletion();
-    for (const keyword of keywords) {
-      if (keyword === literal) {
-        return {
-          type: "KEYWORD",
-          content: literal,
-          position: this.getPosition(literal)
-        };
-      }
+    if (this.keywords.includes(literal)) {
+      return {
+        type: "KEYWORD",
+        content: literal,
+        position: this.getPosition(literal)
+      };
+    } else if (this.nativeFunctions.includes(literal)) {
+      return {
+        type: "NATIVE_FUNCTION",
+        content: literal,
+        position: this.getPosition(literal)
+      };
     }
     return {
       type: "IDENTIFIER",
@@ -10539,13 +11202,16 @@ var Tokenizer = class {
     };
   }
   /**
-  * Returns the rows and columns corresponding to the current position in the text.
-  * TODO: fix possible problems
-  * @returns {[number, number]} An array containing the row and column.
-  */
-  getRowsColsCursor(content) {
-    const characterPosition = content ? this.currPos + content.length : this.currPos;
-    return getRowsAndColsInCursor({ text: this.text, characterPosition });
+   * Returns the rows and columns corresponding to the current position in the text.
+   * TODO: fix possible problems
+   * @returns {[number, number]} An array containing the row and column [[ROW, COL]].
+   */
+  getRowsColsCursor(content = null) {
+    const characterPosition = content !== null ? this.currPos + content.length + 1 : this.currPos;
+    return getRowsAndColsInCursor({
+      text: this.text,
+      characterPosition
+    });
   }
   /**
    * Reads the next character
@@ -10561,18 +11227,15 @@ var Tokenizer = class {
       this.nextChar = this.text[1];
       this.currPos = 1;
       this.nextPos = 2;
-      return;
     } else if (this.nextPos >= this.text.length) {
       this.currChar = this.nextChar;
-      this.nextChar = " ";
+      this.nextChar = "\0";
       this.currPos = this.nextPos;
-      return;
     } else {
       this.currChar = this.nextChar;
       this.nextChar = this.text[this.nextPos];
       this.currPos = this.nextPos;
       this.nextPos++;
-      return;
     }
   }
   /**
@@ -10581,7 +11244,7 @@ var Tokenizer = class {
    */
   readLiteral() {
     let literal = "";
-    while (/[a-zA-Z0-9_]/.test(this.currChar) && this.currPos < this.text.length) {
+    while (/[a-zA-Z0-9_]/.test(this.currChar) && this.currPos <= this.text.length) {
       literal += this.currChar;
       this.readChar();
     }
@@ -10607,7 +11270,7 @@ var Tokenizer = class {
     do {
       this.readChar();
       literal += this.currChar;
-    } while (this.currChar !== '"' && this.currChar !== "'" && this.currPos < this.text.length);
+    } while (this.currChar !== '"' && this.currChar !== "'" && this.currChar !== "\n" && this.currPos < this.text.length);
     this.readChar();
     return literal;
   }
@@ -10620,8 +11283,8 @@ var Visitor = class {
     this.definitions = [];
   }
   /**
-  * Entry point: it extracts all the references and definitions from a Program
-  */
+   * Entry point: it extracts all the references and definitions from a Program
+   */
   visitProgram(node) {
     for (const statement of node.body) {
       this.visitStatement(statement);
@@ -10632,6 +11295,8 @@ var Visitor = class {
       return;
     switch (node.type) {
       case "ASSIGNMENT":
+        if (node.LHE === void 0)
+          return;
         if (node.LHE.type === "FUNCTION_DEFINITION") {
           this.visitExpression(node.LHE, "ASSIGNMENT");
         } else {
@@ -10640,12 +11305,23 @@ var Visitor = class {
         }
         break;
       case "FUNCTION_DEFINITION":
+        if (node.LHE === void 0)
+          return;
         this.visitExpression(node.LHE, "FUNCTION_DEFINITION");
-        (node?.RHE).forEach((statement) => this.visitStatement(statement));
+        (node?.RHE).forEach((statement) => {
+          this.visitStatement(statement);
+        });
         break;
       case "MO_ASSIGNMENT":
+        if (node.LHE === void 0)
+          return;
         this.visitExpression(node.LHE, "MO_ASSIGNMENT");
         this.visitExpression(node.RHE, "MO_ASSIGNMENT", false);
+        break;
+      case "FUNCTION_CALL":
+        if (node?.LHE === void 0)
+          return;
+        this.visitExpression(node.LHE, "FUNCTION_CALL");
         break;
     }
   }
@@ -10655,50 +11331,80 @@ var Visitor = class {
     switch (node.type) {
       case "IDENTIFIER":
         if ((parentType === "ASSIGNMENT" || parentType === "FUNCTION_DEFINITION") && isLHE) {
+          const args = parentType === "FUNCTION_DEFINITION" ? this.getNodeFunctionArgs(node).map((a) => {
+            if (a.type !== "IDENTIFIER" && a.type !== "DEFAULT_VALUE_ARGUMENT") {
+              return null;
+            }
+            const type = a.type === "DEFAULT_VALUE_ARGUMENT" ? "DEFAULT_ARGUMENT" : "ARGUMENT";
+            const content = a.type === "DEFAULT_VALUE_ARGUMENT" ? this.getDefaultValueContent(a) : "";
+            const position = this.getTokenPosition(a);
+            const def = {
+              name: a.content,
+              type,
+              content,
+              position,
+              documentation: ""
+              // TODO think if i should get the documentation
+            };
+            this.definitions.push(def);
+            return def;
+          }).filter((d) => d !== null) : [];
           this.definitions.push({
             name: node.value,
-            position: node.position,
+            position: node.position ?? CERO_POSITION,
             type: parentType === "ASSIGNMENT" ? "VARIABLE" : "FUNCTION",
             documentation: this.getDocumentationOrLineDefinition(node),
-            arguments: parentType === "FUNCTION_DEFINITION" ? node?.functionData?.args?.map((a) => {
-              return {
-                name: a.content,
-                type: a.type === "DEFAULT_VALUE_ARGUMENT" ? "DEFAULT_ARGUMENT" : "ARGUMENT",
-                content: a.type === "DEFAULT_VALUE_ARGUMENT" ? a.defaultValue.content : "",
-                position: a.position,
-                documentation: ""
-                // TODO think if i should get the documentation
-              };
-            }) : null
+            arguments: args
+          });
+          this.references.push({
+            name: node.value,
+            position: this.getExpressionPosition(node),
+            type: parentType === "ASSIGNMENT" ? "VARIABLE" : "FUNCTION",
+            documentation: node?.functionData?.description ?? ""
+          });
+        } else if (parentType === "FUNCTION_CALL") {
+          this.references.push({
+            name: node.value,
+            position: this.getExpressionPosition(node),
+            type: "FUNCTION",
+            documentation: node?.functionData?.description ?? ""
+          });
+        } else {
+          this.references.push({
+            name: node.value,
+            position: this.getExpressionPosition(node),
+            type: "VARIABLE",
+            documentation: node?.functionData?.description ?? ""
           });
         }
-        this.references.push({
-          name: node.value,
-          position: node.position,
-          type: this.getReferenceTypeFromNode(node),
-          documentation: node?.functionData?.description ? node?.functionData?.description : ""
-        });
-        if (node?.functionData?.args) {
-          this.references.push(...node.functionData.args.map(
-            (arg) => {
-              return {
-                name: arg.content,
-                position: arg.position,
-                type: this.getReferenceTypeFromNode(node),
-                documentation: this.getDocumentationOrLineDefinition(node)
-              };
-            }
-          ));
+        if (node?.functionData?.args !== void 0) {
+          const tokenList = this.getArgumentIdentifiersList(node);
+          const ref = tokenList.map((arg) => {
+            return {
+              name: arg.content,
+              position: this.getTokenPosition(arg),
+              // type: this.getReferenceTypeFromNode(node),
+              type: "VARIABLE",
+              documentation: this.getDocumentationOrLineDefinition(node)
+            };
+          });
+          this.references.push(...ref);
         }
-        if (node?.RHO && Array.isArray(node.RHO)) {
-          node.RHO.forEach((stmnt) => this.visitStatement(stmnt));
+        if (node?.RHO !== null && Array.isArray(node.RHO)) {
+          node.RHO.forEach((stmnt) => {
+            this.visitStatement(stmnt);
+          });
         }
         break;
       case "BINARY_OPERATION":
+        if (node?.LHO === void 0)
+          return;
         this.visitExpression(node.LHO, null);
         this.visitExpression(node.RHO, null, false);
         break;
       case "FUNCTION_DEFINITION":
+        if (node?.LHO === void 0)
+          return;
         this.visitExpression(node.LHO, "FUNCTION_DEFINITION");
         if (Array.isArray(node.RHO)) {
           node.RHO.forEach((s) => {
@@ -10707,11 +11413,13 @@ var Visitor = class {
         }
         break;
       case "KEYWORD":
+        if (node?.LHO === void 0)
+          return;
         this.visitExpression(node.LHO, null);
         this.visitExpression(node.RHO, null, false);
         break;
       case "ANONYMOUS_FUNCTION_DEFINITION":
-        if (node?.LHO?.value && node?.LHO?.position) {
+        if (node?.LHO?.value !== void 0 && node?.LHO?.position !== void 0) {
           this.definitions.push({
             name: node.LHO.value,
             position: node.LHO.position,
@@ -10721,32 +11429,48 @@ var Visitor = class {
               return {
                 name: a.content,
                 type: "ARGUMENT",
-                position: a.position,
+                position: this.getTokenPosition(a),
                 documentation: ""
                 // TODO think if i should get the documentation
               };
-            })
+            }) ?? []
           });
         }
-        this.references.push(...node.functionData.args.map((arg) => {
-          return {
-            name: arg.content,
-            position: node.position,
-            type: this.getReferenceTypeFromNode(node),
-            documentation: node?.functionData?.description ? node?.functionData?.description : ""
-          };
-        }));
+        this.references.push(
+          ...node?.functionData?.args?.map((arg) => {
+            return {
+              name: arg.content,
+              position: this.getExpressionPosition(node),
+              type: this.getReferenceTypeFromNode(node),
+              documentation: node?.functionData?.description ?? ""
+            };
+          }) ?? []
+        );
         this.visitExpression(node.RHO, null, false);
         break;
       case "VARIABLE_VECTOR":
         if (!Array.isArray(node.value) || !(node?.value?.length > 1))
           return;
-        if (node?.value && Array.isArray(node.value)) {
+        if (node?.value !== void 0 && Array.isArray(node.value)) {
           node.value.forEach((val) => {
+            if (val.type === "VECTOR") {
+              this.getTokenIdentifiers(val).forEach((t) => {
+                this.references.push({
+                  name: t.content,
+                  type: "VARIABLE",
+                  position: this.getTokenPosition(t),
+                  documentation: ""
+                  // TODO: check how to add documentation here?
+                });
+              });
+              return;
+            }
+            if (val.type !== "IDENTIFIER")
+              return;
             this.definitions.push({
               name: val.content,
               type: "VARIABLE",
-              position: val.position,
+              position: this.getTokenPosition(val),
               documentation: this.getDocumentationOrLineDefinition(node)
             });
           });
@@ -10755,9 +11479,9 @@ var Visitor = class {
           if (token.type === "IDENTIFIER") {
             this.references.push({
               name: token.content,
-              position: token.position,
-              type: this.getReferenceTypeFromNode(node),
-              documentation: node?.functionData?.description ? node?.functionData?.description : ""
+              position: this.getTokenPosition(token),
+              type: "VARIABLE",
+              documentation: node?.functionData?.description ?? ""
             });
           }
         });
@@ -10765,47 +11489,98 @@ var Visitor = class {
       case "FUNCTION_CALL":
         this.references.push({
           name: node.value,
-          position: node.position,
+          position: this.getExpressionPosition(node),
           documentation: this.getDocumentationOrLineDefinition(node),
           type: "FUNCTION"
         });
+        if (node?.functionData?.args === void 0)
+          break;
+        this.references.push(
+          ...this.getArgumentIdentifiersList(node).map((arg) => {
+            return {
+              name: arg.content,
+              position: this.getTokenPosition(arg),
+              type: "VARIABLE",
+              documentation: this.getDocumentationOrLineDefinition(node)
+            };
+          })
+        );
         break;
     }
   }
   /**
-   * Helper that returns weather a node it's of assignment or not
+   * Helper that returns a list of Tokens from the arguments of a function call or definition
    */
-  isAssignment(node) {
-    return node && node.type === "ASSIGNMENT";
+  getArgumentIdentifiersList(node) {
+    if (node?.functionData?.args === void 0)
+      return [];
+    return node.functionData.args.flatMap((arg) => {
+      return this.getTokenIdentifiers(arg);
+    });
   }
   /**
-   * Helper that returns the documentation of the function 
+   * Helper that returns the IDENTIFIERs from a Token.
+   */
+  getTokenIdentifiers(token) {
+    if (token.type === "VECTOR") {
+      return token.content.flatMap(
+        (t) => this.getTokenIdentifiers(t)
+      );
+    }
+    if (token.type === "IDENTIFIER" || token.type === "DEFAULT_VALUE_ARGUMENT")
+      return [token];
+    return [];
+  }
+  /**
+   * Helper that returns the positon property of a node expression
+   */
+  getExpressionPosition(node) {
+    if (node.position === void 0) {
+      return CERO_POSITION;
+    }
+    return node.position;
+  }
+  /**
+   * Helper that returns the position of a Token
+   */
+  getTokenPosition(token) {
+    if (token.position === null)
+      return CERO_POSITION;
+    return token.position;
+  }
+  /**
+   * Helper that returns the content of a default value in a Token
+   */
+  getDefaultValueContent(token) {
+    if (token?.defaultValue?.content === void 0)
+      return "";
+    if (Array.isArray(token?.defaultValue?.content))
+      return "";
+    return token.defaultValue.content;
+  }
+  /**
+   * Helper that returns the arguments of the function data of a node
+   */
+  getNodeFunctionArgs(node) {
+    if (node?.functionData?.args === void 0)
+      return [];
+    return node.functionData.args;
+  }
+  /**
+   * Helper that returns the documentation of the function
    * or the hole line content of the variable
    */
   getDocumentationOrLineDefinition(node) {
-    if (node?.functionData?.description) {
+    if (node?.functionData?.description !== void 0) {
       return node?.functionData?.description;
     }
-    if (!node?.RHO || Array.isArray(node.RHO))
+    if (node?.RHO === void 0 || Array.isArray(node.RHO))
       return "";
     return "";
-    const expr = node?.RHO;
-    switch (expr.type) {
-      case "STRING":
-      case "NUMBER":
-      case "IDENTIFIER":
-      case "FUNCTION_CALL":
-      case "ANONYMOUS_FUNCTION_DEFINITION":
-        return expr.value;
-      case "BINARY_OPERATION":
-        return node.LHO.value + this.getDocumentationOrLineDefinition(node.RHO);
-      default:
-        return "";
-    }
   }
   /**
-  * Helper that returns the type of a reference "CONSTANT" or "FUNCTION"
-  */
+   * Helper that returns the type of a reference "CONSTANT" or "FUNCTION"
+   */
   getReferenceTypeFromNode(node) {
     if (node.type === "FUNCTION_CALL" || node.type === "FUNCTION_DEFINITION" || node.type === "ANONYMOUS_FUNCTION_DEFINITION") {
       return "FUNCTION";
@@ -10825,11 +11600,17 @@ documents.onDidChangeContent((change) => {
   updateDocumentData(change.document.uri, change.document.getText());
 });
 connection2.onInitialize((params) => handleOnInitialize({ params, connection: connection2 }));
-connection2.onInitialized((params) => handleOnInitialized({ params, connection: connection2 }));
-connection2.onDefinition((params) => handleDefinitions({ params, documents }));
+connection2.onInitialized((params) => {
+  handleOnInitialized({ params, connection: connection2 });
+});
+connection2.onDefinition(
+  async (params) => await handleDefinitions({ params, documents })
+);
 connection2.onReferences((params) => {
   const uri = params.textDocument.uri;
   const document = documents.get(uri);
+  if (document === void 0)
+    return [];
   return handleReferences(document, params.position);
 });
 documents.onDidClose((e) => {
@@ -10841,13 +11622,22 @@ connection2.onCompletionResolve((item) => {
 });
 documents.listen(connection2);
 connection2.listen();
+connection2.onExit(() => {
+  documentChanges.forEach((docChanges) => {
+    clearTimeout(docChanges);
+  });
+  documentChanges.clear();
+});
 function updateDocumentData(uri, text) {
   if (documentChanges.has(uri)) {
     clearTimeout(documentChanges.get(uri));
   }
-  documentChanges.set(uri, setTimeout(() => {
-    const document = documents.get(uri);
-    if (document) {
+  documentChanges.set(
+    uri,
+    setTimeout(() => {
+      const document = documents.get(uri);
+      if (document === null || document === void 0)
+        return;
       const tokenizer = new Tokenizer(text);
       const tokens = tokenizer.getAllTokens();
       const parser = new Parser(tokens);
@@ -10857,12 +11647,15 @@ function updateDocumentData(uri, text) {
       visitors.set(uri, visitor);
       const errors = parser.getErrors().map((err) => getDiagnosticFromLitingMessage(err, "error"));
       const warnings = parser.getWarnings().map((warn) => getDiagnosticFromLitingMessage(warn, "warn"));
+      const diagnostics = [...errors, ...warnings];
       connection2.sendDiagnostics({
         uri,
-        diagnostics: [...errors, ...warnings]
+        diagnostics
+      }).catch((err) => {
+        throw new Error(err);
       });
-    }
-  }, DEBOUNCE_DELAY_MS));
+    }, DEBOUNCE_DELAY_MS)
+  );
 }
 // Annotate the CommonJS export names for ESM import in node:
 0 && (module.exports = {

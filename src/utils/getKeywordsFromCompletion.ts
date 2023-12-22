@@ -1,5 +1,5 @@
-import { completionKeywords } from "../data";
+import { getCompletionKeywords } from '../data';
 
 export function getKeywordsFromCompletion(): string[] {
-  return completionKeywords().map(keyword => keyword.label);
+  return getCompletionKeywords().map((keyword) => keyword.label);
 }
