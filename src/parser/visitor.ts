@@ -11,6 +11,8 @@ import {
   type StatementType,
 } from '../types';
 
+let counter = 0;
+
 export class Visitor {
   public references: Reference[] = [];
   public definitions: Definition[] = [];
