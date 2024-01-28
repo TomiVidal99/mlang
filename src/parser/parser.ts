@@ -311,7 +311,7 @@ export class Parser {
    */
   private parseIfStatement(): Statement {
     const startingPosition = this.getPrevToken()?.position;
-    this.getNextToken();
+    const lparent = this.getNextToken();
 
     if (this.getCurrentToken().type !== 'LPARENT') {
       this.errors.push({
@@ -321,19 +321,32 @@ export class Parser {
       });
     }
 
+    this.skipNL(true);
+
+    let noConditions = false;
+    if (this.getCurrentToken().type === 'RPARENT' && lparent !== undefined) {
+      noConditions = true;
+      this.skipNL(true);
+      const currPos = this.getCurrentPosition();
+      this.errors.push({
+        message: 'Missing condition',
+        range: {
+          start: this.getCurrentPosition(lparent).start ?? currPos.start,
+          end: currPos.end,
+        },
+        code: ERROR_CODES.EMPTY_IF_STMNT,
+      });
+      this.getPrevToken();
+    }
+    this.getPrevToken();
+
     // this do while should just parses what's inside the parenthesis
     let endToken: Token | undefined;
     let counter = 0;
     do {
+      if (noConditions) break;
       this.skipNL(true);
       if (!this.isValidConditionDataType()) {
-        this.errors.push({
-          code: ERROR_CODES.EXPECTED_VALID_IF_STMNT,
-          range: this.getCurrentPosition(),
-          message: `Unexpected token: "${JSON.stringify(
-            this.getCurrentToken().content,
-          )}"`,
-        });
         endToken = this.getCurrentToken();
         this.skipNL(true);
         break;
@@ -531,6 +544,12 @@ export class Parser {
       if (this.getNextToken()?.type !== 'EQUALS') {
         this.getPrevToken();
       }
+      return true;
+    } else if (
+      this.getCurrentToken().type === 'AND' ||
+      this.getCurrentToken().type === 'OR'
+    ) {
+      // TODO: maybe i should check correct connector (&& or ||)
       return true;
     } else {
       this.errors.push({
@@ -1219,7 +1238,7 @@ export class Parser {
 
     if (!isValid) {
       this.errors.push({
-        message: `Expected a valid data type. Got ${this.stringifyTokenContent()}`,
+        message: `Expected a valid data type. Got '${this.stringifyTokenContent()}'`,
         range: this.getCurrentPosition(),
         code: 11,
       });

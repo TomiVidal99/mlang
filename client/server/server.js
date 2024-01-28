@@ -9563,7 +9563,8 @@ var ERROR_CODES = {
   EXPECTED_VALID_SYMBOL_IF_STMNT: 4003,
   EXCEEDED_CALLS_PARSING_STMNTS_IF_STMNT: 4004,
   MISSING_END_IF_STMNT: 4005,
-  EXPECTED_VALID_DATA_TYPE_IF_STMNT: 4006
+  EXPECTED_VALID_DATA_TYPE_IF_STMNT: 4006,
+  EMPTY_IF_STMNT: 4007
 };
 
 // src/constants/cero_position.ts
@@ -9910,7 +9911,7 @@ var Parser = class {
    */
   parseIfStatement() {
     const startingPosition = this.getPrevToken()?.position;
-    this.getNextToken();
+    const lparent = this.getNextToken();
     if (this.getCurrentToken().type !== "LPARENT") {
       this.errors.push({
         message: `Expected '('. Got ${this.stringifyTokenContent()}`,
@@ -9918,18 +9919,35 @@ var Parser = class {
         code: ERROR_CODES.EXPECTED_LPAREN_IF_STMNT
       });
     }
+    this.skipNL(true);
+    let noConditions = false;
+    if (this.getCurrentToken().type === "RPARENT" && lparent !== void 0) {
+      noConditions = true;
+      this.skipNL(true);
+      const currPos = this.getCurrentPosition();
+      this.errors.push({
+        message: "Missing condition",
+        range: {
+          start: this.getCurrentPosition(lparent).start ?? currPos.start,
+          end: currPos.end
+        },
+        code: ERROR_CODES.EMPTY_IF_STMNT
+      });
+      this.getPrevToken();
+    }
+    this.getPrevToken();
     let endToken;
     let counter = 0;
     do {
+      if (noConditions)
+        break;
       this.skipNL(true);
+      this.errors.push({
+        message: `current content: "${this.getCurrentContent()}"`,
+        code: 0,
+        range: this.getCurrentPosition()
+      });
       if (!this.isValidConditionDataType()) {
-        this.errors.push({
-          code: ERROR_CODES.EXPECTED_VALID_IF_STMNT,
-          range: this.getCurrentPosition(),
-          message: `Unexpected token: "${JSON.stringify(
-            this.getCurrentToken().content
-          )}"`
-        });
         endToken = this.getCurrentToken();
         this.skipNL(true);
         break;
@@ -10110,6 +10128,8 @@ var Parser = class {
       if (this.getNextToken()?.type !== "EQUALS") {
         this.getPrevToken();
       }
+      return true;
+    } else if (this.getCurrentToken().type === "AND" || this.getCurrentToken().type === "OR") {
       return true;
     } else {
       this.errors.push({
@@ -10703,7 +10723,7 @@ var Parser = class {
     const isValid = token.type === "IDENTIFIER" || token.type === "NUMBER" || token.type === "STRING";
     if (!isValid) {
       this.errors.push({
-        message: `Expected a valid data type. Got ${this.stringifyTokenContent()}`,
+        message: `Expected a valid data type. Got '${this.stringifyTokenContent()}'`,
         range: this.getCurrentPosition(),
         code: 11
       });
