@@ -141,12 +141,24 @@ export function getCompletionKeywords(): CompletionItem[] {
       label: 'function',
       kind: CompletionItemKind.Keyword,
       // eslint-disable-next-line no-template-curly-in-string
-      insertText: 'function ${1:funcName}(${2:funcArgs})\n${3:funcBody}\nend',
+      insertText: 'function ${1:funcName}(${2:funcArgs})\n\t${3:funcBody}\nend',
       insertTextFormat: InsertTextFormat.Snippet,
       documentation: {
         kind: MarkupKind.Markdown,
         value:
           '[block end marker](https://docs.octave.org/v4.2.0/A-Sample-Function-Description.html#A-Sample-Function-Description)',
+      },
+    },
+    {
+      label: 'do',
+      kind: CompletionItemKind.Keyword,
+      // eslint-disable-next-line no-template-curly-in-string
+      insertText: 'do\n\t${2:funcBody}\nuntil (${1:condition})',
+      insertTextFormat: InsertTextFormat.Snippet,
+      documentation: {
+        kind: MarkupKind.Markdown,
+        value:
+          '[block end marker](https://docs.octave.org/v5.2.0/The-do_002duntil-Statement.html)',
       },
     },
   ];

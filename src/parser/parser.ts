@@ -25,6 +25,7 @@ export class Parser {
   private errors: LintingError[] = [];
   private warnings: LintingWarning[] = [];
   private readonly contextDepth: string[] = ['0'];
+  private parsingStatement = false;
 
   constructor(private readonly tokens: Token[]) {}
 
@@ -116,6 +117,17 @@ export class Parser {
         END_STATEMENTS.includes(currToken.content as any)) ||
       currToken.type === 'EOF'
     ) {
+      if (!this.parsingStatement) {
+        this.errors.push({
+          message: `Unexpected ending of statement '${currToken.content}'`,
+          code: ERROR_CODES.UNEXPECTED_END_OF_STMNT,
+          range: {
+            start: this.getCurrentPosition(currToken).start,
+            end: this.getCurrentPosition(nextToken).start,
+          },
+        });
+        return null;
+      }
       this.getPrevToken();
       return null;
     }
@@ -250,6 +262,7 @@ export class Parser {
       // FUNCTION CALL (NOT recommended way)
       // Printing outputs, single operations or function calls with arguments
       // TODO: make this a function call
+      // TODO: this should be handle at visitor level, because we don't know if it's a variable or a function
       let counter = 0;
       while (
         this.getCurrentToken().type !== 'NL' &&
@@ -265,7 +278,6 @@ export class Parser {
         'Could not parse function call',
         ERROR_CODES.FN_CALL_EXCEEDED_CALLS,
       );
-      // TODO: this should be handle at visitor level, because we don't know if it's a variable or a function
       // this.warnings.push({
       //   message: 'Unadvised function call',
       //   range: this.getCurrentPosition(nextToken),
@@ -312,13 +324,14 @@ export class Parser {
   }
 
   /**
-   * Parses an If, For, While Statements
+   * Parses an if, for, while, do, switch Statements
    */
   private parseBasicStatements(content: string): Statement | null {
     const startingToken = this.getPrevToken() as Token;
     const startingPosition = startingToken.position;
     const lparent = this.getNextToken();
-    const specialEndKeyword = `end${content}`;
+    const specialEndKeyword = content === 'do' ? 'until' : `end${content}`;
+    this.parsingStatement = true;
 
     // TODO: here I should check for the conditions
     let tok: Token | undefined;
@@ -343,6 +356,7 @@ export class Parser {
           startingToken,
         )
       ) {
+        this.parsingStatement = false;
         return null;
       }
       this.getNextToken();
@@ -366,6 +380,7 @@ export class Parser {
           startingToken,
         )
       ) {
+        this.parsingStatement = false;
         return null;
       }
       this.getNextToken();
@@ -376,6 +391,7 @@ export class Parser {
         range: this.getCurrentPosition(this.getPrevToken()),
         code: ERROR_CODES.PARSE_ERR_STMNT,
       });
+      this.parsingStatement = false;
       return null;
     }
 
@@ -401,6 +417,7 @@ export class Parser {
         startingToken,
       )
     ) {
+      this.parsingStatement = false;
       return null;
     }
 
@@ -432,6 +449,8 @@ export class Parser {
       default:
         throw new Error('Could not parse statement');
     }
+
+    this.parsingStatement = false;
 
     return {
       type,
@@ -689,6 +708,7 @@ export class Parser {
   private getFunctionDefintionWithOutput(
     isSingleOutput: boolean,
   ): Statement | null {
+    this.parsingStatement = true;
     const [prevContext, newContext] = this.getIntoNewContext();
     let description = this.getFunctionDefinitionDescription(true);
     let output: Token | undefined;
@@ -810,6 +830,7 @@ export class Parser {
    * Helper that extracts the statement of a function definition without output
    */
   private getFunctionDefintionWithoutOutput(): Statement | null {
+    this.parsingStatement = true;
     const [prevContext, newContext] = this.getIntoNewContext();
     let description = this.getFunctionDefinitionDescription(true);
     const functionName = this.getNextToken();
@@ -1167,7 +1188,7 @@ export class Parser {
 
   /**
    * Returns the list of arguments of a function call.
-   * Its expected that the current token it's the LPARENT
+   * WARN: Its expected that the current token it's the LPARENT
    * TODO: implement check of correct grammar in arguments
    */
   private getFunctionArguments(): Token[] {

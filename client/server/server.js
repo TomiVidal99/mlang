@@ -9166,11 +9166,22 @@ function getCompletionKeywords() {
       label: "function",
       kind: import_vscode_languageserver2.CompletionItemKind.Keyword,
       // eslint-disable-next-line no-template-curly-in-string
-      insertText: "function ${1:funcName}(${2:funcArgs})\n${3:funcBody}\nend",
+      insertText: "function ${1:funcName}(${2:funcArgs})\n	${3:funcBody}\nend",
       insertTextFormat: import_vscode_languageserver2.InsertTextFormat.Snippet,
       documentation: {
         kind: import_vscode_languageserver2.MarkupKind.Markdown,
         value: "[block end marker](https://docs.octave.org/v4.2.0/A-Sample-Function-Description.html#A-Sample-Function-Description)"
+      }
+    },
+    {
+      label: "do",
+      kind: import_vscode_languageserver2.CompletionItemKind.Keyword,
+      // eslint-disable-next-line no-template-curly-in-string
+      insertText: "do\n	${2:funcBody}\nuntil (${1:condition})",
+      insertTextFormat: import_vscode_languageserver2.InsertTextFormat.Snippet,
+      documentation: {
+        kind: import_vscode_languageserver2.MarkupKind.Markdown,
+        value: "[block end marker](https://docs.octave.org/v5.2.0/The-do_002duntil-Statement.html)"
       }
     }
   ];
@@ -9559,7 +9570,8 @@ var ERROR_CODES = {
   MAX_ITERATION_PARSING_COMMENT_BEFORE: 3001,
   PARSE_ERR_STMNT: 4e3,
   COULD_NOT_FIND_RPAREN_STMNT: 4001,
-  MISSING_END_STMNT: 4002
+  MISSING_END_STMNT: 4002,
+  UNEXPECTED_END_OF_STMNT: 4003
 };
 
 // src/constants/cero_position.ts
@@ -9687,6 +9699,66 @@ async function handleDefinitions({
   return locations.length > 0 ? locations : null;
 }
 
+// src/types/types.ts
+var STATEMENTS_KEYWORDS = [
+  "function",
+  "if",
+  "for",
+  "while",
+  "switch",
+  "do"
+];
+var END_STATEMENTS = [
+  "until",
+  "endfunction",
+  "endif",
+  "endfor",
+  "endwhile",
+  "endswitch",
+  "end"
+];
+
+// src/types/symbols.ts
+var Symbols = {
+  NL: "\n",
+  EOF: "\0",
+  AT: "@",
+  COLON: ":",
+  COMMA: ",",
+  EQUALS: "=",
+  GRATER_THAN: ">",
+  LESS_THAN: "<",
+  AND: "&",
+  OR: "|",
+  EXCLAMATION: "!",
+  SUBTRACTION: "-",
+  ADDITION: "+",
+  MULTIPLICATION: "*",
+  DIVISION: "/",
+  MODULUS: "%",
+  EXPONENTIATION: "^",
+  PERIOD: ".",
+  SEMICOLON: ";",
+  LBRACKET: "[",
+  RBRACKET: "]",
+  LSQUIRLY: "{",
+  RSQUIRLY: "}",
+  LPARENT: "(",
+  RPARENT: ")"
+};
+function getTokenFromSymbols(char) {
+  for (const [key, value] of Object.entries(Symbols)) {
+    if (value === char) {
+      return {
+        content: key === "EOF" ? "eof" : char,
+        type: key,
+        position: null
+      };
+    }
+  }
+  return void 0;
+}
+
 // src/parser/parser.ts
 var MAX_STATEMENTS_CALLS = 5e3;
 var Parser = class {
@@ -9697,6 +9769,7 @@ var Parser = class {
     this.errors = [];
     this.warnings = [];
     this.contextDepth = ["0"];
+    this.parsingStatement = false;
     this.counter = 0;
   }
   clearLintingMessages() {
@@ -9769,7 +9842,18 @@ var Parser = class {
     const nextToken = this.getNextToken();
     if (nextToken === void 0)
       return null;
-    if (currToken.content === "end" || currToken.content === "endfunction" || currToken.content === "endif" || currToken.type === "EOF") {
+    if (typeof currToken.content === "string" && END_STATEMENTS.includes(currToken.content) || currToken.type === "EOF") {
+      if (!this.parsingStatement) {
+        this.errors.push({
+          message: `Unexpected ending of statement '${currToken.content}'`,
+          code: ERROR_CODES.UNEXPECTED_END_OF_STMNT,
+          range: {
+            start: this.getCurrentPosition(currToken).start,
+            end: this.getCurrentPosition(nextToken).start
+          }
+        });
+        return null;
+      }
       this.getPrevToken();
       return null;
     }
@@ -9881,7 +9965,7 @@ var Parser = class {
         "Could not parse function call",
         ERROR_CODES.FN_CALL_EXCEEDED_CALLS
       );
-    } else if (currToken.type === "KEYWORD" && (currToken.content === "if" || currToken.content === "while" || currToken.content === "for")) {
+    } else if (currToken.type === "KEYWORD" && typeof currToken.content === "string" && STATEMENTS_KEYWORDS.includes(currToken.content)) {
       return this.parseBasicStatements(currToken.content);
     } else {
       if (currToken === void 0)
@@ -9901,13 +9985,14 @@ var Parser = class {
     return null;
   }
   /**
-   * Parses an If, For, While Statements
+   * Parses an if, for, while, do, switch Statements
    */
   parseBasicStatements(content) {
     const startingToken = this.getPrevToken();
     const startingPosition = startingToken.position;
     const lparent = this.getNextToken();
-    const specialEndKeyword = `end${content}`;
+    const specialEndKeyword = content === "do" ? "until" : `end${content}`;
+    this.parsingStatement = true;
     let tok;
     if (lparent?.type === "LPARENT") {
       tok = this.skipNL(true);
@@ -9922,11 +10007,12 @@ var Parser = class {
         ERROR_CODES.COULD_NOT_FIND_RPAREN_STMNT,
         startingToken
       )) {
+        this.parsingStatement = false;
         return null;
       }
       this.getNextToken();
     } else {
-      tok = this.getNextToken();
+      tok = lparent;
       let mCalls = 0;
       while (tok !== void 0 && tok.type !== "NL" && mCalls < MAX_STATEMENTS_CALLS) {
         tok = this.getNextToken();
@@ -9936,8 +10022,10 @@ var Parser = class {
         mCalls,
         "Uncompleted statement",
         9999,
+        // TODO: this is a troll error code, because i can't foresee a scenario where it happens, but i better be damn ready :)
         startingToken
       )) {
+        this.parsingStatement = false;
         return null;
       }
       this.getNextToken();
@@ -9948,6 +10036,7 @@ var Parser = class {
         range: this.getCurrentPosition(this.getPrevToken()),
         code: ERROR_CODES.PARSE_ERR_STMNT
       });
+      this.parsingStatement = false;
       return null;
     }
     const statements = [];
@@ -9964,6 +10053,7 @@ var Parser = class {
       ERROR_CODES.MISSING_END_STMNT,
       startingToken
     )) {
+      this.parsingStatement = false;
       return null;
     }
     const context = this.getIntoNewContext()[1];
@@ -9983,12 +10073,16 @@ var Parser = class {
       case "while":
         type = "WHILE_STMNT";
         break;
+      case "switch":
+        type = "SWITCH_STMNT";
+        break;
       case "do":
         type = "DO_STMNT";
         break;
       default:
         throw new Error("Could not parse statement");
     }
+    this.parsingStatement = false;
     return {
       type,
       supressOutput: true,
@@ -10190,6 +10284,7 @@ var Parser = class {
    * @args isSingleOutput - Weather the statement returns one or more outputs.
    */
   getFunctionDefintionWithOutput(isSingleOutput) {
+    this.parsingStatement = true;
     const [prevContext, newContext] = this.getIntoNewContext();
     let description = this.getFunctionDefinitionDescription(true);
     let output;
@@ -10299,6 +10394,7 @@ var Parser = class {
    * Helper that extracts the statement of a function definition without output
    */
   getFunctionDefintionWithoutOutput() {
+    this.parsingStatement = true;
     const [prevContext, newContext] = this.getIntoNewContext();
     let description = this.getFunctionDefinitionDescription(true);
     const functionName = this.getNextToken();
@@ -10620,7 +10716,7 @@ var Parser = class {
   }
   /**
    * Returns the list of arguments of a function call.
-   * Its expected that the current token it's the LPARENT
+   * WARN: Its expected that the current token it's the LPARENT
    * TODO: implement check of correct grammar in arguments
    */
   getFunctionArguments() {
@@ -10759,6 +10855,7 @@ var Parser = class {
   /**
    * Helper that returns weather the current Token it's an
    * end or endfunction keyword
+   * TODO: this is actually a particular scenario of this.isEndStatementToken() method
    */
   isEndFunctionToken(token) {
     if (token !== null && token !== void 0) {
@@ -10860,47 +10957,6 @@ var Parser = class {
     return this.warnings;
   }
 };
-
-// src/types/symbols.ts
-var Symbols = {
-  NL: "\n",
-  EOF: "\0",
-  AT: "@",
-  COLON: ":",
-  COMMA: ",",
-  EQUALS: "=",
-  GRATER_THAN: ">",
-  LESS_THAN: "<",
-  AND: "&",
-  OR: "|",
-  EXCLAMATION: "!",
-  SUBTRACTION: "-",
-  ADDITION: "+",
-  MULTIPLICATION: "*",
-  DIVISION: "/",
-  MODULUS: "%",
-  EXPONENTIATION: "^",
-  PERIOD: ".",
-  SEMICOLON: ";",
-  LBRACKET: "[",
-  RBRACKET: "]",
-  LSQUIRLY: "{",
-  RSQUIRLY: "}",
-  LPARENT: "(",
-  RPARENT: ")"
-};
-function getTokenFromSymbols(char) {
-  for (const [key, value] of Object.entries(Symbols)) {
-    if (value === char) {
-      return {
-        content: key === "EOF" ? "eof" : char,
-        type: key,
-        position: null
-      };
-    }
-  }
-  return void 0;
-}
 
 // src/parser/tokenizer.ts
 var MAX_TOKENS_CALLS = 1e4;

@@ -10,9 +10,11 @@ export const STATEMENTS_KEYWORDS = [
   'for',
   'while',
   'switch',
+  'do',
 ] as const;
 export type StatementKeywordType = (typeof STATEMENTS_KEYWORDS)[number];
 export const END_STATEMENTS = [
+  'until',
   'endfunction',
   'endif',
   'endfor',

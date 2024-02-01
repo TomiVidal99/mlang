@@ -192,6 +192,10 @@ test('Octave/Matlab Parser, should parse basic statements', function () {
     end
     switch
     endswitch
+    do
+    until
+    do
+    until
 `;
 
   const tokenizer = new Tokenizer(inputCode);
@@ -211,10 +215,14 @@ test('Octave/Matlab Parser, should parse basic statements', function () {
     'WHILE_STMNT',
     'SWITCH_STMNT',
     'SWITCH_STMNT',
+    'DO_STMNT',
+    'DO_STMNT',
   ];
 
   // console.log('TOKENS: ' + JSON.stringify(tokens));
-  // console.log('STATEMENTS: ' + JSON.stringify(program.body));
+  console.log(
+    'STATEMENTS: ' + JSON.stringify(program.body.map((stmn) => stmn.type)),
+  );
 
   if (errors.length > 0) {
     console.log('ERRORS: ' + JSON.stringify(errors));
