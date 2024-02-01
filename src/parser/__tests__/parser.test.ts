@@ -220,9 +220,35 @@ test('Octave/Matlab Parser, should parse basic statements', function () {
   ];
 
   // console.log('TOKENS: ' + JSON.stringify(tokens));
-  console.log(
-    'STATEMENTS: ' + JSON.stringify(program.body.map((stmn) => stmn.type)),
-  );
+  // console.log(
+  //   'STATEMENTS: ' + JSON.stringify(program.body.map((stmn) => stmn.type)),
+  // );
+
+  if (errors.length > 0) {
+    console.log('ERRORS: ' + JSON.stringify(errors));
+  }
+
+  expect(program.body.map((stmn) => stmn.type)).toEqual(STATEMENTS);
+  expect(errors.length).toStrictEqual(0);
+});
+
+test('Octave/Matlab Parser, test function call w/o parenthesis', function () {
+  const inputCode = `
+    myFunc a 1.2 "myString" ["vectorVal", a, b, 20]
+`;
+
+  const tokenizer = new Tokenizer(inputCode);
+  const tokens = tokenizer.getAllTokens();
+  const parser = new Parser(tokens);
+  const program = parser.makeAST();
+  const visitor = new Visitor();
+  visitor.visitProgram(program);
+
+  const errors = parser.getErrors();
+  const STATEMENTS: StatementType[] = ['FUNCTION_CALL'];
+
+  // console.log('TOKENS: ' + JSON.stringify(tokens));
+  console.log('STATEMENTS: ' + JSON.stringify(program.body));
 
   if (errors.length > 0) {
     console.log('ERRORS: ' + JSON.stringify(errors));

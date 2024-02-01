@@ -71,6 +71,7 @@ export interface Expression {
     | 'BINARY_OPERATION'
     | 'FUNCTION_CALL'
     | 'VARIABLE_VECTOR'
+    | 'REFERENCE_CALL_VAR_FUNC'
     | 'ANONYMOUS_FUNCTION_DEFINITION'
     | BasicStatementsType
     | 'FUNCTION_DEFINITION';
@@ -91,6 +92,7 @@ export type BasicStatementsType =
 
 export type StatementType =
   | BasicStatementsType
+  | 'REFERENCE_CALL_VAR_FUNC'
   | 'ASSIGNMENT'
   | 'FUNCTION_CALL'
   | 'MO_ASSIGNMENT'

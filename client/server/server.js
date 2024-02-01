@@ -9571,7 +9571,9 @@ var ERROR_CODES = {
   PARSE_ERR_STMNT: 4e3,
   COULD_NOT_FIND_RPAREN_STMNT: 4001,
   MISSING_END_STMNT: 4002,
-  UNEXPECTED_END_OF_STMNT: 4003
+  UNEXPECTED_END_OF_STMNT: 4003,
+  VISITOR_COULDNT_FIND_REF: 1e4,
+  UNEXPECTED_UNDEFINED_TOKEN: 2e4
 };
 
 // src/constants/cero_position.ts
@@ -9954,17 +9956,54 @@ var Parser = class {
       } else {
         return this.getFunctionDefintionWithoutOutput();
       }
-    } else if (currToken.type === "IDENTIFIER" && (nextToken.type === "NL" || nextToken.type === "EOF" || this.isTokenValidBasicDataType(nextToken))) {
+    } else if (currToken.type === "IDENTIFIER" && nextToken.type === "NL") {
+      return {
+        type: "REFERENCE_CALL_VAR_FUNC",
+        LHE: {
+          type: "REFERENCE_CALL_VAR_FUNC",
+          position: this.getCurrentPosition(currToken),
+          value: currToken.content
+        },
+        supressOutput: false,
+        context: this.getCurrentContext()
+      };
+    } else if (currToken.type === "IDENTIFIER" && (nextToken.type === "EOF" || this.isTokenValidBasicDataType(nextToken))) {
       let counter = 0;
-      while (this.getCurrentToken().type !== "NL" && this.getCurrentToken().type !== "EOF" && this.isTokenValidBasicDataType(this.getCurrentToken()) && counter < MAX_STATEMENTS_CALLS) {
-        this.getNextToken();
+      const args = [];
+      while (this.getCurrentToken().type !== "NL" && this.getCurrentToken().type !== "EOF" && this.isTokenValidBasicDataType(this.getCurrentToken(), false) && counter < MAX_STATEMENTS_CALLS) {
+        const tok = this.getNextToken();
         counter++;
+        if (tok === void 0) {
+          throw new Error(
+            `Unexpected undefined token. Error code ${ERROR_CODES.UNEXPECTED_UNDEFINED_TOKEN}`
+          );
+        }
+        if (this.isTokenValidBasicDataType(tok, false)) {
+          args.push(tok);
+        } else if (tok.type === "LBRACKET") {
+          const vector = this.getVector();
+          args.push(vector);
+        }
       }
       this.logErrorMaxCallsReached(
         counter,
         "Could not parse function call",
         ERROR_CODES.FN_CALL_EXCEEDED_CALLS
       );
+      const supressOutput = this.isOutputSupressed();
+      return {
+        type: "FUNCTION_CALL",
+        context: this.getCurrentContext(),
+        supressOutput,
+        LHE: {
+          type: "FUNCTION_CALL",
+          position: this.getCurrentPosition(currToken),
+          value: currToken.content,
+          functionData: {
+            args
+          }
+        }
+      };
     } else if (currToken.type === "KEYWORD" && typeof currToken.content === "string" && STATEMENTS_KEYWORDS.includes(currToken.content)) {
       return this.parseBasicStatements(currToken.content);
     } else {
@@ -10681,9 +10720,9 @@ var Parser = class {
    * @args token
    * @returns boolean
    */
-  isTokenValidBasicDataType(token) {
+  isTokenValidBasicDataType(token, throwError) {
     const isValid = token.type === "IDENTIFIER" || token.type === "NUMBER" || token.type === "STRING";
-    if (!isValid) {
+    if (!isValid && (throwError === void 0 || throwError === true)) {
       this.errors.push({
         message: `Expected a valid data type. Got '${this.stringifyTokenContent()}'`,
         range: this.getCurrentPosition(),
@@ -11228,6 +11267,7 @@ var Visitor = class {
   constructor() {
     this.references = [];
     this.definitions = [];
+    this.errors = [];
   }
   /**
    * Entry point: it extracts all the references and definitions from a Program
@@ -11236,6 +11276,13 @@ var Visitor = class {
     for (const statement of node.body) {
       this.visitStatement(statement);
     }
+    this.finisHook();
+  }
+  /**
+   * Get the errors found during visiting
+   */
+  getErrors() {
+    return this.errors;
   }
   visitStatement(node) {
     if (node === void 0 || node === null)
@@ -11269,6 +11316,11 @@ var Visitor = class {
         if (node?.LHE === void 0)
           return;
         this.visitExpression(node.LHE, "FUNCTION_CALL");
+        break;
+      case "REFERENCE_CALL_VAR_FUNC":
+        if (node?.LHE === void 0)
+          return;
+        this.visitExpression(node.LHE, "REFERENCE_CALL_VAR_FUNC");
         break;
     }
   }
@@ -11453,6 +11505,15 @@ var Visitor = class {
           })
         );
         break;
+      case "REFERENCE_CALL_VAR_FUNC":
+        this.references.push({
+          name: node.value,
+          position: this.getExpressionPosition(node),
+          documentation: this.getDocumentationOrLineDefinition(node),
+          type: "VARIABLE"
+          // TODO: actually here it's impossible to know weather it's a variable or a function
+        });
+        break;
     }
   }
   /**
@@ -11534,6 +11595,27 @@ var Visitor = class {
     }
     return "VARIABLE";
   }
+  /**
+   * Executed after all statements have been visited
+   * Currently it only checks weather the access methods and variables
+   * are defined
+   */
+  finisHook() {
+    const refsNames = this.references.map((r) => r.name);
+    const defsNames = this.definitions.map((d) => d.name);
+    const nativeFuncList = getNataiveFunctionsList();
+    refsNames.forEach((ref, i) => {
+      if (nativeFuncList.includes(ref))
+        return;
+      if (!defsNames.includes(ref)) {
+        this.errors.push({
+          message: `Could not find reference '${ref}'`,
+          code: ERROR_CODES.VISITOR_COULDNT_FIND_REF,
+          range: this.references[i].position
+        });
+      }
+    });
+  }
 };
 
 // src/server.ts
@@ -11590,11 +11672,16 @@ function updateDocumentData(uri, text) {
       const parser = new Parser(tokens);
       const ast = parser.makeAST();
       const visitor = new Visitor();
+      const visitorErrors = visitor.getErrors();
       visitor.visitProgram(ast);
       visitors.set(uri, visitor);
       const errors = parser.getErrors().map((err) => getDiagnosticFromLitingMessage(err, "error"));
       const warnings = parser.getWarnings().map((warn) => getDiagnosticFromLitingMessage(warn, "warn"));
-      const diagnostics = [...errors, ...warnings];
+      const diagnostics = [
+        ...errors,
+        ...warnings,
+        ...visitorErrors
+      ];
       connection2.sendDiagnostics({
         uri,
         diagnostics

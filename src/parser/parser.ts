@@ -253,36 +253,68 @@ export class Parser {
       } else {
         return this.getFunctionDefintionWithoutOutput();
       }
+    } else if (currToken.type === 'IDENTIFIER' && nextToken.type === 'NL') {
+      // function call or variable output
+      // because this language it's so good it's impossible to know which (awsome (not really))
+      // TODO: maybe get documentation?
+      return {
+        type: 'REFERENCE_CALL_VAR_FUNC',
+        LHE: {
+          type: 'REFERENCE_CALL_VAR_FUNC',
+          position: this.getCurrentPosition(currToken),
+          value: currToken.content,
+        },
+        supressOutput: false,
+        context: this.getCurrentContext(),
+      };
     } else if (
       currToken.type === 'IDENTIFIER' &&
-      (nextToken.type === 'NL' ||
-        nextToken.type === 'EOF' ||
-        this.isTokenValidBasicDataType(nextToken))
+      (nextToken.type === 'EOF' || this.isTokenValidBasicDataType(nextToken))
     ) {
       // FUNCTION CALL (NOT recommended way)
       // Printing outputs, single operations or function calls with arguments
-      // TODO: make this a function call
-      // TODO: this should be handle at visitor level, because we don't know if it's a variable or a function
+      // TODO: detect comments?
       let counter = 0;
+      const args: Token[] = [];
       while (
         this.getCurrentToken().type !== 'NL' &&
         this.getCurrentToken().type !== 'EOF' &&
-        this.isTokenValidBasicDataType(this.getCurrentToken()) &&
+        this.isTokenValidBasicDataType(this.getCurrentToken(), false) &&
         counter < MAX_STATEMENTS_CALLS
       ) {
-        this.getNextToken();
+        const tok = this.getNextToken();
         counter++;
+        if (tok === undefined) {
+          throw new Error(
+            `Unexpected undefined token. Error code ${ERROR_CODES.UNEXPECTED_UNDEFINED_TOKEN}`,
+          );
+        }
+        if (this.isTokenValidBasicDataType(tok, false)) {
+          args.push(tok);
+        } else if (tok.type === 'LBRACKET') {
+          const vector = this.getVector();
+          args.push(vector);
+        }
       }
       this.logErrorMaxCallsReached(
         counter,
         'Could not parse function call',
         ERROR_CODES.FN_CALL_EXCEEDED_CALLS,
       );
-      // this.warnings.push({
-      //   message: 'Unadvised function call',
-      //   range: this.getCurrentPosition(nextToken),
-      //   code: 7,
-      // });
+      const supressOutput = this.isOutputSupressed();
+      return {
+        type: 'FUNCTION_CALL',
+        context: this.getCurrentContext(),
+        supressOutput,
+        LHE: {
+          type: 'FUNCTION_CALL',
+          position: this.getCurrentPosition(currToken),
+          value: currToken.content,
+          functionData: {
+            args,
+          },
+        },
+      };
     } else if (
       currToken.type === 'KEYWORD' &&
       typeof currToken.content === 'string' &&
@@ -1146,13 +1178,16 @@ export class Parser {
    * @args token
    * @returns boolean
    */
-  private isTokenValidBasicDataType(token: Token): boolean {
+  private isTokenValidBasicDataType(
+    token: Token,
+    throwError?: boolean,
+  ): boolean {
     const isValid =
       token.type === 'IDENTIFIER' ||
       token.type === 'NUMBER' ||
       token.type === 'STRING';
 
-    if (!isValid) {
+    if (!isValid && (throwError === undefined || throwError === true)) {
       this.errors.push({
         message: `Expected a valid data type. Got '${this.stringifyTokenContent()}'`,
         range: this.getCurrentPosition(),

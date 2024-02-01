@@ -111,8 +111,8 @@ function updateDocumentData(uri: string, text: string): void {
       const parser = new Parser(tokens);
       const ast = parser.makeAST();
       const visitor = new Visitor();
+      const visitorErrors = visitor.getErrors();
       visitor.visitProgram(ast);
-
       visitors.set(uri, visitor);
 
       const errors: Diagnostic[] = parser
@@ -122,7 +122,11 @@ function updateDocumentData(uri: string, text: string): void {
         .getWarnings()
         .map((warn) => getDiagnosticFromLitingMessage(warn, 'warn'));
 
-      const diagnostics: Diagnostic[] = [...errors, ...warnings];
+      const diagnostics: Diagnostic[] = [
+        ...errors,
+        ...warnings,
+        ...visitorErrors,
+      ];
 
       connection
         .sendDiagnostics({

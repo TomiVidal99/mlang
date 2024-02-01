@@ -1,5 +1,5 @@
 import type { Range } from 'vscode-languageserver';
-import { CERO_POSITION } from '../constants';
+import { CERO_POSITION, ERROR_CODES } from '../constants';
 import {
   type Expression,
   type Program,
@@ -9,13 +9,14 @@ import {
   type ReferenceType,
   type Definition,
   type StatementType,
+  type LintingError,
 } from '../types';
-
-let counter = 0;
+import { getNataiveFunctionsList } from '../utils';
 
 export class Visitor {
-  public references: Reference[] = [];
-  public definitions: Definition[] = [];
+  public readonly references: Reference[] = [];
+  public readonly definitions: Definition[] = [];
+  private readonly errors: LintingError[] = [];
 
   /**
    * Entry point: it extracts all the references and definitions from a Program
@@ -24,6 +25,14 @@ export class Visitor {
     for (const statement of node.body) {
       this.visitStatement(statement);
     }
+    this.finisHook();
+  }
+
+  /**
+   * Get the errors found during visiting
+   */
+  public getErrors(): LintingError[] {
+    return this.errors;
   }
 
   private visitStatement(node: Statement): void {
@@ -53,6 +62,10 @@ export class Visitor {
       case 'FUNCTION_CALL':
         if (node?.LHE === undefined) return;
         this.visitExpression(node.LHE, 'FUNCTION_CALL');
+        break;
+      case 'REFERENCE_CALL_VAR_FUNC':
+        if (node?.LHE === undefined) return;
+        this.visitExpression(node.LHE, 'REFERENCE_CALL_VAR_FUNC');
         break;
     }
   }
@@ -256,6 +269,14 @@ export class Visitor {
           }),
         );
         break;
+      case 'REFERENCE_CALL_VAR_FUNC':
+        this.references.push({
+          name: node.value as string,
+          position: this.getExpressionPosition(node),
+          documentation: this.getDocumentationOrLineDefinition(node),
+          type: 'VARIABLE', // TODO: actually here it's impossible to know weather it's a variable or a function
+        });
+        break;
     }
   }
 
@@ -361,5 +382,26 @@ export class Visitor {
       return 'FUNCTION';
     }
     return 'VARIABLE';
+  }
+
+  /**
+   * Executed after all statements have been visited
+   * Currently it only checks weather the access methods and variables
+   * are defined
+   */
+  private finisHook(): void {
+    const refsNames = this.references.map((r) => r.name);
+    const defsNames = this.definitions.map((d) => d.name);
+    const nativeFuncList = getNataiveFunctionsList();
+    refsNames.forEach((ref, i) => {
+      if (nativeFuncList.includes(ref)) return;
+      if (!defsNames.includes(ref)) {
+        this.errors.push({
+          message: `Could not find reference '${ref}'`,
+          code: ERROR_CODES.VISITOR_COULDNT_FIND_REF,
+          range: this.references[i].position,
+        });
+      }
+    });
   }
 }
