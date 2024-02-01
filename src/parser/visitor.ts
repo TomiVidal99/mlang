@@ -67,6 +67,15 @@ export class Visitor {
         if (node?.LHE === undefined) return;
         this.visitExpression(node.LHE, 'REFERENCE_CALL_VAR_FUNC');
         break;
+      case 'IF_STMNT':
+      case 'DO_STMNT':
+      case 'SWITCH_STMNT':
+      case 'FOR_STMNT':
+      case 'WHILE_STMNT':
+        (node?.RHE as Statement[]).forEach((statement) => {
+          this.visitStatement(statement);
+        });
+        break;
     }
   }
 
@@ -388,13 +397,16 @@ export class Visitor {
    * Executed after all statements have been visited
    * Currently it only checks weather the access methods and variables
    * are defined
+   * TODO: consider the different scopes, right now it ignore the scopes
    */
   private finisHook(): void {
-    const refsNames = this.references.map((r) => r.name);
     const defsNames = this.definitions.map((d) => d.name);
     const nativeFuncList = getNataiveFunctionsList();
+    const refsNames = this.references.map((r) => r.name);
     refsNames.forEach((ref, i) => {
-      if (nativeFuncList.includes(ref)) return;
+      if (nativeFuncList.includes(ref)) {
+        return;
+      }
       if (!defsNames.includes(ref)) {
         this.errors.push({
           message: `Could not find reference '${ref}'`,
