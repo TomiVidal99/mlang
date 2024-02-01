@@ -50,6 +50,7 @@ end
 
 ## TODO
 
+- [ ] ADD: message for missing arguments?
 - [ ] FIX: consider all the statements inside BasicStatements when finding references and definitions.
 - [ ] FIX: linting messages are not correctly positioned.
 - [ ] FIX: statements can have expression within the conditions. if (3+1 == 4) etc.
