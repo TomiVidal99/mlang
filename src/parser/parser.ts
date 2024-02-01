@@ -26,6 +26,7 @@ export class Parser {
   private warnings: LintingWarning[] = [];
   private readonly contextDepth: string[] = ['0'];
   private parsingStatement = false;
+  private parsingStatementType: string | null = null; // TODO: this will fuck up things when cascating statements
 
   constructor(private readonly tokens: Token[]) {}
 
@@ -111,6 +112,41 @@ export class Parser {
     const nextToken = this.getNextToken();
 
     if (nextToken === undefined) return null;
+
+    if (
+      this.parsingStatement &&
+      this.parsingStatementType === 'if' &&
+      (currToken.content === 'elseif' || currToken.content === 'else')
+    ) {
+      // TODO: consider a different scope when using elseif, it should be consider as
+      // an entirely different statement pretty much no?
+      if (currToken.content === 'elseif') {
+        // remove the condition so it's not parsed as a statement
+        if (nextToken.type === 'NL') {
+          this.errors.push({
+            message: 'Missing condition',
+            code: ERROR_CODES.MISSING_CONDITION_ELSEIF,
+            range: this.getCurrentPosition(currToken),
+          });
+          return null;
+        }
+        let mCalls = 0;
+        do {
+          this.skipNL(true);
+        } while (
+          mCalls < MAX_STATEMENTS_CALLS &&
+          this.getCurrentToken().type !== 'RPARENT'
+        );
+        this.logErrorMaxCallsReached(
+          mCalls,
+          "Missing ')' in 'elseif'",
+          ERROR_CODES.COULD_NOT_FIND_RPAREN_STMNT,
+          currToken,
+        );
+        this.getNextToken();
+      }
+      return null;
+    }
 
     if (
       (typeof currToken.content === 'string' &&
@@ -364,6 +400,15 @@ export class Parser {
     const lparent = this.getNextToken();
     const specialEndKeyword = content === 'do' ? 'until' : `end${content}`;
     this.parsingStatement = true;
+    this.parsingStatementType = content;
+
+    if (lparent?.type === 'NL') {
+      this.errors.push({
+        message: 'Missing condition',
+        code: ERROR_CODES.MISSING_CONDITION_ELSEIF,
+        range: this.getCurrentPosition(startingToken),
+      });
+    }
 
     // TODO: here I should check for the conditions
     let tok: Token | undefined;
@@ -389,6 +434,7 @@ export class Parser {
         )
       ) {
         this.parsingStatement = false;
+        this.parsingStatementType = null;
         return null;
       }
       this.getNextToken();
@@ -413,6 +459,7 @@ export class Parser {
         )
       ) {
         this.parsingStatement = false;
+        this.parsingStatementType = null;
         return null;
       }
       this.getNextToken();
@@ -424,6 +471,7 @@ export class Parser {
         code: ERROR_CODES.PARSE_ERR_STMNT,
       });
       this.parsingStatement = false;
+      this.parsingStatementType = null;
       return null;
     }
 
@@ -450,6 +498,7 @@ export class Parser {
       )
     ) {
       this.parsingStatement = false;
+      this.parsingStatementType = null;
       return null;
     }
 
@@ -483,6 +532,7 @@ export class Parser {
     }
 
     this.parsingStatement = false;
+    this.parsingStatementType = null;
 
     return {
       type,

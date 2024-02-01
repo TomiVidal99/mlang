@@ -4,7 +4,7 @@ import {
   type TextDocumentPositionParams,
   InsertTextFormat,
 } from 'vscode-languageserver';
-import { getCompletionKeywords } from '../data';
+import { getCompletionKeywords, getCompletionNativeFunctions } from '../data';
 import { visitors } from '../server';
 
 export function handleCompletion({
@@ -18,6 +18,9 @@ export function handleCompletion({
   if (visitor?.definitions === undefined) return items;
 
   const { definitions } = visitor;
+  const nativeFunctions = getCompletionNativeFunctions();
+
+  items.push(...nativeFunctions);
 
   items.push(
     ...definitions
