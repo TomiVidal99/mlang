@@ -1,6 +1,27 @@
 import { type Range } from 'vscode-languageserver';
 import { type Symbols } from '.';
 
+// TODO: add do while statement
+// TODO: actually i should be infering these types from getCompletionKeywords() method somehow
+// though i dont think it's possible because it's not valid at compile time
+export const STATEMENTS_KEYWORDS = [
+  'function',
+  'if',
+  'for',
+  'while',
+  'switch',
+] as const;
+export type StatementKeywordType = (typeof STATEMENTS_KEYWORDS)[number];
+export const END_STATEMENTS = [
+  'endfunction',
+  'endif',
+  'endfor',
+  'endwhile',
+  'endswitch',
+  'end',
+] as const;
+export type EndStatementType = (typeof END_STATEMENTS)[number];
+
 export interface LintingMessage {
   message: string;
   range: Range;
@@ -49,7 +70,7 @@ export interface Expression {
     | 'FUNCTION_CALL'
     | 'VARIABLE_VECTOR'
     | 'ANONYMOUS_FUNCTION_DEFINITION'
-    | 'IF_STMNT'
+    | BasicStatementsType
     | 'FUNCTION_DEFINITION';
   value: string | string[] | Token[];
   LHO?: Expression;
@@ -59,8 +80,15 @@ export interface Expression {
   position?: Range;
 }
 
+export type BasicStatementsType =
+  | 'DO_STMNT'
+  | 'SWITCH_STMNT'
+  | 'FOR_STMNT'
+  | 'WHILE_STMNT'
+  | 'IF_STMNT';
+
 export type StatementType =
-  | 'IF_STMNT'
+  | BasicStatementsType
   | 'ASSIGNMENT'
   | 'FUNCTION_CALL'
   | 'MO_ASSIGNMENT'
