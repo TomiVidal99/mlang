@@ -8,6 +8,16 @@
   "engines": {
     "node": "*"
   },
+  "scripts": {
+    "test-single-test": "bun test -t 'your-test-name-here'",
+    "test": "bun test",
+    "compile": "esbuild src/server.ts --platform=node --bundle --outfile=./out/server.js && cp -f out/server.js client/server/server.js",
+    "build": "tsc ./client/src/extension.ts --outDir ./client/out/",
+    "watch": "tsc ./client/src/extension.ts -w --outDir ./client/out/",
+    "lint": "eslint_d ./src --ext .ts",
+    "lint-fix": "eslint_d --fix ./src --ext .ts",
+    "publish-extension": "cd client && vsce publish"
+  },
   "repository": {
     "type": "git",
     "url": "https://github.com/TomiVidal99/mlang"
@@ -32,16 +42,6 @@
     "vscode-languageserver": "8.1.0",
     "vscode-languageserver-textdocument": "1.0.8",
     "vscode-uri": "3.0.7"
-  },
-  "scripts": {
-    "test-single-test": "bun test -t 'your-test-name-here'",
-    "test": "bun test",
-    "compile": "esbuild src/server.ts --platform=node --bundle --outfile=./out/server.js && cp out/server.js client/server/server.js",
-    "build": "tsc ./client/src/extension.ts --outDir ./client/out/",
-    "watch": "tsc ./client/src/extension.ts -w --outDir ./client/out/",
-    "lint": "eslint_d ./src --ext .ts",
-    "lint-fix": "eslint_d --fix ./src --ext .ts",
-    "publish-extension": "cd client && vsce publish"
   },
   "devDependencies": {
     "bun-types": "1.0.7",
