@@ -188,10 +188,10 @@ test('Octave/Matlab Parser, should parse basic statements', function () {
     end
     while
     endwhile
-    %switch
-    %end
-    %switch
-    %endswitch
+    switch
+    end
+    switch
+    endswitch
 `;
 
   const tokenizer = new Tokenizer(inputCode);

@@ -276,7 +276,6 @@ export class Parser {
       typeof currToken.content === 'string' &&
       STATEMENTS_KEYWORDS.includes(currToken.content as any)
     ) {
-      // console.log('detecting statement: ' + currToken.content);
       return this.parseBasicStatements(currToken.content);
     } else {
       // console.log("prev token: ", this.tokens[this.currentTokenIndex - 1]);
@@ -320,8 +319,6 @@ export class Parser {
     const startingPosition = startingToken.position;
     const lparent = this.getNextToken();
     const specialEndKeyword = `end${content}`;
-
-    console.log('entering parseBasicStatements: ' + startingToken.content);
 
     // TODO: here I should check for the conditions
     let tok: Token | undefined;
@@ -425,6 +422,9 @@ export class Parser {
         break;
       case 'while':
         type = 'WHILE_STMNT';
+        break;
+      case 'switch':
+        type = 'SWITCH_STMNT';
         break;
       case 'do':
         type = 'DO_STMNT';
