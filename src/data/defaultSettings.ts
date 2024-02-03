@@ -7,6 +7,7 @@ export interface ISettings {
   enableInitFile: boolean;
   defaultInitFile: string;
   defaultExecPath: string;
+  defaultDebounceTimeMS: number;
 }
 
 /**
@@ -37,6 +38,7 @@ export const defaultSettings: ISettings = {
   defaultInitFile: getDefaultInitFile(),
   enableInitFile: false,
   defaultExecPath: '/usr/bin/octave', // TODO: actually integrate this
+  defaultDebounceTimeMS: 1000,
 };
 
 export let globalSettings: ISettings = defaultSettings;

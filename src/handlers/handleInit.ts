@@ -9,7 +9,7 @@ import {
 import { getFilesInWorkspace } from '../utils';
 import { docManager } from '../server';
 
-export let hasConfigurationCapability = false;
+export let hasConfigurationCapability = true;
 export let hasWorkspaceFolderCapability = false;
 export let hasDiagnosticRelatedInformationCapability = false;
 

@@ -11,23 +11,19 @@ import {
   handleReferences,
   handleCompletion,
   handleDefinitions,
+  hasConfigurationCapability,
 } from './handlers';
-import { type ISettings } from './data';
+import { defaultSettings, type ISettings } from './data';
 import { Parser, Tokenizer, Visitor } from './parser';
 import { getDiagnosticFromLitingMessage } from './utils';
 import { DocumentsManager } from './types/DocumentsManager';
 
-// THIS IS THE TIME THAT IT WAITS BEFORE TRIGGERING A REFRESH
-// OF PARSING THE DOCUMENT WHEN THE USER IT'S TYPING
-// TODO: this should be an user setting
-const DEBOUNCE_DELAY_MS = 1000;
-
 export const connection = createConnection(ProposedFeatures.all);
-const documentSettings = new Map<string, Thenable<ISettings>>();
+// const documentSettings = new Map<string, Thenable<ISettings>>();
+let globalSettings: ISettings = defaultSettings;
 export const docManager = new DocumentsManager();
 
 // TODO refactor visitor and documentSettings into the DocumentsManager class
-
 export const documents = new TextDocuments(TextDocument);
 export const visitors = new Map<string, Visitor>();
 const documentChanges = new Map<string, NodeJS.Timer>();
@@ -56,12 +52,23 @@ connection.onReferences((params) => {
   if (document === undefined) return [];
   return handleReferences(document, params.position);
 });
-// connection.onDidChangeConfiguration((change) =>);
+connection.onDidChangeConfiguration((change) => {
+  if (hasConfigurationCapability) {
+    // Reset all cached document settings
+    globalSettings = change.settings;
+  } else {
+    globalSettings = defaultSettings;
+  }
+
+  // Revalidate all open text documents
+  // disabled - uses example code
+  // documents.all().forEach(validateTextDocument);
+});
 // connection.workspace.onDidDeleteFiles((event) => {});
 documents.onDidClose((e) => {
   const uri = e.document.uri;
   docManager.delete(uri);
-  documentSettings.delete(uri);
+  // documentSettings.delete(uri);
 });
 // documents.onDidChangeContent((change) => {
 //   updateDiagnostics(change.document.uri, change.document.getText());
@@ -143,6 +150,6 @@ export function updateDocumentData(uri: string, updatedText?: string): void {
         .catch((err) => {
           throw new Error(err);
         });
-    }, DEBOUNCE_DELAY_MS),
+    }, globalSettings.defaultDebounceTimeMS),
   );
 }
