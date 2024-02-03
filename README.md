@@ -50,6 +50,7 @@ end
 
 ## TODO
 
+- [ ] FIX: function call inside statements not working.
 - [ ] ADD: message for missing arguments?
 - [ ] FIX: consider all the statements inside BasicStatements when finding references and definitions.
 - [ ] FIX: linting messages are not correctly positioned.
