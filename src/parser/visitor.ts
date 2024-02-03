@@ -12,6 +12,7 @@ import {
   type LintingError,
 } from '../types';
 import { getNataiveFunctionsList } from '../utils';
+import { connection } from '../server';
 
 export class Visitor {
   public readonly references: Reference[] = [];
@@ -25,7 +26,7 @@ export class Visitor {
     for (const statement of node.body) {
       this.visitStatement(statement);
     }
-    this.finisHook();
+    this.finishHook();
   }
 
   /**
@@ -155,6 +156,9 @@ export class Visitor {
             position: this.getExpressionPosition(node),
             type: 'FUNCTION',
             documentation: node?.functionData?.description ?? '',
+            args: this.getArgumentIdentifiersList(node)
+              .map((t) => (typeof t.content === 'string' ? t.content : null))
+              .filter((a) => a !== null) as string[], // TODO fix this
           });
         } else {
           this.references.push({
@@ -415,14 +419,21 @@ export class Visitor {
 
   /**
    * Executed after all statements have been visited
-   * Currently it only checks weather the access methods and variables
-   * are defined
    * TODO: consider the different scopes, right now it ignore the scopes
    */
-  private finisHook(): void {
+  private finishHook(): void {
     const defsNames = this.definitions.map((d) => d.name);
     const nativeFuncList = getNataiveFunctionsList();
     const refsNames = this.references.map((r) => r.name);
+
+    // add files to path
+    this.references.forEach((ref) => {
+      if (ref.name === 'addpath') {
+        connection.window.showInformationMessage(JSON.stringify(ref.args));
+      }
+    });
+
+    // check weather the access methods and variables are defined
     refsNames.forEach((ref, i) => {
       if (nativeFuncList.includes(ref)) {
         return;

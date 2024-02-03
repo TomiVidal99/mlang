@@ -33,7 +33,7 @@ function getDefaultInitFile(): string {
 // but could happen with other clients.
 export const defaultSettings: ISettings = {
   // TODO: implement these settings
-  maxNumberOfProblems: 200,
+  maxNumberOfProblems: 1000,
   maxFilesSearchDepth: 3,
   defaultInitFile: getDefaultInitFile(),
   enableInitFile: false,

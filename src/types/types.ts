@@ -67,14 +67,14 @@ export interface FunctionData {
 
 export interface Expression {
   type:
-  | TokenType
-  | 'BINARY_OPERATION'
-  | 'FUNCTION_CALL'
-  | 'VARIABLE_VECTOR'
-  | 'REFERENCE_CALL_VAR_FUNC'
-  | 'ANONYMOUS_FUNCTION_DEFINITION'
-  | BasicStatementsType
-  | 'FUNCTION_DEFINITION';
+    | TokenType
+    | 'BINARY_OPERATION'
+    | 'FUNCTION_CALL'
+    | 'VARIABLE_VECTOR'
+    | 'REFERENCE_CALL_VAR_FUNC'
+    | 'ANONYMOUS_FUNCTION_DEFINITION'
+    | BasicStatementsType
+    | 'FUNCTION_DEFINITION';
   value: string | string[] | Token[];
   LHO?: Expression;
   RHO?: Expression | Statement[];
@@ -138,4 +138,5 @@ export type ReferenceType = 'FUNCTION' | 'VARIABLE';
 export interface Reference extends IDefinition {
   type: ReferenceType;
   documentation: string;
+  args?: string[];
 }

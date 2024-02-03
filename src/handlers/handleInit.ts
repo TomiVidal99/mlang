@@ -8,9 +8,10 @@ import {
 } from 'vscode-languageserver';
 import { getFilesInWorkspace } from '../utils';
 import { docManager } from '../server';
+import { globalSettings } from '../data';
 
 export let hasConfigurationCapability = true;
-export let hasWorkspaceFolderCapability = false;
+export let hasWorkspaceFolderCapability = true;
 export let hasDiagnosticRelatedInformationCapability = false;
 
 interface IOnInitializeProps {
@@ -55,11 +56,6 @@ export function handleOnInitialize({
       referencesProvider: {
         // allows goToReference
         workDoneProgress: true,
-      },
-      workspace: {
-        workspaceFolders: {
-          supported: true,
-        },
       },
     },
   };
