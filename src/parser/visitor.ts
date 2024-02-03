@@ -10,14 +10,19 @@ import {
   type Definition,
   type StatementType,
   type LintingError,
+  LintingWarning,
 } from '../types';
-import { getNataiveFunctionsList } from '../utils';
-import { connection } from '../server';
+import {
+  addNewDocumentFromPath,
+  cleanStringArg,
+  getNataiveFunctionsList,
+} from '../utils';
 
 export class Visitor {
   public readonly references: Reference[] = [];
   public readonly definitions: Definition[] = [];
   private readonly errors: LintingError[] = [];
+  private warnings: LintingWarning[] = [];
 
   /**
    * Entry point: it extracts all the references and definitions from a Program
@@ -156,9 +161,7 @@ export class Visitor {
             position: this.getExpressionPosition(node),
             type: 'FUNCTION',
             documentation: node?.functionData?.description ?? '',
-            args: this.getArgumentIdentifiersList(node)
-              .map((t) => (typeof t.content === 'string' ? t.content : null))
-              .filter((a) => a !== null) as string[], // TODO fix this
+            args: this.getFunctionArgsAsStrings(node?.functionData?.args),
           });
         } else {
           this.references.push({
@@ -314,6 +317,22 @@ export class Visitor {
   }
 
   /**
+   * Gets all the arguments of the function data provided
+   * and it returns it as a list of string
+   * @returns string[]
+   */
+  private getFunctionArgsAsStrings(
+    functionArgs: Token[] | string | undefined,
+  ): string[] {
+    if (functionArgs === undefined) return [];
+    if (typeof functionArgs === 'string') return [functionArgs];
+    return functionArgs.flatMap((t) => {
+      if (typeof t.content === 'string') return [t.content];
+      return this.getFunctionArgsAsStrings([t]);
+    });
+  }
+
+  /**
    * Helper that returns a list of Tokens from the arguments of a function call or definition
    */
   private getArgumentIdentifiersList(node: Expression): Token[] {
@@ -429,7 +448,39 @@ export class Visitor {
     // add files to path
     this.references.forEach((ref) => {
       if (ref.name === 'addpath') {
-        connection.window.showInformationMessage(JSON.stringify(ref.args));
+        const path = ref?.args ? ref.args : [];
+        if (path.length === 0) {
+          this.errors.push({
+            message: 'Missing path argument',
+            code: ERROR_CODES.MISSING_PATH,
+            range: ref.position,
+          });
+        } else if (path.length > 1) {
+          this.errors.push({
+            message: 'Too many arguments',
+            code: ERROR_CODES.TOO_MANY_ARGS,
+            range: ref.position,
+          });
+        }
+        const allPaths = path[0].split(':');
+        if (allPaths.length > 1) {
+          this.warnings.push({
+            message:
+              "Not recommended to use multiple paths separated with ':'. May not work properly in all systems (personal advice and experienced, not said octave.",
+            code: 0,
+            range: ref.position,
+          });
+        }
+        allPaths.forEach((p) => {
+          const failedPaths = addNewDocumentFromPath(cleanStringArg(p));
+          failedPaths.forEach((p) => {
+            this.warnings.push({
+              message: `Could not load '${p}'`,
+              code: 0,
+              range: ref.position,
+            });
+          });
+        });
       }
     });
 
