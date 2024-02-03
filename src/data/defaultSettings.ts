@@ -4,8 +4,9 @@ import * as os from 'os';
 export interface ISettings {
   maxNumberOfProblems: number;
   maxFilesSearchDepth: number;
-  defaultInitFile: string;
   enableInitFile: boolean;
+  defaultInitFile: string;
+  defaultExecPath: string;
 }
 
 /**
@@ -35,9 +36,10 @@ export const defaultSettings: ISettings = {
   maxFilesSearchDepth: 3,
   defaultInitFile: getDefaultInitFile(),
   enableInitFile: false,
+  defaultExecPath: '/usr/bin/octave', // TODO: actually integrate this
 };
 
 export let globalSettings: ISettings = defaultSettings;
-export function updateGlobalSettings(settings: ISettings) {
+export function updateGlobalSettings(settings: ISettings): void {
   globalSettings = settings;
 }

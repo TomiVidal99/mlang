@@ -1,8 +1,8 @@
 import {
   createConnection,
-  TextDocuments,
   ProposedFeatures,
   type Diagnostic,
+  TextDocuments,
 } from 'vscode-languageserver/node';
 import { TextDocument } from 'vscode-languageserver-textdocument';
 import {
@@ -15,6 +15,7 @@ import {
 import { type ISettings } from './data';
 import { Parser, Tokenizer, Visitor } from './parser';
 import { getDiagnosticFromLitingMessage } from './utils';
+import { DocumentsManager } from './types/DocumentsManager';
 
 // THIS IS THE TIME THAT IT WAITS BEFORE TRIGGERING A REFRESH
 // OF PARSING THE DOCUMENT WHEN THE USER IT'S TYPING
@@ -23,24 +24,27 @@ const DEBOUNCE_DELAY_MS = 1000;
 
 export const connection = createConnection(ProposedFeatures.all);
 const documentSettings = new Map<string, Thenable<ISettings>>();
+export const docManager = new DocumentsManager();
 
-export const documents = new TextDocuments<TextDocument>(TextDocument);
+// TODO refactor visitor and documentSettings into the DocumentsManager class
+
+export const documents = new TextDocuments(TextDocument);
 export const visitors = new Map<string, Visitor>();
 const documentChanges = new Map<string, NodeJS.Timer>();
 
 documents.onDidChangeContent((change) => {
   updateDocumentData(change.document.uri, change.document.getText());
 });
-// documents.onDidOpen((change) => {
-// const text = change.document.getText();
-// const uri = change.document.uri;
-
-// log(`opened '${uri}'`);
-// });
+documents.onDidOpen((change) => {
+  const text = change.document.getText();
+  const uri = change.document.uri;
+  docManager.set(uri, text);
+  // connection.window.showInformationMessage('did open: ' + uri);
+});
 // documents.onDidSave((change) => handleOnDidSave({change}));
 connection.onInitialize((params) => handleOnInitialize({ params, connection }));
-connection.onInitialized((params) => {
-  handleOnInitialized({ params, connection });
+connection.onInitialized(async (params) => {
+  await handleOnInitialized({ params, connection });
 });
 // connection.onDidOpenTextDocument((params) => {});
 connection.onDefinition(
@@ -55,7 +59,9 @@ connection.onReferences((params) => {
 // connection.onDidChangeConfiguration((change) =>);
 // connection.workspace.onDidDeleteFiles((event) => {});
 documents.onDidClose((e) => {
-  documentSettings.delete(e.document.uri);
+  const uri = e.document.uri;
+  docManager.delete(uri);
+  documentSettings.delete(uri);
 });
 // documents.onDidChangeContent((change) => {
 //   updateDiagnostics(change.document.uri, change.document.getText());
@@ -94,7 +100,7 @@ connection.onExit(() => {
  * Updates the references, definitions and diagnostics
  * And updates that new data on the visitors map
  */
-function updateDocumentData(uri: string, text: string): void {
+export function updateDocumentData(uri: string, updatedText?: string): void {
   // Clear any previously scheduled diagnostic updates for this document
   if (documentChanges.has(uri)) {
     clearTimeout(documentChanges.get(uri));
@@ -104,7 +110,8 @@ function updateDocumentData(uri: string, text: string): void {
   documentChanges.set(
     uri,
     setTimeout(() => {
-      const document = documents.get(uri);
+      const document = docManager.get(uri);
+      const text = updatedText ?? document?.getText();
       if (document === null || document === undefined) return;
       const tokenizer = new Tokenizer(text);
       const tokens = tokenizer.getAllTokens();

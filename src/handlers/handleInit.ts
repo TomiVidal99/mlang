@@ -6,6 +6,8 @@ import {
   TextDocumentSyncKind,
   type _Connection,
 } from 'vscode-languageserver';
+import { getFilesInWorkspace } from '../utils';
+import { docManager } from '../server';
 
 export let hasConfigurationCapability = false;
 export let hasWorkspaceFolderCapability = false;
@@ -15,7 +17,10 @@ interface IOnInitializeProps {
   params: InitializeParams;
   connection: _Connection;
 }
-export function handleOnInitialize({ params, connection }: IOnInitializeProps) {
+export function handleOnInitialize({
+  params,
+  connection,
+}: IOnInitializeProps): InitializeResult<any> {
   const capabilities = params.capabilities;
 
   // Does the client support the `workspace/configuration` request?
@@ -51,6 +56,11 @@ export function handleOnInitialize({ params, connection }: IOnInitializeProps) {
         // allows goToReference
         workDoneProgress: true,
       },
+      workspace: {
+        workspaceFolders: {
+          supported: true,
+        },
+      },
     },
   };
   if (hasWorkspaceFolderCapability) {
@@ -61,6 +71,22 @@ export function handleOnInitialize({ params, connection }: IOnInitializeProps) {
     };
   }
 
+  // first read all the files in the current directory
+  // then load them all into Documents
+  const { workspaceFolders } = params;
+  if (
+    workspaceFolders &&
+    workspaceFolders.length > 0 &&
+    workspaceFolders[0]?.name
+  ) {
+    const filesInRootFolder = getFilesInWorkspace({
+      workspace: workspaceFolders[0].name,
+    });
+    filesInRootFolder.forEach((d) => docManager.set(d.uri, d.getText()));
+  }
+
+  // handleDefaultPath();
+
   return result;
 }
 
@@ -68,15 +94,15 @@ interface IOnInitializedProps {
   connection: _Connection;
   params: InitializedParams;
 }
-export function handleOnInitialized({
+export async function handleOnInitialized({
   params,
   connection,
-}: IOnInitializedProps) {
+}: IOnInitializedProps): Promise<void> {
   connection.console.log('Mlang Initialized correctly!');
 
   if (hasConfigurationCapability) {
     // Register for all configuration changes.
-    connection.client.register(
+    await connection.client.register(
       DidChangeConfigurationNotification.type,
       undefined,
     );

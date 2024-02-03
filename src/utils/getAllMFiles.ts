@@ -1,7 +1,12 @@
 import fs from 'fs';
 import path from 'path';
 
-export function getAllMFiles(rootDir: string): string[] {
+/**
+ * Returns all the paths of all .m files in the given folder
+ * @param srcPath string
+ * @returns output/*.m string[]
+ */
+export function getAllMFiles(srcPath: string): string[] {
   const files: string[] = [];
 
   function traverseDir(currentDir: string) {
@@ -17,6 +22,6 @@ export function getAllMFiles(rootDir: string): string[] {
     }
   }
 
-  traverseDir(rootDir);
+  traverseDir(srcPath);
   return files;
 }

@@ -1,14 +1,12 @@
 import {
   type CompletionParams,
   type Location,
-  Position,
-  Range,
   type TextDocuments,
 } from 'vscode-languageserver';
-import * as path from 'path';
 import { type TextDocument } from 'vscode-languageserver-textdocument';
 import { getWordRangeAtPosition } from '../utils';
-import { log, visitors } from '../server';
+import { docManager, visitors } from '../server';
+import { type Visitor } from '../parser';
 
 interface IProps {
   params: CompletionParams;
@@ -36,18 +34,39 @@ export async function handleDefinitions({
   const locations: Location[] = [];
 
   const visitor = visitors.get(uri);
-  const { definitions } = visitor;
+  const definitions = visitor?.definitions;
 
-  locations.push(
-    ...definitions
+  // LOCAL DEFINITIONS
+  if (definitions) {
+    locations.push(
+      ...definitions
+        .filter((def) => def.name === word)
+        .map((def) => {
+          return {
+            range: def.position,
+            uri,
+          };
+        }),
+    );
+  }
+
+  // OTHER FILES DEFINITIONS
+  const otherDocuments = docManager
+    .getAllUris()
+    .filter((uri) => uri !== params.textDocument.uri);
+
+  otherDocuments.forEach((_uri) => {
+    visitors
+      .get(_uri)
+      ?.definitions.filter((def) => def.context === '0')
       .filter((def) => def.name === word)
-      .map((ref) => {
-        return {
-          range: ref.position,
-          uri,
-        };
-      }),
-  );
+      .forEach((def) => {
+        locations.push({
+          uri: _uri,
+          range: def.position,
+        });
+      });
+  });
 
   return locations.length > 0 ? locations : null;
 }

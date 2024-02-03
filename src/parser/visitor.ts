@@ -41,31 +41,41 @@ export class Visitor {
       case 'ASSIGNMENT':
         if (node.LHE === undefined) return;
         if (node.LHE.type === 'FUNCTION_DEFINITION') {
-          this.visitExpression(node.LHE, 'ASSIGNMENT');
+          this.visitExpression(node.LHE, 'ASSIGNMENT', node.context);
         } else {
-          this.visitExpression(node.LHE, 'ASSIGNMENT');
-          this.visitExpression(node.RHE as Expression, 'ASSIGNMENT', false);
+          this.visitExpression(node.LHE, 'ASSIGNMENT', node.context);
+          this.visitExpression(
+            node.RHE as Expression,
+            'ASSIGNMENT',
+            node.context,
+            false,
+          );
         }
         break;
       case 'FUNCTION_DEFINITION':
         if (node.LHE === undefined) return;
-        this.visitExpression(node.LHE, 'FUNCTION_DEFINITION');
+        this.visitExpression(node.LHE, 'FUNCTION_DEFINITION', node.context);
         (node?.RHE as Statement[]).forEach((statement) => {
           this.visitStatement(statement);
         });
         break;
       case 'MO_ASSIGNMENT':
         if (node.LHE === undefined) return;
-        this.visitExpression(node.LHE, 'MO_ASSIGNMENT');
-        this.visitExpression(node.RHE as Expression, 'MO_ASSIGNMENT', false);
+        this.visitExpression(node.LHE, 'MO_ASSIGNMENT', node.context);
+        this.visitExpression(
+          node.RHE as Expression,
+          'MO_ASSIGNMENT',
+          node.context,
+          false,
+        );
         break;
       case 'FUNCTION_CALL':
         if (node?.LHE === undefined) return;
-        this.visitExpression(node.LHE, 'FUNCTION_CALL');
+        this.visitExpression(node.LHE, 'FUNCTION_CALL', node.context);
         break;
       case 'REFERENCE_CALL_VAR_FUNC':
         if (node?.LHE === undefined) return;
-        this.visitExpression(node.LHE, 'REFERENCE_CALL_VAR_FUNC');
+        this.visitExpression(node.LHE, 'REFERENCE_CALL_VAR_FUNC', node.context);
         break;
       case 'IF_STMNT':
       case 'DO_STMNT':
@@ -82,6 +92,7 @@ export class Visitor {
   private visitExpression(
     node: Expression,
     parentType: StatementType | null,
+    context: string,
     isLHE = true,
   ): void {
     if (node === undefined || node === null) return;
@@ -117,6 +128,7 @@ export class Visitor {
                       content,
                       position,
                       documentation: '', // TODO think if i should get the documentation
+                      context,
                     };
                     this.definitions.push(def);
                     return def;
@@ -129,6 +141,7 @@ export class Visitor {
             type: parentType === 'ASSIGNMENT' ? 'VARIABLE' : 'FUNCTION',
             documentation: this.getDocumentationOrLineDefinition(node),
             arguments: args,
+            context,
           });
           this.references.push({
             name: node.value as string,
@@ -172,12 +185,16 @@ export class Visitor {
         break;
       case 'BINARY_OPERATION':
         if (node?.LHO === undefined) return;
-        this.visitExpression(node.LHO, null);
-        this.visitExpression(node.RHO as Expression, null, false);
+        this.visitExpression(node.LHO, null, context);
+        this.visitExpression(node.RHO as Expression, null, context, false);
         break;
       case 'FUNCTION_DEFINITION':
         if (node?.LHO === undefined) return;
-        this.visitExpression(node.LHO, 'FUNCTION_DEFINITION');
+        this.visitExpression(
+          node.LHO,
+          'FUNCTION_DEFINITION',
+          node.LHO.functionData?.contextCreated ?? '',
+        );
         if (Array.isArray(node.RHO)) {
           node.RHO.forEach((s) => {
             this.visitStatement(s);
@@ -186,8 +203,8 @@ export class Visitor {
         break;
       case 'KEYWORD':
         if (node?.LHO === undefined) return;
-        this.visitExpression(node.LHO, null);
-        this.visitExpression(node.RHO as Expression, null, false);
+        this.visitExpression(node.LHO, null, context);
+        this.visitExpression(node.RHO as Expression, null, context, false);
         break;
       case 'ANONYMOUS_FUNCTION_DEFINITION':
         // TODO: add a user setting to configure if should consider
@@ -201,9 +218,11 @@ export class Visitor {
             position: node.LHO.position,
             type: 'ANONYMOUS_FUNCTION',
             documentation: this.getDocumentationOrLineDefinition(node),
+            context,
             arguments:
               node?.functionData?.args?.map((a) => {
                 return {
+                  context: node?.functionData?.contextCreated ?? '',
                   name: a.content as string,
                   type: 'ARGUMENT',
                   position: this.getTokenPosition(a),
@@ -222,7 +241,7 @@ export class Visitor {
             };
           }) ?? []),
         );
-        this.visitExpression(node.RHO as Expression, null, false);
+        this.visitExpression(node.RHO as Expression, null, context, false);
         break;
       case 'VARIABLE_VECTOR':
         if (!Array.isArray(node.value) || !(node?.value?.length > 1)) return;
@@ -245,6 +264,7 @@ export class Visitor {
               type: 'VARIABLE',
               position: this.getTokenPosition(val),
               documentation: this.getDocumentationOrLineDefinition(node),
+              context,
             });
           });
         }

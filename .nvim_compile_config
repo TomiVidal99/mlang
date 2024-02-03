@@ -1,5 +1,5 @@
 # compile
-yarn compile
+bun compile
 # test
 bun test
 # Run with bun

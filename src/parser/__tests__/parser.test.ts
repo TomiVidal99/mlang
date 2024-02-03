@@ -176,25 +176,25 @@ test('Octave/Matlab Parser, should parse basic statements', function () {
     if (myCondition)
       a = 1;
     end
-    if
+    if ()
     endif
     for i=1:20
       b = 1;
     end
-    for
+    for ()
     endfor
     while (1)
       disp("hello");
     end
-    while
+    while ()
     endwhile
-    switch
+    switch ()
     end
-    switch
+    switch ()
     endswitch
-    do
+    do ()
     until
-    do
+    do ()
     until
 `;
 
@@ -260,9 +260,9 @@ test('Octave/Matlab Parser, test function call w/o parenthesis', function () {
 
 test('Octave/Matlab Parser, if else elseif statement', function () {
   const inputCode = `
-  if 
+  if ()
     myVar = 1;
-  elseif
+  elseif ()
     myVar = 20;
   else 
     myVar = 100;
@@ -280,7 +280,7 @@ test('Octave/Matlab Parser, if else elseif statement', function () {
   const STATEMENTS: StatementType[] = ['IF_STMNT'];
 
   // console.log('TOKENS: ' + JSON.stringify(tokens));
-  console.log('STATEMENTS: ' + JSON.stringify(program.body));
+  // console.log('STATEMENTS: ' + JSON.stringify(program.body));
 
   if (errors.length > 0) {
     console.log('ERRORS: ' + JSON.stringify(errors));

@@ -8,3 +8,4 @@ export * from './getWordRangeAtPosition';
 export * from './getDiagnosticFromLitingMessage';
 export * from './getRandomStringID';
 export * from './getNativeFunctionsList';
+export * from './fromDefinitionToCompletionItem';
