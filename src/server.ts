@@ -14,7 +14,7 @@ import {
   handleDefinitions,
   hasConfigurationCapability,
 } from './handlers';
-import { defaultSettings, type ISettings } from './data';
+import { defaultSettings, globalSettings, updateGlobalSettings } from './data';
 import { Parser, Tokenizer, Visitor } from './parser';
 import { getDiagnosticFromLitingMessage } from './utils';
 import { DocumentsManager } from './types/DocumentsManager';
@@ -23,7 +23,6 @@ import { URI } from 'vscode-uri';
 
 export const connection = createConnection(ProposedFeatures.all);
 // const documentSettings = new Map<string, Thenable<ISettings>>();
-export let globalSettings: ISettings = defaultSettings;
 export const docManager = new DocumentsManager();
 
 // TODO refactor visitor and documentSettings into the DocumentsManager class
@@ -58,9 +57,9 @@ connection.onReferences((params) => {
 connection.onDidChangeConfiguration((change) => {
   if (hasConfigurationCapability) {
     // Reset all cached document settings
-    globalSettings = change.settings.settings;
+    updateGlobalSettings(change.settings.settings);
   } else {
-    globalSettings = defaultSettings;
+    updateGlobalSettings(defaultSettings);
   }
 
   if (globalSettings.enableInitFile) {

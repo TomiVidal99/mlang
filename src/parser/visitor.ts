@@ -17,6 +17,7 @@ import {
   cleanStringArg,
   getNataiveFunctionsList,
 } from '../utils';
+import { connection } from '../server';
 
 export class Visitor {
   public readonly references: Reference[] = [];
@@ -323,12 +324,33 @@ export class Visitor {
    */
   private getFunctionArgsAsStrings(
     functionArgs: Token[] | string | undefined,
+    totalCalls = 0,
   ): string[] {
+    if (totalCalls > 300) {
+      connection.window.showErrorMessage(
+        'Max calls exceeded in getFunctionArgsAsStrings. Tell a dev',
+      );
+      return [];
+    }
+    // if (functionArgs === undefined) return [];
+    // if (typeof functionArgs === 'string') return [functionArgs];
+    // return functionArgs.flatMap((t) => {
+    //   if (typeof t.content === 'string') return [t.content];
+    //   return this.getFunctionArgsAsStrings([t], totalCalls + 1);
+    // });
     if (functionArgs === undefined) return [];
     if (typeof functionArgs === 'string') return [functionArgs];
+
     return functionArgs.flatMap((t) => {
-      if (typeof t.content === 'string') return [t.content];
-      return this.getFunctionArgsAsStrings([t]);
+      if (typeof t.content === 'string') {
+        return [t.content];
+      } else if (Array.isArray(t.content)) {
+        // Recursively call for each element in the array
+        return this.getFunctionArgsAsStrings(t.content);
+      } else {
+        // Handle other cases as needed
+        return [];
+      }
     });
   }
 
