@@ -200,6 +200,7 @@ test('Octave/Matlab Tokenizer, code break', function () {
   const text = `
     # this is a comment
     ## this is a code break
+    %% this is a code break
   `;
 
   const expectedTokensTypes: TokenType[] = [
@@ -208,11 +209,15 @@ test('Octave/Matlab Tokenizer, code break', function () {
     'NL',
     'CODE_BREAK',
     'NL',
+    'CODE_BREAK',
+    'NL',
     'EOF',
   ];
   const tokenizer = new Tokenizer(text);
   const tokens = tokenizer.getAllTokens();
   const tokensTypes = tokens.map((t) => t.type);
+
+  // console.log('GOT: ' + JSON.stringify(tokensTypes));
 
   expect(tokensTypes).toEqual(expectedTokensTypes);
 });
