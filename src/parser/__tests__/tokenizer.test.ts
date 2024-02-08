@@ -195,3 +195,24 @@ test('Octave/Matlab Tokenizer, test position', function () {
     expect(token).toStrictEqual(tok);
   }
 });
+
+test('Octave/Matlab Tokenizer, code break', function () {
+  const text = `
+    # this is a comment
+    ## this is a code break
+  `;
+
+  const expectedTokensTypes: TokenType[] = [
+    'NL',
+    'COMMENT',
+    'NL',
+    'CODE_BREAK',
+    'NL',
+    'EOF',
+  ];
+  const tokenizer = new Tokenizer(text);
+  const tokens = tokenizer.getAllTokens();
+  const tokensTypes = tokens.map((t) => t.type);
+
+  expect(tokensTypes).toEqual(expectedTokensTypes);
+});

@@ -90,6 +90,8 @@ export class Tokenizer {
     }
 
     if (this.currChar === '#' || this.currChar === '%') {
+      const codeBreakToken = this.isCodeBreak();
+      if (codeBreakToken !== undefined) return codeBreakToken;
       const comment = this.readComment();
       return this.addToken({
         type: 'COMMENT',
@@ -127,6 +129,23 @@ export class Tokenizer {
         type: 'ILLEGAL',
         content: 'illegal',
         position: this.getPositionAfterCursor(this.currChar),
+      });
+    }
+  }
+
+  /**
+   * Helper that checks weather the current token and the next one
+   * correspods to a code break type. (## or %%)
+   * TODO: ## only works for octave.
+   */
+  private isCodeBreak(): Token | undefined {
+    const codeBreak = `${this.currChar}${this.nextChar}`;
+    if (codeBreak === '##' || codeBreak === '%%') {
+      const content = this.readComment();
+      return this.addToken({
+        type: 'CODE_BREAK',
+        content,
+        position: this.getPositionAfterCursor(content),
       });
     }
   }

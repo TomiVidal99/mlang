@@ -48,6 +48,7 @@ export type TokenType =
   | 'VECTOR'
   | 'COMMENT'
   | 'STRUCT'
+  | 'CODE_BREAK'
   | 'DEFAULT_VALUE_ARGUMENT'
   | 'NATIVE_FUNCTION';
 

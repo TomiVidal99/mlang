@@ -50,6 +50,7 @@ end
 
 ## TODO
 
+- [ ] ADD: an option for selecting octave or matlab mode, there are certain things that only work on octave.
 - [ ] ADD: message for missing arguments?
 - [ ] FIX: consider all the statements inside BasicStatements when finding references and definitions.
 - [ ] FIX: linting messages are not correctly positioned.
