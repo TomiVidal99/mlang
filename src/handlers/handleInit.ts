@@ -7,8 +7,7 @@ import {
   type _Connection,
 } from 'vscode-languageserver';
 import { getFilesInWorkspace } from '../utils';
-import { docManager } from '../server';
-import { globalSettings } from '../data';
+import { docManager } from '../types/DocumentsManager';
 
 export let hasConfigurationCapability = true;
 export let hasWorkspaceFolderCapability = true;

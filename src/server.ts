@@ -17,13 +17,15 @@ import {
 import { defaultSettings, globalSettings, updateGlobalSettings } from './data';
 import { Parser, Tokenizer, Visitor } from './parser';
 import { getDiagnosticFromLitingMessage } from './utils';
-import { DocumentsManager } from './types/DocumentsManager';
 import { readFileSync } from 'fs';
 import { URI } from 'vscode-uri';
+import { docManager } from './types/DocumentsManager';
 
-export const connection = createConnection(ProposedFeatures.all);
+export const connection =
+  process.env.NODE_ENV === 'production'
+    ? createConnection(ProposedFeatures.all)
+    : null;
 // const documentSettings = new Map<string, Thenable<ISettings>>();
-export const docManager = new DocumentsManager();
 
 // TODO refactor visitor and documentSettings into the DocumentsManager class
 export const documents = new TextDocuments(TextDocument);
@@ -40,21 +42,23 @@ documents.onDidOpen((change) => {
   // connection.window.showInformationMessage('did open: ' + uri);
 });
 // documents.onDidSave((change) => handleOnDidSave({change}));
-connection.onInitialize((params) => handleOnInitialize({ params, connection }));
-connection.onInitialized(async (params) => {
+connection?.onInitialize((params) =>
+  handleOnInitialize({ params, connection }),
+);
+connection?.onInitialized(async (params) => {
   await handleOnInitialized({ params, connection });
 });
 // connection.onDidOpenTextDocument((params) => {});
-connection.onDefinition(
+connection?.onDefinition(
   async (params) => await handleDefinitions({ params, documents }),
 );
-connection.onReferences((params) => {
+connection?.onReferences((params) => {
   const uri = params.textDocument.uri;
   const document = documents.get(uri);
   if (document === undefined) return [];
   return handleReferences(document, params.position);
 });
-connection.onDidChangeConfiguration((change) => {
+connection?.onDidChangeConfiguration((change) => {
   if (hasConfigurationCapability) {
     // Reset all cached document settings
     updateGlobalSettings(change.settings.settings);
@@ -81,8 +85,8 @@ documents.onDidClose((e) => {
 // documents.onDidChangeContent((change) => {
 //   updateDiagnostics(change.document.uri, change.document.getText());
 // });
-connection.onCompletion((params) => handleCompletion({ params }));
-connection.onCompletionResolve((item) => {
+connection?.onCompletion((params) => handleCompletion({ params }));
+connection?.onCompletionResolve((item) => {
   // if (item.kind.valueOf() === 3 && item.command) {
   //   // IT'S A FUNCTION
   //   return {
@@ -96,12 +100,14 @@ connection.onCompletionResolve((item) => {
 
 // Make the text document manager listen on the connection
 // for open, change and close text document events
-documents.listen(connection);
+if (connection) {
+  documents.listen(connection);
+}
 // Listen on the connection
-connection.listen();
+connection?.listen();
 
 // CLEAN UP Handler
-connection.onExit(() => {
+connection?.onExit(() => {
   // Iterate through the scheduled updates and cancel them
   documentChanges.forEach((docChanges) => {
     clearTimeout(docChanges);
@@ -167,7 +173,7 @@ export function updateDocumentData(uri: string, updatedText?: string): void {
           source: 'mlang',
         };
         connection
-          .sendDiagnostics({
+          ?.sendDiagnostics({
             uri,
             diagnostics: [maxReachedDiagnostic],
           })
@@ -176,7 +182,7 @@ export function updateDocumentData(uri: string, updatedText?: string): void {
           });
       } else {
         connection
-          .sendDiagnostics({
+          ?.sendDiagnostics({
             uri,
             diagnostics,
           })

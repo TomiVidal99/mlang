@@ -1,5 +1,7 @@
 # compile
 bun compile
+# test watch
+bun test-watch
 # test
 bun test
 # Run with bun

@@ -3,9 +3,10 @@ import {
   type TextDocumentPositionParams,
 } from 'vscode-languageserver';
 import { getCompletionKeywords, getCompletionNativeFunctions } from '../data';
-import { connection, docManager, visitors } from '../server';
+import { visitors } from '../server';
 import { fromDefinitionToCompletionItem } from '../utils';
 import { type Visitor } from '../parser';
+import { docManager } from '../types/DocumentsManager';
 
 export function handleCompletion({
   params,

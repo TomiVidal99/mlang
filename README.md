@@ -50,12 +50,10 @@ end
 
 ## TODO
 
-- [ ] FIX: function call inside statements not working.
 - [ ] ADD: message for missing arguments?
 - [ ] FIX: consider all the statements inside BasicStatements when finding references and definitions.
 - [ ] FIX: linting messages are not correctly positioned.
 - [ ] FIX: statements can have expression within the conditions. if (3+1 == 4) etc.
-- [ ] FIX: use INFO instead of WARN in ';' missing message.
 - [ ] FIX: documentation not showing for function definitions.
 - [ ] MAYBE: instead of creating new instances of Tokenizer, Parser and Visitor, reuse the same.
 - [ ] FIX: 'x(1)' it's not just a function call, it could be a vector (eventually add checking that the element accessed it's valid).

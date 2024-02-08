@@ -33,3 +33,5 @@ export class DocumentsManager {
     this._documents.delete(uri);
   }
 }
+
+export const docManager = new DocumentsManager();

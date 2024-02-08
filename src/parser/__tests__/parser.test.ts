@@ -1,8 +1,8 @@
 import { expect, test } from 'bun:test';
 import { Parser } from '../parser';
 import { Tokenizer } from '../tokenizer';
-import { type StatementType, type Expression, type Token } from '../../types';
 import { Visitor } from '../visitor';
+import { type StatementType, type Expression, type Token } from '../../types';
 
 test('Octave/Matlab Parser, should parse a function call', function () {
   const inputCode = 'myFunction("string value");';
@@ -248,7 +248,7 @@ test('Octave/Matlab Parser, test function call w/o parenthesis', function () {
   const STATEMENTS: StatementType[] = ['FUNCTION_CALL'];
 
   // console.log('TOKENS: ' + JSON.stringify(tokens));
-  console.log('STATEMENTS: ' + JSON.stringify(program.body));
+  // console.log('STATEMENTS: ' + JSON.stringify(program.body));
 
   if (errors.length > 0) {
     console.log('ERRORS: ' + JSON.stringify(errors));
@@ -281,6 +281,32 @@ test('Octave/Matlab Parser, if else elseif statement', function () {
 
   // console.log('TOKENS: ' + JSON.stringify(tokens));
   // console.log('STATEMENTS: ' + JSON.stringify(program.body));
+
+  if (errors.length > 0) {
+    console.log('ERRORS: ' + JSON.stringify(errors));
+  }
+
+  expect(program.body.map((stmn) => stmn.type)).toEqual(STATEMENTS);
+  expect(errors.length).toStrictEqual(0);
+});
+
+test('Octave/Matlab Parser, function calls with structs', function () {
+  const inputCode = `
+  mySuperCoolFunc({});
+`;
+
+  const tokenizer = new Tokenizer(inputCode);
+  const tokens = tokenizer.getAllTokens();
+  const parser = new Parser(tokens);
+  const program = parser.makeAST();
+  const visitor = new Visitor();
+  visitor.visitProgram(program);
+
+  const errors = parser.getErrors();
+  const STATEMENTS: StatementType[] = ['FUNCTION_CALL'];
+
+  // console.log('TOKENS: ' + JSON.stringify(tokens));
+  console.log('STATEMENTS: ' + JSON.stringify(program.body));
 
   if (errors.length > 0) {
     console.log('ERRORS: ' + JSON.stringify(errors));

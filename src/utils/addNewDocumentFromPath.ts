@@ -7,9 +7,9 @@ import {
 } from 'fs';
 import { URI } from 'vscode-uri';
 import { expandPath } from './expandPath';
-import { connection, docManager } from '../server';
 import { join, dirname } from 'path';
 import { globalSettings } from '../data';
+import { docManager } from '../types/DocumentsManager';
 
 /**
  * Adds a new TextDocument to the docManager list
@@ -29,11 +29,14 @@ export function addNewDocumentFromPath(
 
       if (stats.isFile()) {
         // It's a regular file
-        connection.window.showInformationMessage('Found file: ' + expandedPath);
+        // connection.window.showInformationMessage('Found file: ' + expandedPath);
+
+        // TODO: think how to make this always work with tests
         const uri = URI.file(expandedPath).toString();
         if (docManager.has(uri)) return [];
         const text = readFileSync(expandedPath, 'utf8').toString();
         docManager.set(uri, text);
+
         return [];
       } else if (stats.isDirectory()) {
         // It's a directory, handle directory-specific logic if needed
@@ -56,7 +59,7 @@ export function addNewDocumentFromPath(
       return [expandedPath];
     }
   } catch (err) {
-    connection.window.showErrorMessage(err.toString());
+    // connection.window.showErrorMessage(err.toString());
     return [expandedPath];
   }
 

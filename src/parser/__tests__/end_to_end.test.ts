@@ -1,5 +1,7 @@
 import { test, expect } from 'bun:test';
-import { Tokenizer, Visitor, Parser } from '..';
+import { Visitor } from '../visitor';
+import { Parser } from '../parser';
+import { Tokenizer } from '../tokenizer';
 
 test('End 2 end test, should get references and definitions of whole file', function () {
   const fileContent = `

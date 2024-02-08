@@ -5,8 +5,8 @@ import {
 } from 'vscode-languageserver';
 import { type TextDocument } from 'vscode-languageserver-textdocument';
 import { getWordRangeAtPosition } from '../utils';
-import { docManager, visitors } from '../server';
-import { type Visitor } from '../parser';
+import { visitors } from '../server';
+import { docManager } from '../types/DocumentsManager';
 
 interface IProps {
   params: CompletionParams;

@@ -17,7 +17,6 @@ import {
   cleanStringArg,
   getNataiveFunctionsList,
 } from '../utils';
-import { connection } from '../server';
 
 export class Visitor {
   public readonly references: Reference[] = [];
@@ -327,10 +326,13 @@ export class Visitor {
     totalCalls = 0,
   ): string[] {
     if (totalCalls > 300) {
-      connection.window.showErrorMessage(
+      throw new Error(
         'Max calls exceeded in getFunctionArgsAsStrings. Tell a dev',
       );
-      return [];
+      //   connection.window.showErrorMessage(
+      //     'Max calls exceeded in getFunctionArgsAsStrings. Tell a dev',
+      //   );
+      //   return [];
     }
     // if (functionArgs === undefined) return [];
     // if (typeof functionArgs === 'string') return [functionArgs];

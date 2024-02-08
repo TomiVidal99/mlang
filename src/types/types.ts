@@ -81,6 +81,7 @@ export interface Expression {
   operator?: string;
   functionData?: FunctionData;
   position?: Range;
+  lineContent?: string;
 }
 
 export type BasicStatementsType =

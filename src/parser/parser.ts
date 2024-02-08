@@ -208,6 +208,7 @@ export class Parser {
           type: 'IDENTIFIER',
           value: currToken.content,
           position: this.getCurrentPosition(currToken),
+          lineContent: this.getLineContent(currToken),
         },
         RHE,
       };
@@ -389,6 +390,29 @@ export class Parser {
     }
 
     return null;
+  }
+
+  /**
+   * Retuns the line that contains the given token
+   */
+  private getLineContent(tok: Token): string {
+    const initIndex = this.currentTokenIndex;
+    let startToken: Token = tok;
+    let endToken: Token = tok;
+    const line = tok.position?.start.line;
+    let counter = 0;
+    while (
+      this.getPrevToken()?.position?.start.line === line &&
+      counter < 1000
+    ) {
+      startToken = this.getCurrentToken();
+    }
+    while (
+      this.getNextToken()?.position?.start.line === line &&
+      counter < 1000
+    ) {
+      endToken = this.getCurrentToken();
+    }
   }
 
   /**
@@ -587,6 +611,7 @@ export class Parser {
     let counter = 0;
     do {
       const arg = this.skipNL(true);
+      if (arg.type === 'RSQUIRLY') break;
       if (arg !== undefined && this.isValidStructType(arg)) {
         args.push(arg);
       } else {
@@ -601,7 +626,7 @@ export class Parser {
           message: `Unexpected struct value. Got "${
             comma?.type ?? 'UNDEFINED'
           }". Code ${ERROR_CODES.STRUCT_BAD_COMMA.toString()}`,
-          code: ERROR_CODES.STRUCT_BAD_ARGS,
+          code: ERROR_CODES.STRUCT_BAD_COMMA,
           range: this.getCurrentPosition(),
         });
       }
@@ -1143,6 +1168,7 @@ export class Parser {
           value: currToken.content,
         };
         break;
+      case 'NATIVE_FUNCTION':
       case 'IDENTIFIER':
         lho = this.parseFunctionCall();
         this.getPrevToken();
@@ -1199,7 +1225,9 @@ export class Parser {
         return;
       default:
         this.errors.push({
-          message: `Unexpected token. ${this.stringifyTokenContent(currToken)}`,
+          message: `Unexpected token. ${this.stringifyTokenContent(
+            currToken,
+          )}. Case ${currToken.type}`,
           range: this.getCurrentPosition(),
           code: 12,
         });
@@ -1330,6 +1358,7 @@ export class Parser {
       } else if (arg.type === 'LSQUIRLY') {
         // STRUCT
         const struct = this.parseStruct();
+        console.log('here');
         arg = null;
         if (struct === null) return tokens;
         tokens.push(struct);
@@ -1405,7 +1434,9 @@ export class Parser {
       'Found too many new lines',
       ERROR_CODES.TOO_MANY_NL,
     );
-    if (tok === undefined) throw new Error('EOF was never found'); // TODO: should throw here?????
+    if (tok === undefined) {
+      return this.getPrevToken() as Token;
+    }
     return tok;
   }
 
