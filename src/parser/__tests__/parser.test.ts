@@ -306,7 +306,7 @@ test('Octave/Matlab Parser, function calls with structs', function () {
   const STATEMENTS: StatementType[] = ['FUNCTION_CALL'];
 
   // console.log('TOKENS: ' + JSON.stringify(tokens));
-  console.log('STATEMENTS: ' + JSON.stringify(program.body));
+  // console.log('STATEMENTS: ' + JSON.stringify(program.body));
 
   if (errors.length > 0) {
     console.log('ERRORS: ' + JSON.stringify(errors));

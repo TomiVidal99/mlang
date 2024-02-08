@@ -1358,7 +1358,6 @@ export class Parser {
       } else if (arg.type === 'LSQUIRLY') {
         // STRUCT
         const struct = this.parseStruct();
-        console.log('here');
         arg = null;
         if (struct === null) return tokens;
         tokens.push(struct);

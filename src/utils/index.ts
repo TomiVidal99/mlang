@@ -12,3 +12,4 @@ export * from './fromDefinitionToCompletionItem';
 export * from './expandPath';
 export * from './cleanStringArg';
 export * from './addNewDocumentFromPath';
+export * from './runOctaveCode';
