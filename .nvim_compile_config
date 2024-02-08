@@ -1,8 +1,6 @@
 # compile
-bun compile
+npm run compile
 # test watch
-bun test-watch
+npm run test-watch
 # test
-bun test
-# Run with bun
-bun src/server.ts
+npm run test

@@ -22,9 +22,9 @@ import { URI } from 'vscode-uri';
 import { docManager } from './types/DocumentsManager';
 
 export const connection =
-  process.env.NODE_ENV === 'production'
-    ? createConnection(ProposedFeatures.all)
-    : null;
+  process.env.NODE_ENV === 'dev'
+    ? null
+    : createConnection(ProposedFeatures.all);
 // const documentSettings = new Map<string, Thenable<ISettings>>();
 
 // TODO refactor visitor and documentSettings into the DocumentsManager class
