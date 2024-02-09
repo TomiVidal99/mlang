@@ -424,6 +424,8 @@ export class Visitor {
       return node?.functionData?.description;
     }
 
+    if (node?.lineContent) return node.lineContent;
+
     if (node?.RHO === undefined || Array.isArray(node.RHO)) return '';
 
     // TODO: complete this

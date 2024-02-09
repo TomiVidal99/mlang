@@ -196,6 +196,7 @@ export class Parser {
       };
     } else if (currToken.type === 'IDENTIFIER' && nextToken.type === 'EQUALS') {
       // SINGLE OUTPUT ASSIGNMENT STATEMENT
+      const lineContent = this.getLineContent();
       this.getNextToken();
       const RHE = this.parseExpression();
       const supressOutput = this.isOutputSupressed();
@@ -208,7 +209,7 @@ export class Parser {
           type: 'IDENTIFIER',
           value: currToken.content,
           position: this.getCurrentPosition(currToken),
-          lineContent: this.getLineContent(currToken),
+          lineContent,
         },
         RHE,
       };
@@ -388,31 +389,45 @@ export class Parser {
       });
       return null;
     }
-
-    return null;
   }
 
   /**
-   * Retuns the line that contains the given token
+   * Retuns the line content of the current token
    */
-  private getLineContent(tok: Token): string {
+  private getLineContent(): string {
     const initIndex = this.currentTokenIndex;
-    let startToken: Token = tok;
-    let endToken: Token = tok;
-    const line = tok.position?.start.line;
+    const prevToken = this.getPrevToken();
+    const tokens: Token[] = [...(prevToken ? [prevToken] : [])];
     let counter = 0;
-    while (
-      this.getPrevToken()?.position?.start.line === line &&
-      counter < 1000
-    ) {
-      startToken = this.getCurrentToken();
+    let tok = this.getNextToken();
+    while (tok?.type !== 'NL' && tok?.type !== 'EOF' && counter < 1000) {
+      if (tok !== undefined) tokens.push(tok);
+      tok = this.getNextToken();
     }
-    while (
-      this.getNextToken()?.position?.start.line === line &&
-      counter < 1000
-    ) {
-      endToken = this.getCurrentToken();
+    const content = tokens
+      .map((t) => this.getLiteralContentFromToken(t.content))
+      .join(' ');
+    this.currentTokenIndex = initIndex;
+    return content;
+  }
+
+  /**
+   * Helper that returns the content of the token as if
+   * you were to see the literal character.
+   * @returns string
+   */
+  private getLiteralContentFromToken(
+    token: string | Token[],
+    count = 0,
+  ): string {
+    if (count > MAX_STATEMENTS_CALLS) {
+      throw new Error('Exceeded calls from getLiteralContentFromToken.');
     }
+    if (typeof token === 'string') return token;
+    if (token.length === 0) return '';
+    return token
+      .map((tok) => this.getLiteralContentFromToken(tok.content, count + 1))
+      .join(' ');
   }
 
   /**
@@ -569,13 +584,6 @@ export class Parser {
       },
       RHE: statements,
     };
-  }
-
-  /**
-   * Helper that returns the content of the current token as string
-   */
-  private getCurrentContent(): string {
-    return JSON.stringify(this.getCurrentToken().content);
   }
 
   /**
