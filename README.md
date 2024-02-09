@@ -50,6 +50,8 @@ end
 
 ## TODO
 
+- [ ] FIX: function composition not working correctly.
+- [ ] FIX: structs can be accessed inside vector outputs: '[a.x] = myFunc()'.
 - [ ] ADD: an option for selecting octave or matlab mode, there are certain things that only work on octave.
 - [ ] ADD: message for missing arguments?
 - [ ] FIX: consider all the statements inside BasicStatements when finding references and definitions.
@@ -57,7 +59,6 @@ end
 - [ ] FIX: statements can have expression within the conditions. if (3+1 == 4) etc.
 - [ ] MAYBE: instead of creating new instances of Tokenizer, Parser and Visitor, reuse the same.
 - [ ] FIX: 'x(1)' it's not just a function call, it could be a vector (eventually add checking that the element accessed it's valid).
-- [ ] FIX: structs can be accessed inside vector outputs: '[a.x] = myFunc()'.
 - [ ] FIX: add more keywords like: 'global'.
 - [ ] ADD: diagnostics for: redefined functions, missing imports.
 - [ ] ADD: references to files.
