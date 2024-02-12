@@ -221,3 +221,32 @@ test('Octave/Matlab Tokenizer, code break', function () {
 
   expect(tokensTypes).toEqual(expectedTokensTypes);
 });
+
+test('Octave/Matlab Tokenizer, STRUCT_ACCESS', function () {
+  const text = `
+    # this is a struct access
+    a.b
+    # this is a nested struct access (but it's a single Token)
+    a.b.c.d.e.f.g.d
+  `;
+
+  const expectedTokensTypes: TokenType[] = [
+    'NL',
+    'COMMENT',
+    'NL',
+    'STRUCT_ACCESS',
+    'NL',
+    'COMMENT',
+    'NL',
+    'STRUCT_ACCESS',
+    'NL',
+    'EOF',
+  ];
+  const tokenizer = new Tokenizer(text);
+  const tokens = tokenizer.getAllTokens();
+  const tokensTypes = tokens.map((t) => t.type);
+
+  // console.log('GOT: ' + JSON.stringify(tokensTypes));
+
+  expect(tokensTypes).toEqual(expectedTokensTypes);
+});

@@ -1,3 +1,4 @@
+import { CERO_POSITION } from '../constants';
 import { type Token, getTokenFromSymbols } from '../types';
 import {
   getKeywordsFromCompletion,
@@ -34,6 +35,59 @@ export class Tokenizer {
   }
 
   /**
+   * It's called after all the tokenizing process has been done
+   * It creates some more complex tokens like STRUCT_ACCESS
+   */
+  private postTokenizationHook(): void {
+    this.makeStructAccess();
+  }
+
+  /**
+   * Makes STRUCT_ACCESS out of more basic tokens in the tokens list
+   */
+  private makeStructAccess(): void {
+    const newList: Token[] = [];
+    let i = 0;
+    while (i < this.tokens.length) {
+      if (
+        i < this.tokens.length - 3 &&
+        this.tokens[i].type === 'IDENTIFIER' &&
+        this.tokens[i + 1].type === 'PERIOD' &&
+        this.tokens[i + 2].type === 'IDENTIFIER'
+      ) {
+        let lastTokenIndex = i + 2;
+        const content = [
+          this.tokens[i],
+          this.tokens[i + 1],
+          this.tokens[i + 2],
+        ];
+        while (
+          lastTokenIndex < this.tokens.length - 3 &&
+          this.tokens[lastTokenIndex + 1].type === 'PERIOD' &&
+          this.tokens[lastTokenIndex + 2].type === 'IDENTIFIER'
+        ) {
+          lastTokenIndex = lastTokenIndex + 2;
+        }
+        const structAccess: Token = {
+          type: 'STRUCT_ACCESS',
+          content,
+          position: {
+            start: this.tokens[i].position?.start ?? CERO_POSITION.start,
+            end: content[content.length - 1].position?.end ?? CERO_POSITION.end,
+          },
+        };
+        newList.push(structAccess);
+        i = lastTokenIndex + 1;
+      } else {
+        newList.push(this.tokens[i]);
+        i++;
+      }
+    }
+    this.tokens.length = 0;
+    this.tokens.push(...newList);
+  }
+
+  /**
    * Updates the current text to the provided one.
    */
   public updateText(text: string): void {
@@ -47,15 +101,13 @@ export class Tokenizer {
    * TODO: maybe update this to use this.tokens??
    */
   public getAllTokens(): Token[] {
-    const tokens: Token[] = [];
+    // const tokens: Token[] = [];
     let counter = 0;
-    do {
-      tokens.push(this.getNextToken());
+    let currentToken: Token = this.getNextToken();
+    while (currentToken.type !== 'EOF' && counter <= MAX_TOKENS_CALLS) {
+      currentToken = this.getNextToken();
       counter++;
-    } while (
-      tokens[tokens.length - 1].type !== 'EOF' &&
-      counter <= MAX_TOKENS_CALLS
-    );
+    }
 
     if (counter >= MAX_TOKENS_CALLS) {
       throw new Error(
@@ -66,7 +118,9 @@ export class Tokenizer {
       );
     }
 
-    return tokens;
+    this.postTokenizationHook();
+
+    return this.tokens;
   }
 
   /**
@@ -91,7 +145,7 @@ export class Tokenizer {
 
     if (this.currChar === '#' || this.currChar === '%') {
       const codeBreakToken = this.isCodeBreak();
-      if (codeBreakToken !== undefined) return codeBreakToken;
+      if (codeBreakToken !== undefined) return this.addToken(codeBreakToken);
       const comment = this.readComment();
       return this.addToken({
         type: 'COMMENT',
@@ -142,11 +196,11 @@ export class Tokenizer {
     const codeBreak = `${this.currChar}${this.nextChar}`;
     if (codeBreak === '##' || codeBreak === '%%') {
       const content = this.readComment();
-      return this.addToken({
+      return {
         type: 'CODE_BREAK',
         content,
         position: this.getPositionAfterCursor(content),
-      });
+      };
     }
   }
 

@@ -47,6 +47,7 @@ export type TokenType =
   | 'KEYWORD'
   | 'VECTOR'
   | 'COMMENT'
+  | 'STRUCT_ACCESS'
   | 'STRUCT'
   | 'CODE_BREAK'
   | 'DEFAULT_VALUE_ARGUMENT'
