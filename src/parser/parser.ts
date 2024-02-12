@@ -1276,6 +1276,7 @@ export class Parser {
   ): boolean {
     const isValid =
       token.type === 'STRUCT_ACCESS' ||
+      token.type === 'IDENTIFIER_REFERENCE' ||
       token.type === 'IDENTIFIER' ||
       token.type === 'NUMBER' ||
       token.type === 'STRING';
@@ -1507,6 +1508,8 @@ export class Parser {
         token.type === 'VECTOR' ||
         token.type === 'STRING' ||
         token.type === 'NUMBER' ||
+        token.type === 'IDENTIFIER_REFERENCE' ||
+        token.type === 'STRUCT_ACCESS' ||
         token.type === 'STRUCT'
       );
     }

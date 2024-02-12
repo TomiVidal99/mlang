@@ -50,6 +50,7 @@ end
 
 ## TODO
 
+- [ ] ADD: reference checking for IDENTIFIER_REFERENCE.
 - [ ] FIX: function composition not working correctly.
 - [ ] FIX: structs can be accessed inside vector outputs: '[a.x] = myFunc()'.
 - [ ] ADD: an option for selecting octave or matlab mode, there are certain things that only work on octave.

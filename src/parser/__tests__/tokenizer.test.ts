@@ -250,3 +250,29 @@ test('Octave/Matlab Tokenizer, STRUCT_ACCESS', function () {
 
   expect(tokensTypes).toEqual(expectedTokensTypes);
 });
+
+test('Octave/Matlab Tokenizer, IDENTIFIER_REFERENCE', function () {
+  const text = `
+    # this is a IDENTIFIER_REFERENCE
+    myFunction(@myOtherFunc)
+  `;
+
+  const expectedTokensTypes: TokenType[] = [
+    'NL',
+    'COMMENT',
+    'NL',
+    'IDENTIFIER',
+    'LPARENT',
+    'IDENTIFIER_REFERENCE',
+    'RPARENT',
+    'NL',
+    'EOF',
+  ];
+  const tokenizer = new Tokenizer(text);
+  const tokens = tokenizer.getAllTokens();
+  const tokensTypes = tokens.map((t) => t.type);
+
+  // console.log('GOT: ' + JSON.stringify(tokensTypes));
+
+  expect(tokensTypes).toEqual(expectedTokensTypes);
+});

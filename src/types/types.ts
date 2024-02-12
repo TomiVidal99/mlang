@@ -43,6 +43,7 @@ export type TokenType =
   | 'NUMBER'
   | 'ILLEGAL'
   | 'IDENTIFIER'
+  | 'IDENTIFIER_REFERENCE'
   | 'STRING'
   | 'KEYWORD'
   | 'VECTOR'

@@ -40,6 +40,38 @@ export class Tokenizer {
    */
   private postTokenizationHook(): void {
     this.makeStructAccess();
+    this.makeIdentifierReferences();
+  }
+
+  /**
+   * Makes the more complex tokens IDENTIFIER_REFERENCEs
+   */
+  private makeIdentifierReferences(): void {
+    const newList: Token[] = [];
+    let i = 0;
+    while (i < this.tokens.length) {
+      if (
+        i < this.tokens.length - 1 &&
+        this.tokens[i].type === 'AT' &&
+        this.tokens[i + 1].type === 'IDENTIFIER'
+      ) {
+        newList.push({
+          type: 'IDENTIFIER_REFERENCE',
+          position: {
+            start: this.tokens[i].position?.start ?? CERO_POSITION.start,
+            end: this.tokens[i + 1].position?.end ?? CERO_POSITION.end,
+          },
+          content: [this.tokens[i], this.tokens[i + 1]],
+        });
+        i = i + 2;
+      } else {
+        newList.push(this.tokens[i]);
+        i++;
+      }
+    }
+
+    this.tokens.length = 0;
+    this.tokens.push(...newList);
   }
 
   /**
