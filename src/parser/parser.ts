@@ -133,6 +133,7 @@ export class Parser {
         let mCalls = 0;
         do {
           this.skipNL(true);
+          mCalls++;
         } while (
           mCalls < MAX_STATEMENTS_CALLS &&
           this.getCurrentToken().type !== 'RPARENT'
@@ -170,6 +171,7 @@ export class Parser {
 
     if (
       (currToken.type === 'IDENTIFIER' ||
+        currToken.type === 'STRUCT_ACCESS' ||
         currToken.type === 'NATIVE_FUNCTION') &&
       nextToken.type === 'LPARENT'
     ) {
@@ -194,7 +196,10 @@ export class Parser {
           },
         },
       };
-    } else if (currToken.type === 'IDENTIFIER' && nextToken.type === 'EQUALS') {
+    } else if (
+      (currToken.type === 'IDENTIFIER' || currToken.type === 'STRUCT_ACCESS') &&
+      nextToken.type === 'EQUALS'
+    ) {
       // SINGLE OUTPUT ASSIGNMENT STATEMENT
       const lineContent = this.getLineContent();
       this.getNextToken();
@@ -206,7 +211,7 @@ export class Parser {
         supressOutput,
         context: this.getCurrentContext(),
         LHE: {
-          type: 'IDENTIFIER',
+          type: currToken.type,
           value: currToken.content,
           position: this.getCurrentPosition(currToken),
           lineContent,
@@ -1178,6 +1183,7 @@ export class Parser {
         break;
       case 'NATIVE_FUNCTION':
       case 'IDENTIFIER':
+      case 'STRUCT_ACCESS':
         lho = this.parseFunctionCall();
         this.getPrevToken();
         break;
@@ -1269,6 +1275,7 @@ export class Parser {
     throwError?: boolean,
   ): boolean {
     const isValid =
+      token.type === 'STRUCT_ACCESS' ||
       token.type === 'IDENTIFIER' ||
       token.type === 'NUMBER' ||
       token.type === 'STRING';
