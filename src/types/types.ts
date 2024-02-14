@@ -49,6 +49,7 @@ export type TokenType =
   | 'VECTOR'
   | 'COMMENT'
   | 'CELL_ARRAY'
+  | 'CELL_ARRAY_ACCESS'
   | 'STRUCT_ACCESS'
   | 'STRUCT'
   | 'CODE_BREAK'

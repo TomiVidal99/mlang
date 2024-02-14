@@ -1185,8 +1185,20 @@ export class Parser {
       case 'NATIVE_FUNCTION':
       case 'IDENTIFIER':
       case 'STRUCT_ACCESS':
-        lho = this.parseFunctionCall();
-        this.getPrevToken();
+        this.getNextToken();
+        if (this.getCurrentToken().type === 'LPARENT') {
+          lho = this.parseFunctionCall();
+          this.getPrevToken();
+        } else if (this.getCurrentToken().type === 'LSQUIRLY') {
+          // CELL_ARRAY access
+          lho = this.parseCellArrayAccess();
+        } else {
+          lho = {
+            type: currToken.type,
+            value: currToken.content,
+            position: this.getCurrentPosition(currToken),
+          };
+        }
         break;
       case 'AT': {
         this.getNextToken();
@@ -1266,6 +1278,39 @@ export class Parser {
   }
 
   /**
+   * Returns the CELL_ARRAY_ACCESS expression
+   */
+  private parseCellArrayAccess(): Expression | undefined {
+    const firstArg = this.getNextToken();
+    if (firstArg === undefined) return;
+    if (firstArg.type === 'COLON') {
+      // returns all the elements of the cell array
+      const closingSquirly = this.getNextToken();
+      if (closingSquirly === undefined) return;
+      if (closingSquirly.type !== 'RSQUIRLY') {
+        this.errors.push({
+          message: `Missing closing token '}'`,
+          code: ERROR_CODES.CELL_ARR_ACCESS_MISSING_END,
+          range: {
+            start:
+              this.tokens[this.currentTokenIndex - 3].position?.start ??
+              CERO_POSITION.start,
+            end: closingSquirly.position?.end ?? CERO_POSITION.end,
+          },
+        });
+        this.getPrevToken();
+        return;
+      }
+      return {
+        type: 'CELL_ARRAY_ACCESS',
+        value: [firstArg],
+        position:
+          this.tokens[this.currentTokenIndex - 3].position ?? CERO_POSITION,
+      };
+    }
+  }
+
+  /**
    * Helper that returns weather a Token it's of type NUMBER, STRING or IDENTIFIER
    * which are commonly used
    * @args token
@@ -1295,25 +1340,17 @@ export class Parser {
 
   private parseFunctionCall(): Expression {
     const currToken = this.getCurrentToken();
-    if (this.getNextToken()?.type === 'LPARENT') {
-      const args = this.getFunctionArguments();
-      this.validateFnCallArgs(args);
-      this.getNextToken();
-      return {
-        type: 'FUNCTION_CALL',
-        value: currToken.content,
-        position: this.getCurrentPosition(currToken),
-        functionData: {
-          args,
-        },
-      };
-    } else {
-      return {
-        type: currToken.type,
-        value: currToken.content,
-        position: this.getCurrentPosition(currToken),
-      };
-    }
+    const args = this.getFunctionArguments();
+    this.validateFnCallArgs(args);
+    this.getNextToken();
+    return {
+      type: 'FUNCTION_CALL',
+      value: currToken.content,
+      position: this.getCurrentPosition(currToken),
+      functionData: {
+        args,
+      },
+    };
   }
 
   /**
