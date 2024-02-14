@@ -123,9 +123,9 @@ test('Octave/Matlab Parser, should parse function definition', function () {
   expect(errors.length).toStrictEqual(0);
 });
 
-test('Octave/Matlab Parser, should parse structs in ASSIGNMENTs', function () {
+test('Octave/Matlab Parser, should parse cell arrays in ASSIGNMENTs', function () {
   const inputCode = `
-    myStruct = {"test", 1}
+    myCellArray = {"test", 1}
   `;
 
   const tokenizer = new Tokenizer(inputCode);
@@ -147,7 +147,7 @@ test('Octave/Matlab Parser, should parse structs in ASSIGNMENTs', function () {
   expect(errors.length).toStrictEqual(0);
 });
 
-test('Octave/Matlab Parser, should parse structs in arguments', function () {
+test('Octave/Matlab Parser, should parse cell arrays in arguments', function () {
   const inputCode = `
     myFunction({"test", 1})
   `;
@@ -290,7 +290,7 @@ test('Octave/Matlab Parser, if else elseif statement', function () {
   expect(errors.length).toStrictEqual(0);
 });
 
-test('Octave/Matlab Parser, function calls with structs', function () {
+test('Octave/Matlab Parser, function calls with cell array', function () {
   const inputCode = `
   mySuperCoolFunc({});
 `;

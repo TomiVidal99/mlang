@@ -638,8 +638,8 @@ export class Parser {
         this.errors.push({
           message: `Unexpected struct value. Got "${
             comma?.type ?? 'UNDEFINED'
-          }". Code ${ERROR_CODES.STRUCT_BAD_COMMA.toString()}`,
-          code: ERROR_CODES.STRUCT_BAD_COMMA,
+          }". Code ${ERROR_CODES.CELL_ARR_BAD_COMMA.toString()}`,
+          code: ERROR_CODES.CELL_ARR_BAD_COMMA,
           range: this.getCurrentPosition(),
         });
       }
@@ -654,7 +654,7 @@ export class Parser {
     this.getNextToken();
 
     return {
-      type: 'STRUCT',
+      type: 'CELL_ARRAY',
       content: args,
       position: {
         start: initPos,
@@ -672,13 +672,14 @@ export class Parser {
     if (
       !this.isTokenValidBasicDataType(token) &&
       token.type !== 'VECTOR' &&
+      token.type !== 'CELL_ARRAY' &&
       token.type !== 'STRUCT'
     ) {
       this.errors.push({
         message: `Unexpected struct value. Got "${
           token.type
-        }". Code ${ERROR_CODES.STRUCT_BAD_ARGS.toString()}`,
-        code: ERROR_CODES.STRUCT_BAD_ARGS,
+        }". Code ${ERROR_CODES.CELL_ARR_BAD_ARGS.toString()}`,
+        code: ERROR_CODES.CELL_ARR_BAD_ARGS,
         range: this.getCurrentPosition(),
       });
       return false;
@@ -1222,11 +1223,11 @@ export class Parser {
           value: this.getVectorArgs()[0],
         };
       case 'LSQUIRLY': {
-        // STRUCT
+        // CELL_ARRAY
         const struct = this.parseStruct();
         if (struct === null) return;
         return {
-          type: 'STRUCT',
+          type: 'CELL_ARRAY',
           value: struct?.content,
         };
       }
@@ -1372,11 +1373,11 @@ export class Parser {
         tokens.push(this.getVector(arg));
         arg = null;
       } else if (arg.type === 'LSQUIRLY') {
-        // STRUCT
-        const struct = this.parseStruct();
+        // CELL_ARRAY
+        const cellArr = this.parseStruct();
         arg = null;
-        if (struct === null) return tokens;
-        tokens.push(struct);
+        if (cellArr === null) return tokens;
+        tokens.push(cellArr);
       } else if (this.isTokenValidBasicDataType(arg)) {
         this.getNextToken();
       } else {
@@ -1509,6 +1510,7 @@ export class Parser {
         token.type === 'STRING' ||
         token.type === 'NUMBER' ||
         token.type === 'IDENTIFIER_REFERENCE' ||
+        token.type === 'CELL_ARRAY' ||
         token.type === 'STRUCT_ACCESS' ||
         token.type === 'STRUCT'
       );
@@ -1517,6 +1519,8 @@ export class Parser {
       this.getCurrentToken().type === 'IDENTIFIER' ||
       this.getCurrentToken().type === 'VECTOR' ||
       this.getCurrentToken().type === 'STRING' ||
+      this.getCurrentToken().type === 'CELL_ARRAY' ||
+      this.getCurrentToken().type === 'STRUCT_ACCESS' ||
       this.getCurrentToken().type === 'STRUCT' ||
       this.getCurrentToken().type === 'NUMBER'
     );
