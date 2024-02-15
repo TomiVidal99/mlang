@@ -1481,11 +1481,15 @@ export class Parser {
         this.getNextToken();
         arg = null;
       } else if (arg.type === 'IDENTIFIER') {
-        if (this.skipNL(true).type === 'LPARENT') {
+        const nextTok = this.skipNL(true);
+        if (nextTok.type === 'LPARENT') {
           // TODO handle function composition
           const fnCallArgs = this.getFunctionArguments(); // just for now so it gets rid of the function call (advances the tokens)
           this.getNextToken();
           this.validateFnCallArgs(fnCallArgs);
+        } else if (nextTok.type === 'LSQUIRLY') {
+          // cell array access
+          this.parseCellArrayAccess(arg);
         }
       } else if (arg.type === 'RPARENT') {
         // When it's a call without any arguments
