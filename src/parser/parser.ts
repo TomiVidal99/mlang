@@ -437,86 +437,81 @@ export class Parser {
 
   /**
    * Parses an if, for, while, do, switch Statements
+   * TODO: is this.parsingStatement a valid thing?
    */
   private parseBasicStatements(content: string): Statement | null {
     const startingToken = this.getPrevToken() as Token;
     const startingPosition = startingToken.position;
-    const lparent = this.getNextToken();
+    const hasLParent = this.skipNL(true).type === 'LPARENT';
     const specialEndKeyword = content === 'do' ? 'until' : `end${content}`;
     this.parsingStatement = true;
     this.parsingStatementType = content;
 
-    if (lparent?.type === 'NL') {
-      this.errors.push({
-        message: 'Missing condition',
-        code: ERROR_CODES.MISSING_CONDITION_ELSEIF,
-        range: this.getCurrentPosition(startingToken),
-      });
+    if (hasLParent) {
+      this.skipNL(true);
     }
 
-    // TODO: here I should check for the conditions
-    let tok: Token | undefined;
-    if (lparent?.type === 'LPARENT') {
-      // if has parenthesis should get the next Token that's contained
-      // wihin the scope of the statement
-      tok = this.skipNL(true);
-      let mCalls = 0;
-      while (
-        tok !== undefined &&
-        tok.type !== 'RPARENT' &&
-        mCalls < MAX_STATEMENTS_CALLS
-      ) {
-        mCalls++;
-        tok = this.skipNL(true);
-      }
+    // gets rid of all the tokens of the condition
+    let mCalls = 0;
+    do {
+      mCalls++;
+      const expr = this.parseExpression();
       if (
-        this.logErrorMaxCallsReached(
-          mCalls,
-          'Missing ")"',
-          ERROR_CODES.COULD_NOT_FIND_RPAREN_STMNT,
-          startingToken,
-        )
+        expr?.type !== 'BINARY_OPERATION' &&
+        expr?.type !== 'FUNCTION_CALL' &&
+        expr?.type !== 'NUMBER' &&
+        expr?.type !== 'IDENTIFIER' &&
+        expr?.type !== 'STRING' &&
+        expr?.type !== 'STRUCT' &&
+        expr?.type !== 'VECTOR' &&
+        expr?.type !== 'IDENTIFIER_REFERENCE' &&
+        expr?.type !== 'STRUCT_ACCESS' &&
+        expr?.type !== 'CELL_ARRAY_ACCESS'
       ) {
+        this.errors.push({
+          message: 'Unexpected token while parsin condition',
+          code: ERROR_CODES.PARSE_ERR_STMNT,
+          range: {
+            start: startingPosition?.start ?? CERO_POSITION.start,
+            end: this.getCurrentPosition().end ?? CERO_POSITION,
+          },
+        });
         this.parsingStatement = false;
         this.parsingStatementType = null;
         return null;
       }
+      this.skipNL(true);
+      let hasErrors = this.consumeEquationSymbols();
+      hasErrors = this.isTokenValidBasicDataType(this.getCurrentToken());
       this.getNextToken();
-    } else {
-      // if there's no parenthesis should skip to the new line
-      tok = lparent;
-      let mCalls = 0;
-      while (
-        tok !== undefined &&
-        tok.type !== 'NL' &&
-        mCalls < MAX_STATEMENTS_CALLS
-      ) {
-        tok = this.getNextToken();
-        mCalls++;
-      }
-      if (
-        this.logErrorMaxCallsReached(
-          mCalls,
-          'Uncompleted statement',
-          9999, // TODO: this is a troll error code, because i can't foresee a scenario where it happens, but i better be damn ready :)
-          startingToken,
-        )
-      ) {
+      hasErrors = this.consumeConditionConcatenator();
+      if (hasErrors) {
         this.parsingStatement = false;
         this.parsingStatementType = null;
         return null;
       }
-      this.getNextToken();
-    }
-    if (tok === undefined) {
-      this.errors.push({
-        message: 'Could not parse statement, undefined Token',
-        range: this.getCurrentPosition(this.getPrevToken()),
-        code: ERROR_CODES.PARSE_ERR_STMNT,
-      });
+      console.log('');
+      if (
+        (hasLParent && this.getCurrentToken().type === 'RPARENT') ||
+        (!hasLParent && this.getCurrentToken().type === 'NL')
+      ) {
+        break;
+      }
+    } while (mCalls < MAX_STATEMENTS_CALLS);
+    if (
+      this.logErrorMaxCallsReached(
+        mCalls,
+        'Error parsing conditions',
+        ERROR_CODES.PARSE_ERR_STMNT,
+      )
+    ) {
       this.parsingStatement = false;
       this.parsingStatementType = null;
       return null;
+    }
+
+    if (hasLParent) {
+      this.skipNL(true);
     }
 
     // check statements inside if statement
@@ -589,6 +584,62 @@ export class Parser {
       },
       RHE: statements,
     };
+  }
+
+  /**
+   * Consumes the tokens of an equation or inequality symbols
+   * like: == > < >= <=
+   * WARN: expects that the current token it's the first symbol
+   * WARN: leaves at the next Token after the last symbol
+   * @returns boolean - returns true when there was an error
+   */
+  private consumeEquationSymbols() {
+    switch (this.getCurrentToken().type) {
+      case 'EQUALS':
+        if (this.getNextToken()?.type !== 'EQUALS') {
+          this.errors.push({
+            message: `Missing '='. Got '${JSON.stringify(
+              this.getCurrentToken().content,
+            )}'`,
+            code: ERROR_CODES.MISSING_EQUALS_STMNT,
+            range: this.getCurrentPosition(),
+          });
+          return true;
+        }
+        break;
+      case 'GRATER_THAN':
+      case 'LESS_THAN':
+        if (this.getNextToken()?.type !== 'EQUALS') {
+          this.getPrevToken();
+        }
+        break;
+      default:
+        return true;
+    }
+    this.getNextToken();
+    return false;
+  }
+
+  /**
+   * Consumes the tokens of the condition concatenator
+   * && || or )
+   * WARN: expectes that the first token be the first symbol to check (& or |)
+   * WARN: leaves at the token after the last symbol
+   * @returns boolean - weather there was an error or not
+   */
+  private consumeConditionConcatenator(): boolean {
+    switch (this.getCurrentToken().type) {
+      case 'AND':
+        if (this.getNextToken()?.type !== 'AND') return true;
+        break;
+      case 'OR':
+        if (this.getNextToken()?.type !== 'OR') return true;
+        break;
+      default:
+        return true;
+    }
+    this.getNextToken();
+    return false;
   }
 
   /**

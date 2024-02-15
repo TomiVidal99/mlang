@@ -173,67 +173,6 @@ test('Octave/Matlab Parser, should parse cell arrays in arguments', function () 
   expect(errors.length).toStrictEqual(0);
 });
 
-test('Octave/Matlab Parser, should parse basic statements', function () {
-  const inputCode = `
-    if (myCondition)
-      a = 1;
-    end
-    if ()
-    endif
-    for i=1:20
-      b = 1;
-    end
-    for ()
-    endfor
-    while (1)
-      disp("hello");
-    end
-    while ()
-    endwhile
-    switch ()
-    end
-    switch ()
-    endswitch
-    do ()
-    until
-    do ()
-    until
-`;
-
-  const tokenizer = new Tokenizer(inputCode);
-  const tokens = tokenizer.getAllTokens();
-  const parser = new Parser(tokens);
-  const program = parser.makeAST();
-  const visitor = new Visitor();
-  visitor.visitProgram(program);
-
-  const errors = parser.getErrors();
-  const STATEMENTS: StatementType[] = [
-    'IF_STMNT',
-    'IF_STMNT',
-    'FOR_STMNT',
-    'FOR_STMNT',
-    'WHILE_STMNT',
-    'WHILE_STMNT',
-    'SWITCH_STMNT',
-    'SWITCH_STMNT',
-    'DO_STMNT',
-    'DO_STMNT',
-  ];
-
-  // console.log('TOKENS: ' + JSON.stringify(tokens));
-  // console.log(
-  //   'STATEMENTS: ' + JSON.stringify(program.body.map((stmn) => stmn.type)),
-  // );
-
-  if (errors.length > 0) {
-    console.log('ERRORS: ' + JSON.stringify(errors));
-  }
-
-  expect(program.body.map((stmn) => stmn.type)).toEqual(STATEMENTS);
-  expect(errors.length).toStrictEqual(0);
-});
-
 test('Octave/Matlab Parser, test function call w/o parenthesis', function () {
   const inputCode = `
     myFunc a 1.2 "myString" ["vectorVal", a, b, 20]
@@ -248,38 +187,6 @@ test('Octave/Matlab Parser, test function call w/o parenthesis', function () {
 
   const errors = parser.getErrors();
   const STATEMENTS: StatementType[] = ['FUNCTION_CALL'];
-
-  // console.log('TOKENS: ' + JSON.stringify(tokens));
-  // console.log('STATEMENTS: ' + JSON.stringify(program.body));
-
-  if (errors.length > 0) {
-    console.log('ERRORS: ' + JSON.stringify(errors));
-  }
-
-  expect(program.body.map((stmn) => stmn.type)).toEqual(STATEMENTS);
-  expect(errors.length).toStrictEqual(0);
-});
-
-test('Octave/Matlab Parser, if else elseif statement', function () {
-  const inputCode = `
-  if ()
-    myVar = 1;
-  elseif ()
-    myVar = 20;
-  else 
-    myVar = 100;
-  end
-`;
-
-  const tokenizer = new Tokenizer(inputCode);
-  const tokens = tokenizer.getAllTokens();
-  const parser = new Parser(tokens);
-  const program = parser.makeAST();
-  const visitor = new Visitor();
-  visitor.visitProgram(program);
-
-  const errors = parser.getErrors();
-  const STATEMENTS: StatementType[] = ['IF_STMNT'];
 
   // console.log('TOKENS: ' + JSON.stringify(tokens));
   // console.log('STATEMENTS: ' + JSON.stringify(program.body));
@@ -425,6 +332,102 @@ test('Octave/Matlab Parser, cell array access in function  call', function () {
 
   // console.log('TOKENS: ' + JSON.stringify(tokens));
   // console.log('STATEMENTS: ' + JSON.stringify(program.body));
+
+  if (errors.length > 0) {
+    console.log('ERRORS: ' + JSON.stringify(errors));
+  }
+
+  expect(program.body.map((stmn) => stmn.type)).toEqual(STATEMENTS);
+  expect(errors.length).toStrictEqual(0);
+});
+
+test('Octave/Matlab Parser, should parse basic statements', function () {
+  const inputCode = `
+    if (myCondition)
+      a = 1;
+    end
+    if (a)
+    endif
+    for i=1:20
+      b = 1;
+    end
+    for (a)
+    endfor
+    while (1)
+      disp("hello");
+    end
+    while (20)
+    endwhile
+    switch (1)
+    end
+    switch (b)
+    endswitch
+    do
+    until (a)
+    do
+    until (a)
+`;
+
+  const tokenizer = new Tokenizer(inputCode);
+  const tokens = tokenizer.getAllTokens();
+  const parser = new Parser(tokens);
+  const program = parser.makeAST();
+  const visitor = new Visitor();
+  visitor.visitProgram(program);
+
+  const errors = parser.getErrors();
+  const STATEMENTS: StatementType[] = [
+    'IF_STMNT',
+    'IF_STMNT',
+    'FOR_STMNT',
+    'FOR_STMNT',
+    'WHILE_STMNT',
+    'WHILE_STMNT',
+    'SWITCH_STMNT',
+    'SWITCH_STMNT',
+    'DO_STMNT',
+    'DO_STMNT',
+  ];
+
+  // console.log('TOKENS: ' + JSON.stringify(tokens));
+  // console.log(
+  //   'STATEMENTS: ' + JSON.stringify(program.body.map((stmn) => stmn.type)),
+  // );
+
+  if (errors.length > 0) {
+    console.log('ERRORS: ' + JSON.stringify(errors));
+  }
+
+  expect(program.body.map((stmn) => stmn.type)).toEqual(STATEMENTS);
+  expect(errors.length).toStrictEqual(0);
+});
+
+test('Octave/Matlab Parser, if statement with complex conditions', function () {
+  const inputCode = `
+    if a > 1 || a < 1 || a <= 1 || a >= 1
+      disp("laksdjalkdjal");
+    end
+    if (a > 1 &&
+        a < 1 ||
+        a <= 1 ||
+        a >= 1
+    )
+      disp("laksdjalkdjal");
+    end
+  `;
+
+  const tokenizer = new Tokenizer(inputCode);
+  const tokens = tokenizer.getAllTokens();
+  const parser = new Parser(tokens);
+  const program = parser.makeAST();
+  const visitor = new Visitor();
+  visitor.visitProgram(program);
+
+  const errors = parser.getErrors();
+  const STATEMENTS: StatementType[] = ['IF_STMNT'];
+
+  // console.log('TOKENS: ' + JSON.stringify(tokens));
+  console.log('STATEMENTS: ' + JSON.stringify(program.body));
 
   if (errors.length > 0) {
     console.log('ERRORS: ' + JSON.stringify(errors));
