@@ -13,20 +13,22 @@ export function fromDefinitionToCompletionItem(
   const args =
     def?.arguments?.length !== undefined && def?.arguments?.length > 0
       ? def.arguments.map((d, i) => {
-        return (
-          `${i !== 0 ? ' ' : ''}` +
-          '${' +
-          `${i + 1}:${d.name}${d.type !== 'DEFAULT_ARGUMENT' ? '' : ` = ${d.content}`
-          }` +
-          '}'
-        );
-      })
+          return (
+            `${i !== 0 ? ' ' : ''}` +
+            '${' +
+            `${i + 1}:${d.name}${
+              d.type !== 'DEFAULT_ARGUMENT' ? '' : ` = ${d.content}`
+            }` +
+            '}'
+          );
+        })
       : '';
   const insertText =
     def.type !== 'FUNCTION'
       ? def.name
-      : `${def.name}(${(Array.isArray(args) ? args.map((a) => a) : args) as string
-      });`;
+      : `${def.name}(${
+          (Array.isArray(args) ? args.map((a) => a) : args) as string
+        })`;
   const item: CompletionItem = {
     label: def.name,
     kind:
