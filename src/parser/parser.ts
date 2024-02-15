@@ -623,10 +623,34 @@ export class Parser {
       this.getCurrentToken().position?.start ?? CERO_POSITION.start;
     let counter = 0;
     const firstArg = this.skipNL(true);
-    // if (firstArg.type === 'COLON') {
-    // returns all elements of the cell array
-
-    // }
+    if (firstArg.type === 'COLON') {
+      // returns all elements of the cell array
+      const rightSquirlyToken = this.skipNL(true);
+      if (rightSquirlyToken.type !== 'RSQUIRLY') {
+        this.errors.push({
+          message: `Missing closing '}'. Got ${JSON.stringify(
+            rightSquirlyToken.content,
+          )}`,
+          code: ERROR_CODES.CELL_ARR_BAD_MISSING_END,
+          range: {
+            start: initPos,
+            end: rightSquirlyToken?.position?.end ?? CERO_POSITION.end,
+          },
+        });
+        this.getNextToken();
+        return null;
+      }
+      this.getNextToken();
+      return {
+        type: 'CELL_ARRAY',
+        content: [firstArg],
+        position: {
+          start: initPos,
+          end: rightSquirlyToken?.position?.end ?? CERO_POSITION.end,
+        },
+      };
+    }
+    this.getPrevTokenSkipNL();
     do {
       const arg = this.skipNL(true);
       if (arg.type === 'RSQUIRLY') break;
@@ -1192,14 +1216,14 @@ export class Parser {
       case 'STRUCT_ACCESS':
         this.getNextToken();
         if (this.getCurrentToken().type === 'LPARENT') {
-          lho = this.parseFunctionCall();
-          // } else if (this.getCurrentToken().type === 'LSQUIRLY') {
+          lho = this.parseFunctionCall(currToken);
+        } else if (this.getCurrentToken().type === 'LSQUIRLY') {
           // CELL_ARRAY access
-          // lho = this.parseCellArrayAccess();
+          lho = this.parseCellArrayAccess(currToken);
         } else {
           lho = {
-            type: this.getCurrentToken().type,
-            value: this.getCurrentToken().content,
+            type: currToken.type,
+            value: currToken.content,
             position: this.getCurrentPosition(currToken),
           };
         }
@@ -1241,7 +1265,10 @@ export class Parser {
         };
       case 'LSQUIRLY': {
         // CELL_ARRAY
+        console.log('entering token: ' + this.getCurrentToken().type);
         const struct = this.parseCellArray();
+        console.log('struct: ' + JSON.stringify(struct));
+        console.log('last token: ' + this.getCurrentToken().type);
         if (struct === null) return;
         return {
           type: 'CELL_ARRAY',
@@ -1285,13 +1312,15 @@ export class Parser {
   /**
    * Returns the CELL_ARRAY_ACCESS expression
    */
-  private parseCellArrayAccess(): Expression | undefined {
-    const firstArg = this.getNextToken();
+  private parseCellArrayAccess(identifierToken: Token): Expression | undefined {
+    const firstArg = this.skipNL(true);
     if (firstArg === undefined) return;
     if (firstArg.type === 'COLON') {
       // returns all the elements of the cell array
-      const closingSquirly = this.getNextToken();
-      if (closingSquirly === undefined) return;
+      const closingSquirly = this.skipNL(true);
+      if (closingSquirly === undefined) {
+        return;
+      }
       if (closingSquirly.type !== 'RSQUIRLY') {
         this.errors.push({
           message: `Missing closing token '}'`,
@@ -1303,12 +1332,61 @@ export class Parser {
             end: closingSquirly.position?.end ?? CERO_POSITION.end,
           },
         });
+
         this.getPrevToken();
         return;
       }
+      this.getNextToken();
       return {
         type: 'CELL_ARRAY_ACCESS',
         value: [firstArg],
+        position:
+          this.tokens[this.currentTokenIndex - 3].position ?? CERO_POSITION,
+      };
+    } else {
+      // parse comma separated valued
+      let maxCalls = 0;
+      let args: Token[] = [firstArg];
+      this.getPrevTokenSkipNL();
+      do {
+        maxCalls++;
+        this.skipNL(true);
+        // TODO: here i could also have an array i should consume those tokens as well
+        if (!this.isTokenValidBasicDataType(this.getCurrentToken(), false))
+          break;
+        args.push(this.getCurrentToken());
+        this.skipNL(true);
+        if (
+          this.getCurrentToken().type !== 'COMMA' &&
+          this.getCurrentToken().type !== 'RSQUIRLY'
+        ) {
+          this.errors.push({
+            message: `Unexpected token '${JSON.stringify(
+              this.getCurrentToken().content,
+            )}'`,
+            code: ERROR_CODES.CELL_ARR_ACCESS_BAD_ARGS,
+            range: {
+              start: identifierToken.position?.start ?? CERO_POSITION.start,
+              end: this.getCurrentPosition().end,
+            },
+          });
+        }
+      } while (
+        maxCalls < MAX_STATEMENTS_CALLS &&
+        args[args.length - 1].type !== 'RSQUIRLY'
+      );
+      if (
+        this.logErrorMaxCallsReached(
+          maxCalls,
+          "Missing '}'. Could not parse cell array access",
+          ERROR_CODES.CELL_ARR_ACCESS_MISSING_END,
+        )
+      )
+        return;
+      this.getNextToken();
+      return {
+        type: 'CELL_ARRAY_ACCESS',
+        value: args,
         position:
           this.tokens[this.currentTokenIndex - 3].position ?? CERO_POSITION,
       };
@@ -1326,6 +1404,7 @@ export class Parser {
     throwError?: boolean,
   ): boolean {
     const isValid =
+      token.type === 'CELL_ARRAY_ACCESS' ||
       token.type === 'STRUCT_ACCESS' ||
       token.type === 'IDENTIFIER_REFERENCE' ||
       token.type === 'IDENTIFIER' ||
@@ -1343,15 +1422,18 @@ export class Parser {
     return isValid;
   }
 
-  private parseFunctionCall(): Expression {
-    const currToken = this.getCurrentToken();
+  /**
+   * Parses a function call
+   * WARN: Its expected that the current token it's the LPARENT
+   */
+  private parseFunctionCall(functionNameToken: Token): Expression {
     const args = this.getFunctionArguments();
     this.validateFnCallArgs(args);
     this.getNextToken();
     return {
       type: 'FUNCTION_CALL',
-      value: currToken.content,
-      position: this.getCurrentPosition(currToken),
+      value: functionNameToken.content,
+      position: this.getCurrentPosition(functionNameToken),
       functionData: {
         args,
       },

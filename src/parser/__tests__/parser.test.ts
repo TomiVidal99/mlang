@@ -29,6 +29,8 @@ test('Octave/Matlab Parser, should parse vectors as arguments', function () {
   const parser = new Parser(tokens);
   const parsedStatement = parser.parseStatement();
 
+  console.log('STATEMENT: ' + JSON.stringify(parsedStatement));
+
   expect(parsedStatement.type).toStrictEqual('ASSIGNMENT');
   expect(parsedStatement.supressOutput).toStrictEqual(true);
   expect(parsedStatement.LHE.type).toStrictEqual('IDENTIFIER');
@@ -378,6 +380,7 @@ test('Octave/Matlab Parser, cell array access in assignment', function () {
   const inputCode = `
     a = b{1};
     c = b{"a"};
+    c = b{:};
   `;
 
   const tokenizer = new Tokenizer(inputCode);
@@ -388,10 +391,14 @@ test('Octave/Matlab Parser, cell array access in assignment', function () {
   visitor.visitProgram(program);
 
   const errors = parser.getErrors();
-  const STATEMENTS: StatementType[] = ['ASSIGNMENT', 'ASSIGNMENT'];
+  const STATEMENTS: StatementType[] = [
+    'ASSIGNMENT',
+    'ASSIGNMENT',
+    'ASSIGNMENT',
+  ];
 
   // console.log('TOKENS: ' + JSON.stringify(tokens));
-  console.log('STATEMENTS: ' + JSON.stringify(program.body));
+  // console.log('STATEMENTS: ' + JSON.stringify(program.body));
 
   if (errors.length > 0) {
     console.log('ERRORS: ' + JSON.stringify(errors));
