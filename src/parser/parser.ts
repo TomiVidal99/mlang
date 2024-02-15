@@ -1265,10 +1265,7 @@ export class Parser {
         };
       case 'LSQUIRLY': {
         // CELL_ARRAY
-        console.log('entering token: ' + this.getCurrentToken().type);
         const struct = this.parseCellArray();
-        console.log('struct: ' + JSON.stringify(struct));
-        console.log('last token: ' + this.getCurrentToken().type);
         if (struct === null) return;
         return {
           type: 'CELL_ARRAY',
