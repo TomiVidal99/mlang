@@ -1484,6 +1484,7 @@ export class Parser {
         if (this.skipNL(true).type === 'LPARENT') {
           // TODO handle function composition
           const fnCallArgs = this.getFunctionArguments(); // just for now so it gets rid of the function call (advances the tokens)
+          this.getNextToken();
           this.validateFnCallArgs(fnCallArgs);
         }
       } else if (arg.type === 'RPARENT') {
