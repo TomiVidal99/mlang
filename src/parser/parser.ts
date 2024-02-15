@@ -612,16 +612,21 @@ export class Parser {
   }
 
   /**
-   * Helper that returns a 'struct' Token if the grammar it's correct
+   * Helper that returns a 'CELL_ARRAY' Token if the grammar it's correct
    * else it returns null
    * WARN: assumes that the first token it's 'LSQUIRLY'
    * WARN: Leaves the current token to the next after the '}'
    */
-  private parseStruct(): Token | null {
+  private parseCellArray(): Token | null {
     const args: Token[] = [];
     const initPos =
       this.getCurrentToken().position?.start ?? CERO_POSITION.start;
     let counter = 0;
+    const firstArg = this.skipNL(true);
+    // if (firstArg.type === 'COLON') {
+    // returns all elements of the cell array
+
+    // }
     do {
       const arg = this.skipNL(true);
       if (arg.type === 'RSQUIRLY') break;
@@ -1188,17 +1193,17 @@ export class Parser {
         this.getNextToken();
         if (this.getCurrentToken().type === 'LPARENT') {
           lho = this.parseFunctionCall();
-          this.getPrevToken();
-        } else if (this.getCurrentToken().type === 'LSQUIRLY') {
+          // } else if (this.getCurrentToken().type === 'LSQUIRLY') {
           // CELL_ARRAY access
-          lho = this.parseCellArrayAccess();
+          // lho = this.parseCellArrayAccess();
         } else {
           lho = {
-            type: currToken.type,
-            value: currToken.content,
+            type: this.getCurrentToken().type,
+            value: this.getCurrentToken().content,
             position: this.getCurrentPosition(currToken),
           };
         }
+        this.getPrevToken();
         break;
       case 'AT': {
         this.getNextToken();
@@ -1236,7 +1241,7 @@ export class Parser {
         };
       case 'LSQUIRLY': {
         // CELL_ARRAY
-        const struct = this.parseStruct();
+        const struct = this.parseCellArray();
         if (struct === null) return;
         return {
           type: 'CELL_ARRAY',
@@ -1411,7 +1416,7 @@ export class Parser {
         arg = null;
       } else if (arg.type === 'LSQUIRLY') {
         // CELL_ARRAY
-        const cellArr = this.parseStruct();
+        const cellArr = this.parseCellArray();
         arg = null;
         if (cellArr === null) return tokens;
         tokens.push(cellArr);
