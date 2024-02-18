@@ -16,9 +16,9 @@ test('Octave/Matlab Parser, should parse a function call', function () {
   expect(parsedStatement?.supressOutput).toStrictEqual(true);
   expect(parsedStatement?.LHE?.type).toStrictEqual('IDENTIFIER');
   expect(parsedStatement?.LHE?.value).toStrictEqual('myFunction');
-  expect(parsedStatement?.LHE?.functionData?.args[0]?.content).toStrictEqual(
-    '"string value"',
-  );
+  expect(
+    (parsedStatement?.LHE?.functionData?.args as Token[])[0].content,
+  ).toStrictEqual('"string value"');
 });
 
 test('Octave/Matlab Parser, should parse vectors as arguments', function () {
@@ -31,20 +31,23 @@ test('Octave/Matlab Parser, should parse vectors as arguments', function () {
 
   console.log('STATEMENT: ' + JSON.stringify(parsedStatement));
 
-  expect(parsedStatement.type).toStrictEqual('ASSIGNMENT');
-  expect(parsedStatement.supressOutput).toStrictEqual(true);
-  expect(parsedStatement.LHE.type).toStrictEqual('IDENTIFIER');
-  expect(parsedStatement.LHE.value).toStrictEqual('a');
-  expect((parsedStatement.RHE as Expression).type).toStrictEqual(
+  expect(parsedStatement?.type).toStrictEqual('ASSIGNMENT');
+  expect(parsedStatement?.supressOutput).toStrictEqual(true);
+  expect(parsedStatement?.LHE?.type).toStrictEqual('IDENTIFIER');
+  expect(parsedStatement?.LHE?.value).toStrictEqual('a');
+  expect((parsedStatement?.RHE as Expression).type).toStrictEqual(
     'FUNCTION_CALL',
   );
-  expect((parsedStatement.RHE as Expression).value).toStrictEqual('myFunction');
+  expect((parsedStatement?.RHE as Expression).value).toStrictEqual(
+    'myFunction',
+  );
   expect(
-    (parsedStatement.RHE as Expression).functionData.args[0].type,
+    ((parsedStatement?.RHE as Expression)?.functionData?.args as Token[])[0]
+      .type,
   ).toStrictEqual('VECTOR');
   expect(
     (
-      (parsedStatement.RHE as Expression).functionData.args[0]
+      ((parsedStatement?.RHE as Expression)?.functionData?.args as Token[])[0]
         .content as Token[]
     ).map((a) => a.type as string),
   ).toStrictEqual(['VECTOR', 'VECTOR']);
@@ -58,16 +61,19 @@ test('Octave/Matlab Parser, should parse default arguments', function () {
   const parser = new Parser(tokens);
   const parsedStatement = parser.parseStatement();
 
-  expect(parsedStatement.type).toStrictEqual('FUNCTION_CALL');
-  expect(parsedStatement.supressOutput).toStrictEqual(true);
-  expect(parsedStatement.LHE.type).toStrictEqual('IDENTIFIER');
-  expect(parsedStatement.LHE.value).toStrictEqual('myFunction');
-  expect(parsedStatement.LHE.functionData.args[0].type).toStrictEqual(
-    'DEFAULT_VALUE_ARGUMENT',
-  );
-  expect(parsedStatement.LHE.functionData.args[0].content).toStrictEqual('a');
+  expect(parsedStatement?.type).toStrictEqual('FUNCTION_CALL');
+  expect(parsedStatement?.supressOutput).toStrictEqual(true);
+  expect(parsedStatement?.LHE?.type).toStrictEqual('IDENTIFIER');
+  expect(parsedStatement?.LHE?.value).toStrictEqual('myFunction');
   expect(
-    parsedStatement.LHE.functionData.args[0].defaultValue.content,
+    (parsedStatement?.LHE?.functionData?.args as Token[])[0].type,
+  ).toStrictEqual('DEFAULT_VALUE_ARGUMENT');
+  expect(
+    (parsedStatement?.LHE?.functionData?.args as Token[])[0].content,
+  ).toStrictEqual('a');
+  expect(
+    (parsedStatement?.LHE?.functionData?.args as Token[])[0]?.defaultValue
+      ?.content,
   ).toStrictEqual("'lasdkjasldk'");
 });
 
@@ -99,7 +105,7 @@ test('Octave/Matlab Parser, should parse empty function definition with comments
     parsedStatement?.LHE?.functionData?.closingToken?.content,
   ).toStrictEqual('end');
   expect(
-    parsedStatement?.LHE?.functionData?.contextCreated?.length > 0,
+    (parsedStatement?.LHE?.functionData?.contextCreated as string).length > 0,
   ).toStrictEqual(true);
 });
 
