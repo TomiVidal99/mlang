@@ -404,17 +404,17 @@ test('Octave/Matlab Parser, should parse basic statements', function () {
 
 test('Octave/Matlab Parser, if statement with complex conditions', function () {
   const inputCode = `
-    if a > 1 || a < 1 || a <= 1 || a >= 1
-      disp("laksdjalkdjal");
-    end
-    if (a > 1 &&
-        a < 1 ||
-        a <= 1 ||
-        a >= 1
-    )
-      disp("laksdjalkdjal");
-    end
-  `;
+if a > 1 || b < 1 || c <= 1 || d >= 1 || e == 1
+  disp("laksdjalkdjal");
+end
+if (a1 > 1 &&
+  a2 < 1 ||
+  a3 <= 1 ||
+  a4 >= 1
+)
+disp("laksdjalkdjal");
+end
+`;
 
   const tokenizer = new Tokenizer(inputCode);
   const tokens = tokenizer.getAllTokens();
@@ -424,7 +424,7 @@ test('Octave/Matlab Parser, if statement with complex conditions', function () {
   visitor.visitProgram(program);
 
   const errors = parser.getErrors();
-  const STATEMENTS: StatementType[] = ['IF_STMNT'];
+  const STATEMENTS: StatementType[] = ['IF_STMNT', 'IF_STMNT'];
 
   // console.log('TOKENS: ' + JSON.stringify(tokens));
   console.log('STATEMENTS: ' + JSON.stringify(program.body));

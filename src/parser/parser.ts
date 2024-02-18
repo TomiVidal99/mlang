@@ -121,31 +121,23 @@ export class Parser {
       // TODO: consider a different scope when using elseif, it should be consider as
       // an entirely different statement pretty much no?
       if (currToken.content === 'elseif') {
-        // remove the condition so it's not parsed as a statement
-        if (nextToken.type === 'NL') {
-          this.errors.push({
-            message: 'Missing condition',
-            code: ERROR_CODES.MISSING_CONDITION_ELSEIF,
-            range: this.getCurrentPosition(currToken),
-          });
-          return null;
-        }
-        let mCalls = 0;
-        do {
-          this.skipNL(true);
-          mCalls++;
-        } while (
-          mCalls < MAX_STATEMENTS_CALLS &&
-          this.getCurrentToken().type !== 'RPARENT'
+        this.consumeStatementCondition(
+          currToken.position,
+          nextToken.type === 'LPARENT',
         );
-        this.logErrorMaxCallsReached(
-          mCalls,
-          "Missing ')' in 'elseif'",
-          ERROR_CODES.COULD_NOT_FIND_RPAREN_STMNT,
-          currToken,
-        );
-        this.getNextToken();
+        this.consumeStatementsInsideBasicStatement(currToken, 'endif');
       }
+      return null;
+    } else if (
+      this.parsingStatement &&
+      this.parsingStatementType === 'do' &&
+      currToken.content === 'until'
+    ) {
+      this.consumeStatementCondition(
+        currToken.position,
+        nextToken.type === 'LPARENT',
+      );
+      this.consumeStatementsInsideBasicStatement(currToken, 'until');
       return null;
     }
 
@@ -296,6 +288,12 @@ export class Parser {
       } else {
         return this.getFunctionDefintionWithoutOutput();
       }
+    } else if (
+      currToken.type === 'KEYWORD' &&
+      typeof currToken.content === 'string' &&
+      STATEMENTS_KEYWORDS.includes(currToken.content as any)
+    ) {
+      return this.parseBasicStatements(currToken.content);
     } else if (currToken.type === 'IDENTIFIER' && nextToken.type === 'NL') {
       // function call or variable output
       // because this language it's so good it's impossible to know which (awsome (not really))
@@ -358,12 +356,6 @@ export class Parser {
           },
         },
       };
-    } else if (
-      currToken.type === 'KEYWORD' &&
-      typeof currToken.content === 'string' &&
-      STATEMENTS_KEYWORDS.includes(currToken.content as any)
-    ) {
-      return this.parseBasicStatements(currToken.content);
     } else {
       // console.log("prev token: ", this.tokens[this.currentTokenIndex - 1]);
       // console.log("currToken: ", this.getCurrentToken());
@@ -447,98 +439,30 @@ export class Parser {
     this.parsingStatement = true;
     this.parsingStatementType = content;
 
-    if (hasLParent) {
-      this.skipNL(true);
-    }
+    console.log('parsing basic statement: ' + content);
 
-    // gets rid of all the tokens of the condition
-    let mCalls = 0;
-    do {
-      mCalls++;
-      const expr = this.parseExpression();
-      if (
-        expr?.type !== 'BINARY_OPERATION' &&
-        expr?.type !== 'FUNCTION_CALL' &&
-        expr?.type !== 'NUMBER' &&
-        expr?.type !== 'IDENTIFIER' &&
-        expr?.type !== 'STRING' &&
-        expr?.type !== 'STRUCT' &&
-        expr?.type !== 'VECTOR' &&
-        expr?.type !== 'IDENTIFIER_REFERENCE' &&
-        expr?.type !== 'STRUCT_ACCESS' &&
-        expr?.type !== 'CELL_ARRAY_ACCESS'
-      ) {
-        this.errors.push({
-          message: 'Unexpected token while parsin condition',
-          code: ERROR_CODES.PARSE_ERR_STMNT,
-          range: {
-            start: startingPosition?.start ?? CERO_POSITION.start,
-            end: this.getCurrentPosition().end ?? CERO_POSITION,
-          },
-        });
-        this.parsingStatement = false;
-        this.parsingStatementType = null;
-        return null;
-      }
-      this.skipNL(true);
-      let hasErrors = this.consumeEquationSymbols();
-      hasErrors = this.isTokenValidBasicDataType(this.getCurrentToken());
-      this.getNextToken();
-      hasErrors = this.consumeConditionConcatenator();
-      if (hasErrors) {
-        this.parsingStatement = false;
-        this.parsingStatementType = null;
-        return null;
-      }
-      console.log('');
-      if (
-        (hasLParent && this.getCurrentToken().type === 'RPARENT') ||
-        (!hasLParent && this.getCurrentToken().type === 'NL')
-      ) {
-        break;
-      }
-    } while (mCalls < MAX_STATEMENTS_CALLS);
-    if (
-      this.logErrorMaxCallsReached(
-        mCalls,
-        'Error parsing conditions',
-        ERROR_CODES.PARSE_ERR_STMNT,
-      )
-    ) {
-      this.parsingStatement = false;
-      this.parsingStatementType = null;
-      return null;
-    }
-
-    if (hasLParent) {
-      this.skipNL(true);
-    }
-
-    // check statements inside if statement
-    // TODO
-    const statements: Statement[] = [];
-    let maxCalls = 0;
-    // console.log('specialEndKeyword: ' + specialEndKeyword);
-    while (
-      !this.isEndStatementToken(specialEndKeyword) &&
-      !this.isEOF() &&
-      maxCalls < MAX_STATEMENTS_CALLS
-    ) {
-      const statement = this.parseStatement();
-      if (statement !== null) statements.push(statement);
-      maxCalls++;
-    }
-    if (
-      this.logErrorMaxCallsReached(
-        this.getCurrentToken().type === 'EOF' ? MAX_STATEMENTS_CALLS : maxCalls,
-        `Could not find closing keyword 'end' or '${specialEndKeyword}'`,
-        ERROR_CODES.MISSING_END_STMNT,
+    let statements: Statement[] = [];
+    if (content === 'do') {
+      // TODO
+      const [success, stmnts] = this.consumeStatementsInsideBasicStatement(
         startingToken,
-      )
-    ) {
-      this.parsingStatement = false;
-      this.parsingStatementType = null;
-      return null;
+        specialEndKeyword,
+      );
+      if (!success) return null;
+      statements = stmnts;
+    } else {
+      if (hasLParent) this.skipNL(true);
+      const cond = this.consumeStatementCondition(startingPosition, hasLParent);
+      console.log('cond: ' + JSON.stringify(cond));
+      if (!cond) return null;
+      if (hasLParent) this.skipNL(true);
+      // check statements inside if statement
+      const [success, stmnts] = this.consumeStatementsInsideBasicStatement(
+        startingToken,
+        specialEndKeyword,
+      );
+      if (!success) return null;
+      statements = stmnts;
     }
 
     const context = this.getIntoNewContext()[1];
@@ -573,6 +497,8 @@ export class Parser {
     this.parsingStatement = false;
     this.parsingStatementType = null;
 
+    console.log('found statement of ' + type);
+
     return {
       type,
       supressOutput: true,
@@ -587,10 +513,137 @@ export class Parser {
   }
 
   /**
+   * Consumes the tokens of the statements inside a basic statement (if, for, etc)
+   * WARN: expects that the current token it's the first of the statements to be consumed
+   * WARN: leaves at the token after the last of the statements being consumed
+   * @returns [boolean, statements[]] - indicates if there was an error (false if error), list of the statements consumed
+   */
+  private consumeStatementsInsideBasicStatement(
+    startingToken: Token,
+    specialEndKeyword: string,
+  ): [boolean, Statement[]] {
+    // TODO
+    const statements: Statement[] = [];
+    let maxCalls = 0;
+    while (
+      !this.isEndStatementToken(specialEndKeyword) &&
+      !this.isEOF() &&
+      maxCalls < MAX_STATEMENTS_CALLS
+    ) {
+      const statement = this.parseStatement();
+      if (statement !== null) statements.push(statement);
+      maxCalls++;
+    }
+    if (
+      this.logErrorMaxCallsReached(
+        this.getCurrentToken().type === 'EOF' ? MAX_STATEMENTS_CALLS : maxCalls,
+        `Could not find closing keyword 'end' or '${specialEndKeyword}'`,
+        ERROR_CODES.MISSING_END_STMNT,
+        startingToken,
+      )
+    ) {
+      this.parsingStatement = false;
+      this.parsingStatementType = null;
+      return [false, statements];
+    }
+    return [true, statements];
+  }
+
+  /**
+   * Consumes all the tokens of a conditions of an if, while, for, etc
+   * WARN: expects that the current token it's the first of the condition
+   * WARN: leaves at the token after the last one of the condition
+   * @returns boolean if an error ocurred returns false
+   */
+  private consumeStatementCondition(
+    startingPosition: Range | null,
+    hasLParent: boolean,
+  ): boolean {
+    // gets rid of all the tokens of the condition
+    let mCalls = 0;
+    do {
+      mCalls++;
+      // TODO: think what happens when you've got a ==, IDENTIFIER EQUALS
+      const expr = this.parseExpression();
+      if (
+        expr?.type !== 'BINARY_OPERATION' &&
+        expr?.type !== 'FUNCTION_CALL' &&
+        expr?.type !== 'NUMBER' &&
+        expr?.type !== 'IDENTIFIER' &&
+        expr?.type !== 'STRING' &&
+        expr?.type !== 'STRUCT' &&
+        expr?.type !== 'VECTOR' &&
+        expr?.type !== 'IDENTIFIER_REFERENCE' &&
+        expr?.type !== 'STRUCT_ACCESS' &&
+        expr?.type !== 'CELL_ARRAY_ACCESS'
+      ) {
+        this.errors.push({
+          message: 'Unexpected token while parsin condition',
+          code: ERROR_CODES.PARSE_ERR_STMNT,
+          range: {
+            start: startingPosition?.start ?? CERO_POSITION.start,
+            end: this.getCurrentPosition().end ?? CERO_POSITION,
+          },
+        });
+        this.parsingStatement = false;
+        this.parsingStatementType = null;
+        return false;
+      }
+      console.log('tok: ' + this.getCurrentToken().type);
+      let hasErrors = this.consumeEquationSymbols();
+      this.skipNL(true);
+      console.log('tok2: ' + this.getCurrentToken().type);
+      hasErrors = !this.isTokenValidBasicDataType(this.getCurrentToken());
+      this.skipNL(true);
+      console.log('tok3: ' + this.getCurrentToken().type);
+      const [hasErrorsConcat, hasEnded] = this.consumeConditionConcatenator(
+        hasLParent ? 'RPARENT' : 'NL',
+      );
+      this.skipNL(true);
+      console.log('hasErrors: ' + hasErrors);
+      console.log('hasErrorsConcat: ' + hasErrorsConcat);
+      console.log('hasEnded: ' + hasEnded);
+      hasErrors = hasErrorsConcat;
+      // if (
+      //   (hasLParent && this.getCurrentToken().type === 'RPARENT') ||
+      //   (!hasLParent && this.getCurrentToken().type === 'NL')
+      // ) {
+      //   break;
+      // }
+      if (hasEnded) {
+        console.log('broke!');
+        break;
+      }
+      if (hasErrors) {
+        console.log('im outty');
+        this.parsingStatement = false;
+        this.parsingStatementType = null;
+        return false;
+      }
+    } while (
+      mCalls < MAX_STATEMENTS_CALLS &&
+      this.getCurrentToken().type !== 'EOF'
+    );
+    if (
+      this.logErrorMaxCallsReached(
+        mCalls,
+        'Error parsing conditions',
+        ERROR_CODES.PARSE_ERR_STMNT,
+      )
+    ) {
+      this.parsingStatement = false;
+      this.parsingStatementType = null;
+      return false;
+    }
+
+    return true;
+  }
+
+  /**
    * Consumes the tokens of an equation or inequality symbols
    * like: == > < >= <=
    * WARN: expects that the current token it's the first symbol
-   * WARN: leaves at the next Token after the last symbol
+   * WARN: leaves at the Token of the last symbol
    * @returns boolean - returns true when there was an error
    */
   private consumeEquationSymbols() {
@@ -616,7 +669,6 @@ export class Parser {
       default:
         return true;
     }
-    this.getNextToken();
     return false;
   }
 
@@ -624,22 +676,25 @@ export class Parser {
    * Consumes the tokens of the condition concatenator
    * && || or )
    * WARN: expectes that the first token be the first symbol to check (& or |)
-   * WARN: leaves at the token after the last symbol
-   * @returns boolean - weather there was an error or not
+   * WARN: leaves at the Token of the last symbol
+   * @returns [hasErrors, hasEnded] - [weather there was an error or not, if the condition has ended]
    */
-  private consumeConditionConcatenator(): boolean {
+  private consumeConditionConcatenator(
+    endingTokenType: TokenType,
+  ): [boolean, boolean] {
     switch (this.getCurrentToken().type) {
       case 'AND':
-        if (this.getNextToken()?.type !== 'AND') return true;
+        if (this.getNextToken()?.type !== 'AND') return [true, false];
         break;
       case 'OR':
-        if (this.getNextToken()?.type !== 'OR') return true;
+        if (this.getNextToken()?.type !== 'OR') return [true, false];
         break;
+      case endingTokenType:
+        return [false, true];
       default:
-        return true;
+        return [true, false];
     }
-    this.getNextToken();
-    return false;
+    return [true, false];
   }
 
   /**
