@@ -439,8 +439,6 @@ export class Parser {
     this.parsingStatement = true;
     this.parsingStatementType = content;
 
-    console.log('parsing basic statement: ' + content);
-
     let statements: Statement[] = [];
     if (content === 'do') {
       // TODO
@@ -453,9 +451,8 @@ export class Parser {
     } else {
       if (hasLParent) this.skipNL(true);
       const cond = this.consumeStatementCondition(startingPosition, hasLParent);
-      console.log('cond: ' + JSON.stringify(cond));
       if (!cond) return null;
-      if (hasLParent) this.skipNL(true);
+
       // check statements inside if statement
       const [success, stmnts] = this.consumeStatementsInsideBasicStatement(
         startingToken,
@@ -496,8 +493,6 @@ export class Parser {
 
     this.parsingStatement = false;
     this.parsingStatementType = null;
-
-    console.log('found statement of ' + type);
 
     return {
       type,
@@ -565,6 +560,11 @@ export class Parser {
       mCalls++;
       // TODO: think what happens when you've got a ==, IDENTIFIER EQUALS
       const expr = this.parseExpression();
+      if (expr?.type === 'BINARY_OPERATION') {
+        // if it's a binary operation i have to consume the other EQUALS token
+        this.getNextToken();
+        this.getPrevToken();
+      }
       if (
         expr?.type !== 'BINARY_OPERATION' &&
         expr?.type !== 'FUNCTION_CALL' &&
@@ -589,33 +589,23 @@ export class Parser {
         this.parsingStatementType = null;
         return false;
       }
-      console.log('tok: ' + this.getCurrentToken().type);
       let hasErrors = this.consumeEquationSymbols();
       this.skipNL(true);
-      console.log('tok2: ' + this.getCurrentToken().type);
       hasErrors = !this.isTokenValidBasicDataType(this.getCurrentToken());
-      this.skipNL(true);
-      console.log('tok3: ' + this.getCurrentToken().type);
+      if (hasLParent) {
+        this.skipNL(true);
+      } else {
+        this.getNextToken();
+      }
       const [hasErrorsConcat, hasEnded] = this.consumeConditionConcatenator(
         hasLParent ? 'RPARENT' : 'NL',
       );
       this.skipNL(true);
-      console.log('hasErrors: ' + hasErrors);
-      console.log('hasErrorsConcat: ' + hasErrorsConcat);
-      console.log('hasEnded: ' + hasEnded);
       hasErrors = hasErrorsConcat;
-      // if (
-      //   (hasLParent && this.getCurrentToken().type === 'RPARENT') ||
-      //   (!hasLParent && this.getCurrentToken().type === 'NL')
-      // ) {
-      //   break;
-      // }
       if (hasEnded) {
-        console.log('broke!');
         break;
       }
       if (hasErrors) {
-        console.log('im outty');
         this.parsingStatement = false;
         this.parsingStatementType = null;
         return false;
@@ -694,7 +684,7 @@ export class Parser {
       default:
         return [true, false];
     }
-    return [true, false];
+    return [false, false];
   }
 
   /**
