@@ -357,7 +357,7 @@ test('Octave/Matlab Parser, should parse basic statements', function () {
     for i=1:20
       b = 1;
     end
-    for (a)
+    for (i = 1:20)
     endfor
     while (1)
       disp("hello");
@@ -396,9 +396,7 @@ test('Octave/Matlab Parser, should parse basic statements', function () {
   ];
 
   // console.log('TOKENS: ' + JSON.stringify(tokens));
-  // console.log(
-  //   'STATEMENTS: ' + JSON.stringify(program.body.map((stmn) => stmn.type)),
-  // );
+  console.log('STATEMENTS: ' + JSON.stringify(program.body));
 
   if (errors.length > 0) {
     console.log('ERRORS: ' + JSON.stringify(errors));
@@ -434,7 +432,7 @@ end
   const STATEMENTS: StatementType[] = ['IF_STMNT', 'IF_STMNT'];
 
   // console.log('TOKENS: ' + JSON.stringify(tokens));
-  console.log('STATEMENTS: ' + JSON.stringify(program.body));
+  // console.log('STATEMENTS: ' + JSON.stringify(program.body));
 
   if (errors.length > 0) {
     console.log('ERRORS: ' + JSON.stringify(errors));

@@ -449,6 +449,7 @@ export class Parser {
       if (!success) return null;
       statements = stmnts;
     } else {
+      // OTHER STATEMENTS (if, for, while, etc)
       if (hasLParent) this.skipNL(true);
       const cond = this.consumeStatementCondition(startingPosition, hasLParent);
       if (!cond) return null;
@@ -589,9 +590,16 @@ export class Parser {
         this.parsingStatementType = null;
         return false;
       }
-      let hasErrors = this.consumeEquationSymbols();
-      this.skipNL(true);
-      hasErrors = !this.isTokenValidBasicDataType(this.getCurrentToken());
+      const hasSymbols = this.checkConditionHasSymbols();
+      console.log(`hasSymbols: ${hasSymbols}`);
+      console.log(`parsing: ${this.parsingStatementType}`);
+      let hasErrors = false;
+      if (hasSymbols) {
+        hasErrors = this.consumeEquationSymbols();
+        this.skipNL(true);
+        // TODO: this isTokenValidBasicDataType should be an expression parsing no?
+        hasErrors = !this.isTokenValidBasicDataType(this.getCurrentToken());
+      }
       if (hasLParent) {
         this.skipNL(true);
       } else {
@@ -627,6 +635,24 @@ export class Parser {
     }
 
     return true;
+  }
+
+  /**
+   * Returns weather the current condition being checked has
+   * comparing symbols or not, because it could be 2 casess:
+   * if (myVar) or if (myVar == 1) <- with and without the symbols
+   * WARN: this does not change the current token
+   * @returns boolean - weather it has comparing symbols or not
+   */
+  private checkConditionHasSymbols(): boolean {
+    switch (this.getCurrentToken().type) {
+      case 'GRATER_THAN':
+      case 'LESS_THAN':
+      case 'EQUALS':
+        return true;
+      default:
+        return false;
+    }
   }
 
   /**
