@@ -113,6 +113,7 @@ export class Parser {
 
     if (nextToken === undefined) return null;
 
+    // TODO: consider elseif as if it were to be like an if
     if (
       this.parsingStatement &&
       this.parsingStatementType === 'if' &&
@@ -133,11 +134,7 @@ export class Parser {
       this.parsingStatementType === 'do' &&
       currToken.content === 'until'
     ) {
-      this.consumeStatementCondition(
-        currToken.position,
-        nextToken.type === 'LPARENT',
-      );
-      this.consumeStatementsInsideBasicStatement(currToken, 'until');
+      this.getPrevToken();
       return null;
     }
 
@@ -293,7 +290,17 @@ export class Parser {
       typeof currToken.content === 'string' &&
       STATEMENTS_KEYWORDS.includes(currToken.content as any)
     ) {
-      return this.parseBasicStatements(currToken.content);
+      switch (currToken.content) {
+        case 'if':
+        case 'while':
+          return this.parseBasicIfStatements(currToken.content);
+        case 'for':
+          return this.parseForStatement(currToken);
+        case 'do':
+          return this.parseDoUntilStatement(currToken);
+        default:
+          return this.parseBasicIfStatements(currToken.content);
+      }
     } else if (currToken.type === 'IDENTIFIER' && nextToken.type === 'NL') {
       // function call or variable output
       // because this language it's so good it's impossible to know which (awsome (not really))
@@ -389,6 +396,160 @@ export class Parser {
   }
 
   /**
+   * Parses the do until loop statement
+   * WARN: expects that the current token it's the one after the 'do' Token
+   * WARN: leaves at the token after the last token of this statement
+   */
+  private parseDoUntilStatement(currToken: Token): Statement | null {
+    this.parsingStatement = true;
+    this.parsingStatementType = 'do';
+
+    // get all statements inside do
+    const [_, stmnts] = this.consumeStatementsInsideBasicStatement(
+      this.getCurrentToken(),
+      'until',
+    );
+
+    const startingPosition = this.getCurrentPosition();
+    let hasLParent = this.getNextToken()?.type === 'LPARENT';
+    if (hasLParent) this.skipNL(true);
+    const cond = this.consumeStatementCondition(startingPosition, hasLParent);
+    if (!cond) return null;
+
+    return {
+      type: 'DO_STMNT',
+      context: this.getCurrentContext(),
+      supressOutput: true,
+      LHE: {
+        type: 'DO_STMNT',
+        value: currToken.content, // TODO: here i should get all conditions no?
+        position: this.getCurrentPosition(currToken),
+      },
+      RHE: stmnts,
+    };
+  }
+
+  /**
+   * Parses the 'for' statement when this keyword it's found
+   * WARN: expects that the current token it's the next after the for
+   * WARN: leaves at the token after the end or 'endfor' tokens
+   */
+  private parseForStatement(currToken: Token): Statement | null {
+    this.parsingStatement = true;
+    this.parsingStatementType = 'for';
+    let hasLParent = false;
+    if (this.getCurrentToken().type === 'LPARENT') {
+      // TODO: when it has LPARENT it could be multiple lines no?
+      // maybe account for NL?
+      hasLParent = true;
+      this.getNextToken();
+    }
+    const forVarIdentifier = this.getCurrentToken();
+    if (!this.isTokenValidBasicDataType(this.getCurrentToken(), true))
+      return null;
+    this.getNextToken();
+    if (this.getCurrentToken().type !== 'EQUALS') {
+      this.errors.push({
+        message: 'Missing = in for loop',
+        code: ERROR_CODES.MISSING_EQUALS_FOR_LOOP,
+        range: {
+          start: currToken.position?.start ?? CERO_POSITION.start,
+          end: this.getCurrentPosition().end,
+        },
+      });
+      this.parsingStatement = false;
+      this.parsingStatementType = null;
+      return null;
+    }
+    this.getNextToken();
+    // check if it's a number range
+    if (this.isValidForDataType()) {
+      this.getNextToken();
+      if (this.getCurrentToken().type === 'COLON') {
+        this.getNextToken();
+        if (!this.isValidForDataType()) {
+          this.errors.push({
+            message: `Unexpected '${JSON.stringify(
+              this.getCurrentToken().content,
+            )}' in for loop`,
+            range: {
+              start: currToken.position?.start ?? CERO_POSITION.start,
+              end: this.getCurrentPosition()?.end ?? CERO_POSITION.end,
+            },
+            code: ERROR_CODES.WRONG_DATA_TYPE_FOR_LOOP,
+          });
+          this.parsingStatement = false;
+          this.parsingStatementType = null;
+          return null;
+        }
+        this.getNextToken();
+      }
+    } else {
+      /// TODO: make tests for looping cell arrays, vectors and other data types
+      this.parseExpression();
+      this.getNextToken();
+    }
+
+    if (hasLParent) {
+      if (this.getCurrentToken().type !== 'RPARENT') {
+        this.errors.push({
+          message: `Was expecting closing ')' in for loop`,
+          code: ERROR_CODES.MISSING_END_RPAREN_FOR_LOOP,
+          range: {
+            start: currToken.position?.start ?? CERO_POSITION.start,
+            end: this.getCurrentPosition()?.end ?? CERO_POSITION.end,
+          },
+        });
+        this.parsingStatement = false;
+        this.parsingStatementType = null;
+        return null;
+      }
+      this.getNextToken();
+    }
+
+    // get statements inside for loop
+    const [_, stmnts] = this.consumeStatementsInsideBasicStatement(
+      this.getCurrentToken(),
+      'endfor',
+    );
+
+    this.getNextToken();
+
+    return {
+      type: 'FOR_STMNT',
+      supressOutput: true,
+      context: this.getCurrentContext(),
+      LHE: {
+        type: 'IDENTIFIER',
+        value: forVarIdentifier.content,
+        position: forVarIdentifier.position ?? CERO_POSITION,
+      },
+      RHE: stmnts,
+    };
+  }
+
+  /**
+   * Returns if the given Token it's of type VECTOR,
+   * IDENTIFIER, NUMBER, STRUCT_ACCESS or CELL_ARRAY_ACCESS
+   */
+  private isValidForDataType(tok?: Token | undefined) {
+    if (tok === undefined) {
+      return (
+        this.getCurrentToken().type === 'CELL_ARRAY_ACCESS' ||
+        this.getCurrentToken().type === 'STRUCT_ACCESS' ||
+        this.getCurrentToken().type === 'NUMBER' ||
+        this.getCurrentToken().type === 'IDENTIFIER'
+      );
+    }
+    return (
+      tok.type === 'CELL_ARRAY_ACCESS' ||
+      tok.type === 'STRUCT_ACCESS' ||
+      tok.type === 'NUMBER' ||
+      tok.type === 'IDENTIFIER'
+    );
+  }
+
+  /**
    * Retuns the line content of the current token
    */
   private getLineContent(): string {
@@ -431,7 +592,7 @@ export class Parser {
    * Parses an if, for, while, do, switch Statements
    * TODO: is this.parsingStatement a valid thing?
    */
-  private parseBasicStatements(content: string): Statement | null {
+  private parseBasicIfStatements(content: string): Statement | null {
     const startingToken = this.getPrevToken() as Token;
     const startingPosition = startingToken.position;
     const hasLParent = this.skipNL(true).type === 'LPARENT';
@@ -591,8 +752,6 @@ export class Parser {
         return false;
       }
       const hasSymbols = this.checkConditionHasSymbols();
-      console.log(`hasSymbols: ${hasSymbols}`);
-      console.log(`parsing: ${this.parsingStatementType}`);
       let hasErrors = false;
       if (hasSymbols) {
         hasErrors = this.consumeEquationSymbols();
@@ -600,9 +759,9 @@ export class Parser {
         // TODO: this isTokenValidBasicDataType should be an expression parsing no?
         hasErrors = !this.isTokenValidBasicDataType(this.getCurrentToken());
       }
-      if (hasLParent) {
+      if (hasLParent && hasSymbols) {
         this.skipNL(true);
-      } else {
+      } else if (!hasLParent && hasSymbols) {
         this.getNextToken();
       }
       const [hasErrorsConcat, hasEnded] = this.consumeConditionConcatenator(
