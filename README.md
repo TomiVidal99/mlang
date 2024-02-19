@@ -50,6 +50,7 @@ end
 
 ## TODO
 
+- [ ] FIX: if statements not working when there's a comment before the end keyword.
 - [ ] ADD: reference checking for IDENTIFIER_REFERENCE.
 - [ ] FIX: function composition not working correctly.
 - [ ] FIX: structs can be accessed inside vector outputs: '[a.x] = myFunc()'.
