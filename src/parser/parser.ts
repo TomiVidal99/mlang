@@ -508,17 +508,20 @@ export class Parser {
     }
 
     // get statements inside for loop
-    const [_, stmnts] = this.consumeStatementsInsideBasicStatement(
+    const stmnts = this.consumeStatementsInsideBasicStatement(
       this.getCurrentToken(),
       'endfor',
-    );
+    )[1];
 
     this.getNextToken();
+
+    const context = this.getIntoNewContext()[1];
+    this.getBackOfContext();
 
     return {
       type: 'FOR_STMNT',
       supressOutput: true,
-      context: this.getCurrentContext(),
+      context,
       LHE: {
         type: 'IDENTIFIER',
         value: forVarIdentifier.content,
@@ -597,6 +600,7 @@ export class Parser {
     const startingPosition = startingToken.position;
     const hasLParent = this.skipNL(true).type === 'LPARENT';
     const specialEndKeyword = content === 'do' ? 'until' : `end${content}`;
+    const context = this.getIntoNewContext()[1];
     this.parsingStatement = true;
     this.parsingStatementType = content;
 
@@ -624,7 +628,7 @@ export class Parser {
       statements = stmnts;
     }
 
-    const context = this.getIntoNewContext()[1];
+    this.getBackOfContext();
     const position: Range = {
       ...(startingPosition as Range),
       end: this.getCurrentPosition().start,
