@@ -83,10 +83,12 @@ export class Visitor {
         if (node?.LHE === undefined) return;
         this.visitExpression(node.LHE, 'REFERENCE_CALL_VAR_FUNC', node.context);
         break;
+      case 'FOR_STMNT':
+        if (node?.LHE === undefined) return;
+        this.visitExpression(node.LHE, 'FOR_STMNT', node.context);
       case 'IF_STMNT':
       case 'DO_STMNT':
       case 'SWITCH_STMNT':
-      case 'FOR_STMNT':
       case 'WHILE_STMNT':
         (node?.RHE as Statement[]).forEach((statement) => {
           this.visitStatement(statement);
@@ -162,6 +164,14 @@ export class Visitor {
             type: 'FUNCTION',
             documentation: node?.functionData?.description ?? '',
             args: this.getFunctionArgsAsStrings(node?.functionData?.args),
+          });
+        } else if (parentType === 'FOR_STMNT') {
+          this.definitions.push({
+            name: node.value as string,
+            type: 'VARIABLE',
+            position: node.position ?? CERO_POSITION,
+            documentation: node.lineContent ?? '',
+            context,
           });
         } else {
           this.references.push({

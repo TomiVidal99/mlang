@@ -119,3 +119,29 @@ test('Octave/Matlab Visitor, should get documentation of function definitions', 
     }
   }
 });
+
+test('Octave/Matlab Visitor, should get var definitions from for statements', () => {
+  const text = `
+    for (a = 10:20)
+      doSomethingWith(a);
+    end
+    for b = 10:20
+      doSomethingWith(b);
+    end
+  `;
+
+  const tokenizer = new Tokenizer(text);
+  const tokens = tokenizer.getAllTokens();
+  const parser = new Parser(tokens);
+  const program = parser.makeAST();
+  const visitor = new Visitor();
+  visitor.visitProgram(program);
+  const { definitions } = visitor;
+
+  // console.log('STATEMENTS: ' + JSON.stringify(program.body));
+  // console.log('GOT: ' + JSON.stringify(definitions));
+  // console.log('TOKENS: ' + JSON.stringify(tokens.map((t) => t.type)));
+
+  expect(definitions[0].name).toBe('a');
+  expect(definitions[1].name).toBe('b');
+});

@@ -441,3 +441,32 @@ end
   expect(program.body.map((stmn) => stmn.type)).toEqual(STATEMENTS);
   expect(errors.length).toStrictEqual(0);
 });
+
+test('Octave/Matlab Parser, if statement with complex conditions', function () {
+  const inputCode = `
+   if a > 1 || b < 1 || c <= 1 || d >= 1 || e == 1
+     disp("laksdjalkdjal");
+    % here's a comment that should not make this fail
+   end
+`;
+
+  const tokenizer = new Tokenizer(inputCode);
+  const tokens = tokenizer.getAllTokens();
+  const parser = new Parser(tokens);
+  const program = parser.makeAST();
+  const visitor = new Visitor();
+  visitor.visitProgram(program);
+
+  const errors = parser.getErrors();
+  const STATEMENTS: StatementType[] = ['IF_STMNT'];
+
+  // console.log('TOKENS: ' + JSON.stringify(tokens));
+  // console.log('STATEMENTS: ' + JSON.stringify(program.body));
+
+  if (errors.length > 0) {
+    console.log('ERRORS: ' + JSON.stringify(errors));
+  }
+
+  expect(program.body.map((stmn) => stmn.type)).toEqual(STATEMENTS);
+  expect(errors.length).toStrictEqual(0);
+});
