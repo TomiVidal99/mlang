@@ -161,6 +161,7 @@ export class Parser {
     if (
       (currToken.type === 'IDENTIFIER' ||
         currToken.type === 'STRUCT_ACCESS' ||
+        currToken.type === 'CELL_ARRAY_ACCESS' ||
         currToken.type === 'NATIVE_FUNCTION') &&
       nextToken.type === 'LPARENT'
     ) {
@@ -301,7 +302,12 @@ export class Parser {
         default:
           return this.parseBasicIfStatements(currToken.content);
       }
-    } else if (currToken.type === 'IDENTIFIER' && nextToken.type === 'NL') {
+    } else if (
+      (currToken.type === 'IDENTIFIER' ||
+        currToken.type === 'CELL_ARRAY_ACCESS' ||
+        currToken.type === 'STRUCT_ACCESS') &&
+      (nextToken.type === 'NL' || nextToken.type === 'EOF')
+    ) {
       // function call or variable output
       // because this language it's so good it's impossible to know which (awsome (not really))
       // TODO: maybe get documentation?
@@ -947,7 +953,9 @@ export class Parser {
       const comma = this.skipNL(true);
       if (
         comma === undefined ||
-        (comma.type !== 'COMMA' && comma.type !== 'RSQUIRLY')
+        (comma.type !== 'COMMA' &&
+          comma.type !== 'SEMICOLON' &&
+          comma.type !== 'RSQUIRLY')
       ) {
         this.errors.push({
           message: `Unexpected struct value. Got "${
