@@ -40,7 +40,139 @@ export class Tokenizer {
    */
   private postTokenizationHook(): void {
     this.makeStructAccess();
+    this.makeCellArrayAccess();
     this.makeIdentifierReferences();
+  }
+
+  /**
+   * Makes the more complex token of the CELL_ARRAY_ACCESS
+   * example: myCellArray{2} -> IDENTIFIER, 'LSQUIRLY', n amount of basic types
+   * comma separated or : (myCellArray{:})
+   */
+  private makeCellArrayAccess(): void {
+    const newList: Token[] = [];
+    let i = 0;
+    let MAX_CALLS1 = 0;
+    let MAX_CALLS2 = 0;
+    while (i < this.tokens.length && MAX_CALLS1 < MAX_TOKENS_CALLS) {
+      MAX_CALLS1++;
+      if (
+        i < this.tokens.length - 2 &&
+        (this.tokens[i].type === 'IDENTIFIER' ||
+          this.tokens[i].type === 'STRUCT_ACCESS') &&
+        this.tokens[i + 1].type === 'LSQUIRLY'
+      ) {
+        if (
+          (this.tokens[i + 2].type === 'COLON' ||
+            this.isBasicTokenData(this.tokens[i + 2])) &&
+          this.tokens[i + 3].type === 'RSQUIRLY'
+        ) {
+          // ie: myCellArrayAccess{:}
+          // access all elements
+          i = i + 4;
+          newList.push({
+            type: 'CELL_ARRAY_ACCESS',
+            content: [
+              this.tokens[i], // indentifier
+              this.tokens[i + 1], // {
+              this.tokens[i + 2], // :
+              this.tokens[i + 3], // }
+            ],
+            position: {
+              start: this.tokens[i].position?.start ?? CERO_POSITION.start,
+              end: this.tokens[i + 3].position?.end ?? CERO_POSITION.end,
+            },
+          });
+        } else if (
+          i + 5 < this.tokens.length &&
+          this.isBasicTokenData(this.tokens[i + 2]) &&
+          this.tokens[i + 3].type === 'COLON' &&
+          this.isBasicTokenData(this.tokens[i + 4]) &&
+          this.tokens[i + 5].type === 'RSQUIRLY'
+        ) {
+          // ie: myCellArrayAccess{DATA:DATA}
+          // access a segment of the elements
+          i = i + 6;
+          newList.push({
+            type: 'CELL_ARRAY_ACCESS',
+            content: [
+              this.tokens[i], // indentifier
+              this.tokens[i + 1], // {
+              this.tokens[i + 2], // DATA
+              this.tokens[i + 3], // :
+              this.tokens[i + 4], // DATA
+              this.tokens[i + 5], // }
+            ],
+            position: {
+              start: this.tokens[i].position?.start ?? CERO_POSITION.start,
+              end: this.tokens[i + 5].position?.end ?? CERO_POSITION.end,
+            },
+          });
+        } else if (
+          this.isBasicTokenData(this.tokens[i + 2]) &&
+          this.tokens[i + 3].type === 'COMMA'
+        ) {
+          // case when it's accessing specific elements like:
+          // myCellArrayAccess{DATA1, DATA2, DATA3}
+          const content: Token[] = [
+            this.tokens[i],
+            this.tokens[i + 1],
+            this.tokens[i + 2],
+            this.tokens[i + 3],
+          ];
+          let index = i + 4;
+          while (
+            index + 1 < this.tokens.length &&
+            MAX_CALLS2 < MAX_TOKENS_CALLS
+          ) {
+            MAX_CALLS2++;
+            if (!this.isBasicTokenData(this.tokens[index])) {
+              return;
+            }
+            content.push(this.tokens[index]);
+            content.push(this.tokens[index + 1]);
+            if (this.tokens[index + 1].type === 'RSQUIRLY') {
+              break;
+            }
+            index = index + 2;
+          }
+          newList.push({
+            type: 'CELL_ARRAY_ACCESS',
+            content,
+            position: {
+              start: this.tokens[i].position?.start ?? CERO_POSITION.start,
+              end:
+                content[content.length - 1].position?.end ?? CERO_POSITION.end,
+            },
+          });
+          i = i + 1 + content.length;
+        } else {
+          newList.push(this.tokens[i]);
+          i++;
+        }
+      }
+    }
+
+    if (MAX_CALLS1 >= MAX_TOKENS_CALLS) {
+      console.log('ERROR 1');
+    }
+    if (MAX_CALLS2 >= MAX_TOKENS_CALLS) {
+      console.log('ERROR 2');
+    }
+  }
+
+  /**
+   * Checks weather the given Token it's of type:
+   * 'NUMBER' | 'IDENTIFIER' | 'STRUCT_ACCESS' | 'CELL_ARRAY_ACCESS'
+   * TODO: is there any other type that can access an struct access??? (idk)
+   */
+  private isBasicTokenData(token: Token): boolean {
+    return (
+      token.type === 'NUMBER' ||
+      token.type === 'IDENTIFIER' ||
+      token.type === 'STRUCT_ACCESS' ||
+      token.type === 'CELL_ARRAY_ACCESS'
+    );
   }
 
   /**

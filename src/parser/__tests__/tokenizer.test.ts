@@ -276,3 +276,23 @@ test('Octave/Matlab Tokenizer, IDENTIFIER_REFERENCE', function () {
 
   expect(tokensTypes).toEqual(expectedTokensTypes);
 });
+
+test('Octave/Matlab Tokenizer, CELL_ARRAY_ACCESS', function () {
+  const text = `
+      myCellArray{2}
+  `;
+
+  const expectedTokensTypes: TokenType[] = [
+    'NL',
+    'CELL_ARRAY_ACCESS',
+    'NL',
+    'EOF',
+  ];
+  const tokenizer = new Tokenizer(text);
+  const tokens = tokenizer.getAllTokens();
+  const tokensTypes = tokens.map((t) => t.type);
+
+  // console.log('GOT: ' + JSON.stringify(tokensTypes));
+
+  expect(tokensTypes).toEqual(expectedTokensTypes);
+});

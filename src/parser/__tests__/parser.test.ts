@@ -29,7 +29,7 @@ test('Octave/Matlab Parser, should parse vectors as arguments', function () {
   const parser = new Parser(tokens);
   const parsedStatement = parser.parseStatement();
 
-  console.log('STATEMENT: ' + JSON.stringify(parsedStatement));
+  // console.log('STATEMENT: ' + JSON.stringify(parsedStatement));
 
   expect(parsedStatement?.type).toStrictEqual('ASSIGNMENT');
   expect(parsedStatement?.supressOutput).toStrictEqual(true);
@@ -462,6 +462,39 @@ test('Octave/Matlab Parser, if statement with complex conditions', function () {
 
   // console.log('TOKENS: ' + JSON.stringify(tokens));
   // console.log('STATEMENTS: ' + JSON.stringify(program.body));
+
+  if (errors.length > 0) {
+    console.log('ERRORS: ' + JSON.stringify(errors));
+  }
+
+  expect(program.body.map((stmn) => stmn.type)).toEqual(STATEMENTS);
+  expect(errors.length).toStrictEqual(0);
+});
+
+test('Octave/Matlab Parser, method call in cell arrays and structs', function () {
+  return;
+  const inputCode = `
+    % struct method call
+    mySuperCoolStruct.myMethod("a", 1, b);
+
+    testVar{2}
+
+    % cell array method call
+    mySuperCoolStruct{1}("a", 1, b);
+`;
+
+  const tokenizer = new Tokenizer(inputCode);
+  const tokens = tokenizer.getAllTokens();
+  const parser = new Parser(tokens);
+  const program = parser.makeAST();
+  const visitor = new Visitor();
+  visitor.visitProgram(program);
+
+  const errors = parser.getErrors();
+  const STATEMENTS: StatementType[] = ['FUNCTION_CALL', 'FUNCTION_CALL'];
+
+  console.log('TOKENS: ' + JSON.stringify(tokens));
+  console.log('STATEMENTS: ' + JSON.stringify(program.body));
 
   if (errors.length > 0) {
     console.log('ERRORS: ' + JSON.stringify(errors));
