@@ -907,6 +907,7 @@ export class Parser {
    * else it returns null
    * WARN: assumes that the first token it's 'LSQUIRLY'
    * WARN: Leaves the current token to the next after the '}'
+   * TODO: check that the amount of columns is the same as rows in the definition (, and ;)
    */
   private parseCellArray(): Token | null {
     const args: Token[] = [];
