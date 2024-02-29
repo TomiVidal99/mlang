@@ -50,6 +50,7 @@ end
 
 ## TODO
 
+- [ ] FIX: struct access can be of INDENTIFER.("string")
 - [ ] FIX: if statements not working when there's a comment before the end keyword.
 - [ ] ADD: reference checking for IDENTIFIER_REFERENCE.
 - [ ] FIX: function composition not working correctly.
