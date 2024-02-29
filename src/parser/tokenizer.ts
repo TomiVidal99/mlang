@@ -39,6 +39,9 @@ export class Tokenizer {
    * It creates some more complex tokens like STRUCT_ACCESS
    */
   private postTokenizationHook(): void {
+    // TODO: here these modifications are run once.
+    // what happens if you've got nested structAccess or CELL_ARRAY_ACCESS???
+    // Gotta modify the array in each run of the loop
     this.makeStructAccess();
     this.makeCellArrayAccess();
     this.makeIdentifierReferences();

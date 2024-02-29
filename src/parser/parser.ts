@@ -306,13 +306,17 @@ export class Parser {
       }
     } else if (
       (currToken.type === 'IDENTIFIER' ||
+        currToken.type === 'NATIVE_FUNCTION' ||
         currToken.type === 'CELL_ARRAY_ACCESS' ||
         currToken.type === 'STRUCT_ACCESS') &&
-      (nextToken.type === 'NL' || nextToken.type === 'EOF')
+      (nextToken.type === 'SEMICOLON' ||
+        nextToken.type === 'NL' ||
+        nextToken.type === 'EOF')
     ) {
       // function call or variable output
       // because this language it's so good it's impossible to know which (awsome (not really))
       // TODO: maybe get documentation?
+      const supressOutput = this.isOutputSupressed();
       return {
         type: 'REFERENCE_CALL_VAR_FUNC',
         LHE: {
@@ -320,7 +324,7 @@ export class Parser {
           position: this.getCurrentPosition(currToken),
           value: currToken.content,
         },
-        supressOutput: false,
+        supressOutput,
         context: this.getCurrentContext(),
       };
     } else if (
