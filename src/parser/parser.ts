@@ -187,7 +187,9 @@ export class Parser {
         },
       };
     } else if (
-      (currToken.type === 'IDENTIFIER' || currToken.type === 'STRUCT_ACCESS') &&
+      (currToken.type === 'IDENTIFIER' ||
+        currToken.type === 'STRUCT_ACCESS' ||
+        currToken.type === 'CELL_ARRAY_ACCESS') &&
       nextToken.type === 'EQUALS'
     ) {
       // SINGLE OUTPUT ASSIGNMENT STATEMENT
@@ -1507,6 +1509,7 @@ export class Parser {
         break;
       case 'NATIVE_FUNCTION':
       case 'IDENTIFIER':
+      case 'CELL_ARRAY_ACCESS':
       case 'STRUCT_ACCESS':
         this.getNextToken();
         if (this.getCurrentToken().type === 'LPARENT') {

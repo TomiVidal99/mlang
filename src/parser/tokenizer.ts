@@ -48,6 +48,7 @@ export class Tokenizer {
    * Makes the more complex token of the CELL_ARRAY_ACCESS
    * example: myCellArray{2} -> IDENTIFIER, 'LSQUIRLY', n amount of basic types
    * comma separated or : (myCellArray{:})
+   * TODO: refactor and improve MAX_CALLS1 and MAX_CALLS2
    */
   private makeCellArrayAccess(): void {
     const newList: Token[] = [];
@@ -63,13 +64,13 @@ export class Tokenizer {
         this.tokens[i + 1].type === 'LSQUIRLY'
       ) {
         if (
+          i + 3 < this.tokens.length &&
           (this.tokens[i + 2].type === 'COLON' ||
             this.isBasicTokenData(this.tokens[i + 2])) &&
           this.tokens[i + 3].type === 'RSQUIRLY'
         ) {
           // ie: myCellArrayAccess{:}
           // access all elements
-          i = i + 4;
           newList.push({
             type: 'CELL_ARRAY_ACCESS',
             content: [
@@ -79,10 +80,12 @@ export class Tokenizer {
               this.tokens[i + 3], // }
             ],
             position: {
-              start: this.tokens[i].position?.start ?? CERO_POSITION.start,
-              end: this.tokens[i + 3].position?.end ?? CERO_POSITION.end,
+              start: this.tokens[i]?.position?.start ?? CERO_POSITION.start,
+              end: this.tokens[i + 3]?.position?.end ?? CERO_POSITION.end,
             },
           });
+          i = i + 4;
+          continue;
         } else if (
           i + 5 < this.tokens.length &&
           this.isBasicTokenData(this.tokens[i + 2]) &&
@@ -92,7 +95,6 @@ export class Tokenizer {
         ) {
           // ie: myCellArrayAccess{DATA:DATA}
           // access a segment of the elements
-          i = i + 6;
           newList.push({
             type: 'CELL_ARRAY_ACCESS',
             content: [
@@ -108,6 +110,8 @@ export class Tokenizer {
               end: this.tokens[i + 5].position?.end ?? CERO_POSITION.end,
             },
           });
+          i = i + 6;
+          continue;
         } else if (
           this.isBasicTokenData(this.tokens[i + 2]) &&
           this.tokens[i + 3].type === 'COMMA'
@@ -135,6 +139,7 @@ export class Tokenizer {
               break;
             }
             index = index + 2;
+            continue;
           }
           newList.push({
             type: 'CELL_ARRAY_ACCESS',
@@ -145,20 +150,31 @@ export class Tokenizer {
                 content[content.length - 1].position?.end ?? CERO_POSITION.end,
             },
           });
-          i = i + 1 + content.length;
+          i = i + content.length;
+          continue;
         } else {
           newList.push(this.tokens[i]);
           i++;
+          continue;
         }
+      } else {
+        newList.push(this.tokens[i]);
+        i++;
+        continue;
       }
     }
 
     if (MAX_CALLS1 >= MAX_TOKENS_CALLS) {
       console.log('ERROR 1');
+      return;
     }
     if (MAX_CALLS2 >= MAX_TOKENS_CALLS) {
       console.log('ERROR 2');
+      return;
     }
+
+    this.tokens.length = 0;
+    this.tokens.push(...newList);
   }
 
   /**
@@ -169,6 +185,7 @@ export class Tokenizer {
   private isBasicTokenData(token: Token): boolean {
     return (
       token.type === 'NUMBER' ||
+      token.type === 'STRING' ||
       token.type === 'IDENTIFIER' ||
       token.type === 'STRUCT_ACCESS' ||
       token.type === 'CELL_ARRAY_ACCESS'

@@ -280,9 +280,21 @@ test('Octave/Matlab Tokenizer, IDENTIFIER_REFERENCE', function () {
 test('Octave/Matlab Tokenizer, CELL_ARRAY_ACCESS', function () {
   const text = `
       myCellArray{2}
+      myCellArray{:}
+      myCellArray{"test"}
+      myCellArray{indetExample}
+      myCellArray{a, 2, "laskdja"; b, 3, "alkdjslkad"}
   `;
 
   const expectedTokensTypes: TokenType[] = [
+    'NL',
+    'CELL_ARRAY_ACCESS',
+    'NL',
+    'CELL_ARRAY_ACCESS',
+    'NL',
+    'CELL_ARRAY_ACCESS',
+    'NL',
+    'CELL_ARRAY_ACCESS',
     'NL',
     'CELL_ARRAY_ACCESS',
     'NL',
