@@ -39,9 +39,6 @@ export class Tokenizer {
    * It creates some more complex tokens like STRUCT_ACCESS
    */
   private postTokenizationHook(): void {
-    // TODO: here these modifications are run once.
-    // what happens if you've got nested structAccess or CELL_ARRAY_ACCESS???
-    // Gotta modify the array in each run of the loop
     this.makeStructAccess();
     this.makeCellArrayAccess();
     this.makeIdentifierReferences();
@@ -55,17 +52,22 @@ export class Tokenizer {
    */
   private makeCellArrayAccess(): void {
     const newList: Token[] = [];
-    let i = 0;
     let MAX_CALLS1 = 0;
     let MAX_CALLS2 = 0;
-    while (i < this.tokens.length && MAX_CALLS1 < MAX_TOKENS_CALLS) {
+    const foundCellArrayAccessAt: number[] = [];
+
+    for (let i = 0; i < this.tokens.length; i++) {
       MAX_CALLS1++;
-      if (
-        i < this.tokens.length - 2 &&
-        (this.tokens[i].type === 'IDENTIFIER' ||
-          this.tokens[i].type === 'STRUCT_ACCESS') &&
-        this.tokens[i + 1].type === 'LSQUIRLY'
-      ) {
+      if (this.isCellArrayAccessAt(i)) {
+        foundCellArrayAccessAt.push(i);
+        i++;
+        continue;
+      }
+    }
+
+    for (let j = foundCellArrayAccessAt.length - 1; j > 0; j--) {
+      let i = foundCellArrayAccessAt[j];
+      if (this.isCellArrayAccessAt(i)) {
         if (
           i + 3 < this.tokens.length &&
           (this.tokens[i + 2].type === 'COLON' ||
@@ -167,6 +169,10 @@ export class Tokenizer {
       }
     }
 
+    console.log('tok: ' + JSON.stringify(newList.map((t) => t.type)));
+
+    return;
+
     if (MAX_CALLS1 >= MAX_TOKENS_CALLS) {
       console.log('ERROR 1');
       return;
@@ -178,6 +184,19 @@ export class Tokenizer {
 
     this.tokens.length = 0;
     this.tokens.push(...newList);
+  }
+
+  /**
+   * Checks weather there is or not an array access at the given position
+   */
+  private isCellArrayAccessAt(i: number) {
+    return (
+      i < this.tokens.length - 2 &&
+      (this.tokens[i].type === 'IDENTIFIER' ||
+        this.tokens[i].type === 'STRUCT_ACCESS' ||
+        this.tokens[i].type === 'CELL_ARRAY_ACCESS') &&
+      this.tokens[i + 1].type === 'LSQUIRLY'
+    );
   }
 
   /**
