@@ -46,7 +46,13 @@ connection?.onInitialize((params) =>
   handleOnInitialize({ params, connection }),
 );
 connection?.onInitialized(async (params) => {
+  try {
   await handleOnInitialized({ params, connection });
+  } catch (err) {
+    if (err instanceof Error) {
+      throw new Error(err.message);
+    }
+  }
 });
 // connection.onDidOpenTextDocument((params) => {});
 connection?.onDefinition(
