@@ -51,117 +51,15 @@ export class Tokenizer {
    * TODO: refactor and improve MAX_CALLS1 and MAX_CALLS2
    */
   private makeCellArrayAccess(): void {
+    return;
     const newList: Token[] = [];
     let MAX_CALLS1 = 0;
     let MAX_CALLS2 = 0;
-    const foundCellArrayAccessAt: number[] = [];
+    let i = 0;
 
-    for (let i = 0; i < this.tokens.length; i++) {
-      MAX_CALLS1++;
+    while (i < this.tokens.length && MAX_CALLS1 < MAX_TOKENS_CALLS) {
       if (this.isCellArrayAccessAt(i)) {
-        foundCellArrayAccessAt.push(i);
-        i++;
-        continue;
-      }
-    }
-
-    for (let j = foundCellArrayAccessAt.length - 1; j > 0; j--) {
-      let i = foundCellArrayAccessAt[j];
-      if (this.isCellArrayAccessAt(i)) {
-        if (
-          i + 3 < this.tokens.length &&
-          (this.tokens[i + 2].type === 'COLON' ||
-            this.isBasicTokenData(this.tokens[i + 2])) &&
-          this.tokens[i + 3].type === 'RSQUIRLY'
-        ) {
-          // ie: myCellArrayAccess{:}
-          // access all elements
-          newList.push({
-            type: 'CELL_ARRAY_ACCESS',
-            content: [
-              this.tokens[i], // indentifier
-              this.tokens[i + 1], // {
-              this.tokens[i + 2], // :
-              this.tokens[i + 3], // }
-            ],
-            position: {
-              start: this.tokens[i]?.position?.start ?? CERO_POSITION.start,
-              end: this.tokens[i + 3]?.position?.end ?? CERO_POSITION.end,
-            },
-          });
-          i = i + 4;
-          continue;
-        } else if (
-          i + 5 < this.tokens.length &&
-          this.isBasicTokenData(this.tokens[i + 2]) &&
-          this.tokens[i + 3].type === 'COLON' &&
-          this.isBasicTokenData(this.tokens[i + 4]) &&
-          this.tokens[i + 5].type === 'RSQUIRLY'
-        ) {
-          // ie: myCellArrayAccess{DATA:DATA}
-          // access a segment of the elements
-          newList.push({
-            type: 'CELL_ARRAY_ACCESS',
-            content: [
-              this.tokens[i], // indentifier
-              this.tokens[i + 1], // {
-              this.tokens[i + 2], // DATA
-              this.tokens[i + 3], // :
-              this.tokens[i + 4], // DATA
-              this.tokens[i + 5], // }
-            ],
-            position: {
-              start: this.tokens[i].position?.start ?? CERO_POSITION.start,
-              end: this.tokens[i + 5].position?.end ?? CERO_POSITION.end,
-            },
-          });
-          i = i + 6;
-          continue;
-        } else if (
-          this.isBasicTokenData(this.tokens[i + 2]) &&
-          this.tokens[i + 3].type === 'COMMA'
-        ) {
-          // case when it's accessing specific elements like:
-          // myCellArrayAccess{DATA1, DATA2, DATA3}
-          const content: Token[] = [
-            this.tokens[i],
-            this.tokens[i + 1],
-            this.tokens[i + 2],
-            this.tokens[i + 3],
-          ];
-          let index = i + 4;
-          while (
-            index + 1 < this.tokens.length &&
-            MAX_CALLS2 < MAX_TOKENS_CALLS
-          ) {
-            MAX_CALLS2++;
-            if (!this.isBasicTokenData(this.tokens[index])) {
-              return;
-            }
-            content.push(this.tokens[index]);
-            content.push(this.tokens[index + 1]);
-            if (this.tokens[index + 1].type === 'RSQUIRLY') {
-              break;
-            }
-            index = index + 2;
-            continue;
-          }
-          newList.push({
-            type: 'CELL_ARRAY_ACCESS',
-            content,
-            position: {
-              start: this.tokens[i].position?.start ?? CERO_POSITION.start,
-              end:
-                content[content.length - 1].position?.end ?? CERO_POSITION.end,
-            },
-          });
-          i = i + content.length;
-          continue;
-        } else {
-          newList.push(this.tokens[i]);
-          i++;
-          continue;
-        }
+        const cellArrayAccess = this.extractNestedCellArrayAccessNode(i + 2);
       } else {
         newList.push(this.tokens[i]);
         i++;
@@ -171,14 +69,15 @@ export class Tokenizer {
 
     console.log('tok: ' + JSON.stringify(newList.map((t) => t.type)));
 
-    return;
+    // return;
 
     if (MAX_CALLS1 >= MAX_TOKENS_CALLS) {
       console.log('ERROR 1');
       return;
     }
+
     if (MAX_CALLS2 >= MAX_TOKENS_CALLS) {
-      console.log('ERROR 2');
+      console.log('ERROR 1');
       return;
     }
 

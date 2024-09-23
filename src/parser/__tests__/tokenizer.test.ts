@@ -299,8 +299,6 @@ test('Octave/Matlab Tokenizer, CELL_ARRAY_ACCESS', function () {
     'NL',
     'CELL_ARRAY_ACCESS',
     'NL',
-    'CELL_ARRAY_ACCESS',
-    'NL',
     'EOF',
   ];
   const tokenizer = new Tokenizer(text);
