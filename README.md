@@ -24,7 +24,7 @@ This is an implementation of the [Language Server Protocol](https://code.visuals
 
 ### Neovim (lua)
 
-The _'path/to_server.js'_ is the path to the compiled version of the server, you can find it in [releases](https://github.com/TomiVidal99/mlang/releases/tag/v2.1.0) or by compiling it yourself.
+The _'path/to/server.js'_ is the path to the compiled version of the server, you can find it in [releases](https://github.com/TomiVidal99/mlang/releases/tag/v2.1.0) or by compiling it yourself.
 
 ```lua
 local lspconfig = require("lspconfig")
