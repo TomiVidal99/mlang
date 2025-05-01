@@ -81,6 +81,10 @@ end
 
 If a reference or a keyword it's not found and it should because it's defined by default by the language you simply add it in _'./src/data/completionKeywords.ts'_.
 
+## Developer notes
+
+If you want to log information into the VSCode output you can use `console.error()` and you'll see it in the error output terminal of the LSP in VSCode.
+
 ## Contributors
 
 - [Tomás Vidal](https://github.com/TomiVidal99)
