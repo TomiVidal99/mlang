@@ -10,8 +10,8 @@
   },
   "scripts": {
     "test-single-test": "bun test -t 'your-test-name-here'",
-    "test": "NODE_ENV=dev bun test",
-    "test-watch": "NODE_ENV=dev bun test --watch",
+    "test": "cross-env NODE_ENV=dev bun test",
+    "test-watch": "cross-env NODE_ENV=dev bun test --watch",
     "compile": "esbuild src/server.ts --minify-whitespace --minify-identifiers --minify-syntax  --legal-comments=none  --analyze  --platform=node --bundle --outfile=./out/server.js && cp -f out/server.js client/server/server.js",
     "build": "tsc ./client/src/extension.ts --outDir ./client/out/",
     "watch": "tsc ./client/src/extension.ts -w --outDir ./client/out/",
@@ -24,6 +24,7 @@
   "dependencies": {
     "@types/node": "18.15.5",
     "@types/recursive-readdir": "2.2.1",
+    "cross-env": "^7.0.3",
     "esbuild": "0.17.14",
     "prettier-eslint": "16.1.2",
     "recursive-readdir": "2.2.3",
