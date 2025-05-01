@@ -123,9 +123,14 @@ connection?.onExit(() => {
  */
 export function updateDocumentData(uri: string, updatedText?: string): void {
   // Clear any previously scheduled diagnostic updates for this document
+
+  console.error('Updating file!');
+
   if (documentChanges.has(uri)) {
     clearTimeout(documentChanges.get(uri));
   }
+
+  console.error('Setting timeout');
 
   // Schedule a new diagnostic update after a delay (e.g., 500 ms)
   documentChanges.set(
@@ -142,6 +147,14 @@ export function updateDocumentData(uri: string, updatedText?: string): void {
       const visitorErrors = visitor.getErrors();
       visitor.visitProgram(ast);
       visitors.set(uri, visitor);
+
+      // console.error(`Parsed file (${uri}): ${JSON.stringify({
+      //   text,
+        // tokenizerErrors: tokenizer.getErrors(),
+        // tokens: tokens.map(t => t.type),
+        // tokensContent: tokens.map(t => t.content),
+        // parser:  parser.getErrors().map(e=>e.message),
+      // })}`);
 
       const errors: Diagnostic[] = parser
         .getErrors()
