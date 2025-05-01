@@ -52,29 +52,30 @@ export class Tokenizer {
    * Makes the more complex token of the CELL_ARRAY_ACCESS
    * example: myCellArray{2} -> IDENTIFIER, 'LSQUIRLY', n amount of basic types
    * comma separated or : (myCellArray{:})
-   * TODO: refactor and improve MAX_CALLS1 and MAX_CALLS2
+   * TODO: refactor and improve MAX_CALLS1
    */
   private makeCellArrayAccess(): void {
     const newList: Token[] = [];
-    let MAX_CALLS1 = 0;
-    let MAX_CALLS2 = 0;
+    let MAX_CALLS = 0;
     let i = 0;
 
-    while (i < this.tokens.length && MAX_CALLS1 < MAX_TOKENS_CALLS) {
+    // a.b.c("test", @myFunc);
+
+    while (i < this.tokens.length && MAX_CALLS < MAX_TOKENS_CALLS) {
       if (this.isCellArrayAccessAt(i)) {
         if (
           this.tokens[i + 2].type !== 'IDENTIFIER' &&
           this.tokens[i + 2].type !== 'CELL_ARRAY_ACCESS' &&
           this.tokens[i + 2].type !== 'STRUCT_ACCESS' &&
           this.tokens[i + 2].type !== 'NUMBER' &&
+          this.tokens[i + 2].type !== 'STRING' &&
           this.tokens[i + 2].type !== 'COLON'
         ) {
           // TODO: move this function to the parser and check for the correct
           // types
           newList.push(this.tokens[i]);
           i++;
-          throw new Error("Argument of cell array it's not valid.")
-          continue;
+          throw new Error(`Argument of cell array it's not valid. ${this.tokens[i+2].type}`)
         }
 
         const newCellArrayAccess: Token = {
@@ -100,18 +101,10 @@ export class Tokenizer {
       }
     }
 
-    console.log('tok: ' + JSON.stringify(newList.map((t) => t.type)));
+    // console.log('tok: ' + JSON.stringify(newList.map((t) => t.type)));
 
-    // return;
-
-    if (MAX_CALLS1 >= MAX_TOKENS_CALLS) {
-      console.log('ERROR 1');
-      return;
-    }
-
-    if (MAX_CALLS2 >= MAX_TOKENS_CALLS) {
-      console.log('ERROR 1');
-      return;
+    if (MAX_CALLS >= MAX_TOKENS_CALLS) {
+      throw new Error('Max calls reached while processing cell array acess.');
     }
 
     this.tokens.length = 0;
