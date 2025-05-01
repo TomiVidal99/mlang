@@ -8,6 +8,7 @@ import {
 } from 'vscode-languageserver';
 import { getFilesInWorkspace } from '../utils';
 import { docManager } from '../types/DocumentsManager';
+import { URI } from 'vscode-uri';
 
 export let hasConfigurationCapability = true;
 export let hasWorkspaceFolderCapability = true;
@@ -75,9 +76,12 @@ export function handleOnInitialize({
     workspaceFolders[0]?.name
   ) {
     const filesInRootFolder = getFilesInWorkspace({
-      workspace: workspaceFolders[0].name,
+      workspace: URI.parse(workspaceFolders[0].uri).fsPath,
     });
-    filesInRootFolder.forEach((d) => docManager.set(d.uri, d.getText()));
+    filesInRootFolder.forEach((d) => {
+      console.error(JSON.stringify({uri:d.uri, text:d.getText()}));
+      docManager.set(d.uri, d.getText());
+    });
   }
 
   // handleDefaultPath();
