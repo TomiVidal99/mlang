@@ -73,6 +73,7 @@ export class Tokenizer {
           // types
           newList.push(this.tokens[i]);
           i++;
+          throw new Error("Argument of cell array it's not valid.")
           continue;
         }
 
@@ -85,9 +86,9 @@ export class Tokenizer {
           },
         };
 
-        console.log(
-          `Found new cell array access: ${JSON.stringify(newCellArrayAccess)}`,
-        );
+        // console.log(
+        //   `Found new cell array access: ${JSON.stringify(newCellArrayAccess)}`,
+        // );
 
         newList.push(newCellArrayAccess);
         i = i + 4;
