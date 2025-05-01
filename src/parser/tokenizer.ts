@@ -37,6 +37,10 @@ export class Tokenizer {
   /**
    * It's called after all the tokenizing process has been done
    * It creates some more complex tokens like STRUCT_ACCESS
+   *
+   * This is "actually" work that the parser should do,
+   * but to make it simpler to code I did it here.
+   * Eventually it would "better" to take it to the parser
    */
   private postTokenizationHook(): void {
     this.makeStructAccess();
@@ -51,7 +55,6 @@ export class Tokenizer {
    * TODO: refactor and improve MAX_CALLS1 and MAX_CALLS2
    */
   private makeCellArrayAccess(): void {
-    return;
     const newList: Token[] = [];
     let MAX_CALLS1 = 0;
     let MAX_CALLS2 = 0;
@@ -59,7 +62,36 @@ export class Tokenizer {
 
     while (i < this.tokens.length && MAX_CALLS1 < MAX_TOKENS_CALLS) {
       if (this.isCellArrayAccessAt(i)) {
-        const cellArrayAccess = this.extractNestedCellArrayAccessNode(i + 2);
+        if (
+          this.tokens[i + 2].type !== 'IDENTIFIER' &&
+          this.tokens[i + 2].type !== 'CELL_ARRAY_ACCESS' &&
+          this.tokens[i + 2].type !== 'STRUCT_ACCESS' &&
+          this.tokens[i + 2].type !== 'NUMBER' &&
+          this.tokens[i + 2].type !== 'COLON'
+        ) {
+          // TODO: move this function to the parser and check for the correct
+          // types
+          newList.push(this.tokens[i]);
+          i++;
+          continue;
+        }
+
+        const newCellArrayAccess: Token = {
+          type: 'CELL_ARRAY_ACCESS',
+          content: [this.tokens[i], this.tokens[i + 2]],
+          position: {
+            start: this.tokens[i].position?.start ?? CERO_POSITION.start,
+            end: this.tokens[i + 3].position?.start ?? CERO_POSITION.start,
+          },
+        };
+
+        console.log(
+          `Found new cell array access: ${JSON.stringify(newCellArrayAccess)}`,
+        );
+
+        newList.push(newCellArrayAccess);
+        i = i + 4;
+        continue;
       } else {
         newList.push(this.tokens[i]);
         i++;
