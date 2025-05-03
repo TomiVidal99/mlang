@@ -1,8 +1,9 @@
-import fs from 'fs';
-import path from 'path';
 import { pathToFileURL } from 'url';
 import { TextDocument } from 'vscode-languageserver-textdocument';
 import { getAllMFiles } from '.';
+
+const fs = require('fs');
+const path = require('path');
 
 export function getFilesInWorkspace({
   workspace,

@@ -181,9 +181,7 @@ export class Parser {
           type: 'IDENTIFIER',
           value: currToken.content,
           position,
-          functionData: {
-            args,
-          },
+          functionData: { args },
         },
       };
     } else if (
@@ -253,17 +251,12 @@ export class Parser {
           operator: '=',
           supressOutput,
           context: this.getCurrentContext(),
-          LHE: {
-            type: 'VARIABLE_VECTOR',
-            value: vectorArgs,
-          },
+          LHE: { type: 'VARIABLE_VECTOR', value: vectorArgs },
           RHE: {
             type: 'FUNCTION_CALL',
             position: this.getCurrentPosition(functionIdentifier),
             value: functionIdentifier.content,
-            functionData: {
-              args,
-            },
+            functionData: { args },
           },
         };
       }
@@ -279,8 +272,16 @@ export class Parser {
       const next2Token = this.getNextToken();
       this.getPrevToken();
       this.getPrevToken();
-      if (next2Token === undefined)
+
+      if (next2Token === undefined) {
+        this.errors.push({
+          code: ERROR_CODES.UNDEFINED_TOKEN,
+          message: 'Unexpected undefined token',
+          range: nextToken.position ?? currToken.position ?? CERO_POSITION,
+        });
         throw new Error('Unexpected undefined token. Code 60'); // TODO: better handle this
+      }
+
       if (nextToken.type === 'IDENTIFIER' && next2Token.type === 'EQUALS') {
         return this.getFunctionDefintionWithOutput(true);
       } else if (nextToken.type === 'LBRACKET') {
@@ -370,9 +371,7 @@ export class Parser {
           type: 'FUNCTION_CALL',
           position: this.getCurrentPosition(currToken),
           value: currToken.content,
-          functionData: {
-            args,
-          },
+          functionData: { args },
         },
       };
     } else {
@@ -985,10 +984,7 @@ export class Parser {
     return {
       type: 'CELL_ARRAY',
       content: args,
-      position: {
-        start: initPos,
-        end: this.getCurrentPosition().end,
-      },
+      position: { start: initPos, end: this.getCurrentPosition().end },
     };
   }
 
@@ -1500,16 +1496,10 @@ export class Parser {
       case 'STRING':
       case 'VECTOR':
         isValidBinary = false;
-        lho = {
-          type: currToken.type,
-          value: currToken.content,
-        };
+        lho = { type: currToken.type, value: currToken.content };
         break;
       case 'NUMBER':
-        lho = {
-          type: currToken.type,
-          value: currToken.content,
-        };
+        lho = { type: currToken.type, value: currToken.content };
         break;
       case 'NATIVE_FUNCTION':
       case 'IDENTIFIER':
@@ -1540,9 +1530,7 @@ export class Parser {
           type: 'ANONYMOUS_FUNCTION_DEFINITION',
           value: '@',
           position: this.getCurrentPosition(currToken),
-          functionData: {
-            args,
-          },
+          functionData: { args },
           RHO: expr,
         };
       }
@@ -1560,18 +1548,12 @@ export class Parser {
         break;
       case 'LBRACKET':
         // VECTOR
-        return {
-          type: 'VARIABLE_VECTOR',
-          value: this.getVectorArgs()[0],
-        };
+        return { type: 'VARIABLE_VECTOR', value: this.getVectorArgs()[0] };
       case 'LSQUIRLY': {
         // CELL_ARRAY
         const struct = this.parseCellArray();
         if (struct === null) return;
-        return {
-          type: 'CELL_ARRAY',
-          value: struct?.content,
-        };
+        return { type: 'CELL_ARRAY', value: struct?.content };
       }
       case 'NL':
         this.errors.push({
@@ -1732,9 +1714,7 @@ export class Parser {
       type: 'FUNCTION_CALL',
       value: functionNameToken.content,
       position: this.getCurrentPosition(functionNameToken),
-      functionData: {
-        args,
-      },
+      functionData: { args },
     };
   }
 
@@ -1989,10 +1969,7 @@ export class Parser {
    */
   public makeAST(): Program {
     if (this.tokens.length < 4)
-      return {
-        type: 'Program',
-        body: this.statements,
-      };
+      return { type: 'Program', body: this.statements };
     let statementsCounter = 0;
     do {
       const statement = this.parseStatement();
@@ -2014,10 +1991,7 @@ export class Parser {
       // throw new Error("Maximum amount of statements reached."); // TODO: should i throw???
     }
 
-    return {
-      type: 'Program',
-      body: this.statements,
-    };
+    return { type: 'Program', body: this.statements };
   }
 
   /**

@@ -124,13 +124,13 @@ connection?.onExit(() => {
 export function updateDocumentData(uri: string, updatedText?: string): void {
   // Clear any previously scheduled diagnostic updates for this document
 
-  console.error('Updating file!');
+  connection?.console.log('Updating file!');
 
   if (documentChanges.has(uri)) {
     clearTimeout(documentChanges.get(uri));
   }
 
-  console.error('Setting timeout');
+  connection?.console.log('Setting timeout');
 
   // Schedule a new diagnostic update after a delay (e.g., 500 ms)
   documentChanges.set(

@@ -20,6 +20,7 @@ export class Tokenizer {
   private readonly tokens: Token[] = [];
   private readonly keywords = getKeywordsFromCompletion();
   private readonly nativeFunctions = getNataiveFunctionsList();
+  private errors: string[] = [];
 
   constructor(text = '') {
     this.text = text;
@@ -75,7 +76,12 @@ export class Tokenizer {
           // types
           newList.push(this.tokens[i]);
           i++;
-          throw new Error(`Argument of cell array it's not valid. ${this.tokens[i+2].type}`)
+          this.errors.push(
+            `Argument of cell array it's not valid. ${this.tokens[i + 2].type}`,
+          );
+          throw new Error(
+            `Argument of cell array it's not valid. ${this.tokens[i + 2].type}`,
+          );
         }
 
         const newCellArrayAccess: Token = {
@@ -104,6 +110,7 @@ export class Tokenizer {
     // console.log('tok: ' + JSON.stringify(newList.map((t) => t.type)));
 
     if (MAX_CALLS >= MAX_TOKENS_CALLS) {
+      this.errors.push('Max calls reached while processing cell array acess.');
       throw new Error('Max calls reached while processing cell array acess.');
     }
 
@@ -238,6 +245,7 @@ export class Tokenizer {
     }
 
     if (counter >= MAX_TOKENS_CALLS) {
+      this.errors.push('Tokens calls exeeded.');
       throw new Error(
         'Tokens calls exeeded. ' +
           JSON.stringify(this.text) +
@@ -256,7 +264,7 @@ export class Tokenizer {
    */
   public getNextToken(): Token {
     // ignore spaces and jump lines
-    while (this.currChar === ' ') {
+    while (this.currChar === ' ' || this.currChar === '\r') {
       this.readChar();
     }
 
@@ -378,7 +386,7 @@ export class Tokenizer {
     do {
       comment += this.currChar;
       this.readChar();
-    } while (this.currChar !== '\n' && this.currPos < this.text.length);
+    } while (this.currChar !== '\n' && this.currChar !== '\r'  && this.currPos < this.text.length);
     return comment;
   }
 
@@ -511,6 +519,14 @@ export class Tokenizer {
   }
 
   /**
+   * Just the errors to check that everything ran well
+   * @returns errors - in form of string[]
+   */
+  public getErrors(): string[] {
+    return this.errors;
+  }
+
+  /**
    * Gets a literal string from the text.
    */
   private readLiteralString(): string {
@@ -522,6 +538,7 @@ export class Tokenizer {
     } while (
       this.currChar !== '"' &&
       this.currChar !== "'" &&
+      this.currChar !== "\r" &&
       this.currChar !== '\n' &&
       this.currPos < this.text.length
     );

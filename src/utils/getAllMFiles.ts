@@ -1,5 +1,5 @@
-import fs from 'fs';
-import path from 'path';
+const fs = require('fs');
+const path = require('path');
 
 /**
  * Returns all the paths of all .m files in the given folder
@@ -11,6 +11,9 @@ export function getAllMFiles(srcPath: string): string[] {
 
   function traverseDir(currentDir: string) {
     const dirEntries = fs.readdirSync(currentDir, { withFileTypes: true });
+    // console.error(`currentDir: ${JSON.stringify(currentDir)}`);
+    // console.error(`dirEntries: ${JSON.stringify(dirEntries)}`);
+
     for (const dirEntry of dirEntries) {
       // const fullPath = `${currentDir}/${dirEntry.name}`;
       const fullPath = path.join(currentDir, dirEntry.name);

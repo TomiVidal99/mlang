@@ -13,6 +13,7 @@
     "test": "cross-env NODE_ENV=dev bun test",
     "test-watch": "cross-env NODE_ENV=dev bun test --watch",
     "compile": "esbuild src/server.ts --minify-whitespace --minify-identifiers --minify-syntax  --legal-comments=none  --analyze  --platform=node --bundle --outfile=./out/server.js && cp -f out/server.js client/server/server.js",
+    "windows:compile": "esbuild src/server.ts --minify-whitespace --minify-identifiers --minify-syntax --legal-comments=none --analyze --platform=node --bundle --outfile=./out/server.js && copy /Y out\\server.js client\\server\\server.js",
     "build": "tsc ./client/src/extension.ts --outDir ./client/out/",
     "watch": "tsc ./client/src/extension.ts -w --outDir ./client/out/",
     "publish-extension": "cd client && vsce publish"
@@ -22,20 +23,22 @@
     "url": "https://github.com/TomiVidal99/mlang"
   },
   "dependencies": {
-    "@types/node": "18.15.5",
-    "@types/recursive-readdir": "2.2.1",
+    "@types/debug": "^4.1.12",
+    "@types/node": "22.15.3",
+    "@types/recursive-readdir": "2.2.4",
     "cross-env": "^7.0.3",
-    "esbuild": "0.17.14",
-    "prettier-eslint": "16.1.2",
+    "debug": "^4.4.0",
+    "esbuild": "0.25.3",
+    "prettier-eslint": "16.4.1",
     "recursive-readdir": "2.2.3",
     "typescript": "*",
-    "vscode-languageclient": "9.0.1",
-    "vscode-languageserver": "8.1.0",
-    "vscode-languageserver-textdocument": "1.0.8",
-    "vscode-uri": "3.0.7"
+    "vscode-languageclient": "^9.0.1",
+    "vscode-languageserver": "9.0.1",
+    "vscode-languageserver-textdocument": "1.0.12",
+    "vscode-uri": "3.1.0"
   },
   "devDependencies": {
-    "bun-types": "1.0.7",
-    "oxlint": "^0.3.5"
+    "bun-types": "1.2.11",
+    "oxlint": "^0.16.8"
   }
 }

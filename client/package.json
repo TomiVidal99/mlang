@@ -15,6 +15,25 @@
   ],
   "main": "./out/extension.js",
   "contributes": {
+    "languages": [
+      {
+        "id": "octave",
+        "extensions": [
+          ".m"
+        ],
+        "aliases": [
+          "Octave",
+          "octave"
+        ]
+      }
+    ],
+    "grammars": [
+      {
+        "language": "octave",
+        "scopeName": "source.octave",
+        "path": "./syntaxes/octave.tmLanguage.json"
+      }
+    ],
     "commands": [
       {
         "command": "mlang.restart",
@@ -39,16 +58,16 @@
     "test": "node ./out/test/runTest.js"
   },
   "devDependencies": {
-    "@types/mocha": "^10.0.2",
-    "@types/node": "18.x",
-    "@types/vscode": "^1.83.0",
-    "@typescript-eslint/eslint-plugin": "^6.7.3",
-    "@typescript-eslint/parser": "^6.7.3",
-    "@vscode/test-electron": "^2.3.4",
-    "eslint": "^8.50.0",
-    "glob": "^10.3.3",
-    "mocha": "^10.2.0",
-    "typescript": "^5.2.2"
+    "@types/mocha": "^10.0.10",
+    "@types/node": "22.x",
+    "@types/vscode": "^1.99.1",
+    "@typescript-eslint/eslint-plugin": "^8.31.1",
+    "@typescript-eslint/parser": "^8.31.1",
+    "@vscode/test-electron": "^2.5.2",
+    "eslint": "^9.26.0",
+    "glob": "^11.0.2",
+    "mocha": "^11.2.2",
+    "typescript": "^5.8.3"
   },
   "dependencies": {
     "vscode-languageclient": "^9.0.1"

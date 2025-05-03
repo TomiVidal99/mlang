@@ -21,6 +21,8 @@ export function handleCompletion({
   const { definitions } = visitor;
   const nativeFunctions = getCompletionNativeFunctions();
 
+  console.error('Calling completion!');
+
   // NATIVE FUNCTION
   items.push(...nativeFunctions);
 
