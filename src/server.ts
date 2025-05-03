@@ -33,7 +33,7 @@ export const visitors = new Map<string, Visitor>();
 const documentChanges = new Map<string, NodeJS.Timer>();
 
 documents.onDidChangeContent((change) => {
-  updateDocumentData(change.document.uri, change.document.getText());
+      updateDocumentData(change.document.uri, change.document.getText());
 });
 documents.onDidOpen((change) => {
   const text = change.document.getText();
@@ -127,7 +127,7 @@ export function updateDocumentData(uri: string, updatedText?: string): void {
   connection?.console.log('Updating file!');
 
   if (documentChanges.has(uri)) {
-    clearTimeout(documentChanges.get(uri));
+      clearTimeout(documentChanges.get(uri));
   }
 
   connection?.console.log('Setting timeout');

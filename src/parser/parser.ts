@@ -406,6 +406,133 @@ export class Parser {
     }
   }
 
+
+  /**
+   * Helper that sends an error if the arguments of a funcion call are wrong
+   */
+  private validateFnCallArgs(args: Token[]): void {
+    for (const arg of args) {
+      if (arg.type === "DEFAULT_VALUE_ARGUMENT") {
+        this.errors.push({
+          message: "Unexpected default value argument in function call",
+          range: arg.position,
+        });
+      }
+    }
+  }
+
+  /**
+   * Returns the list of tokens that are contained in an vector
+   * Also returns weather the vector it's declared with ':' or just ','
+   */
+  private getVectorArgs(): [Token[], "COMMA" | "COLON"] {
+    const tokens: Token[] = [];
+
+    if (this.getCurrentToken().type === "LBRACKET") this.getNextToken();
+
+    if (this.getCurrentToken().type === "RBRACKET") {
+      this.getNextToken();
+      return [[], "COMMA"];
+    }
+    if (this.getCurrentToken().type === "LBRACKET") {
+      tokens.push(this.getVector());
+      this.getPrevToken();
+    } else if (this.isTokenValidBasicDataType(this.getCurrentToken())) {
+      tokens.push(this.getCurrentToken());
+    }
+    const itsCommaSeparated = this.getNextToken().type === "COMMA";
+
+    if (itsCommaSeparated) {
+      tokens.push(...this.getVectorValuesCommaSeparated());
+    } else {
+      tokens.push(...this.getVectorValuesColonSeparated());
+    }
+
+    this.getNextToken();
+
+    return [
+      tokens,
+      itsCommaSeparated ? "COMMA" : "COLON"
+    ];
+  }
+
+  /**
+   * Helper that returns the value of a vector ':' separated
+   */
+  private getVectorValuesColonSeparated(): Token[] {
+    const tokens: Token[] = [];
+
+    while (this.getCurrentToken().type === "COLON" && tokens.length < 2) {
+      const nextValue = this.getNextToken();
+
+      if (nextValue.type === "LBRACKET") {
+        tokens.push(this.getVector(nextValue));
+        this.getPrevToken();
+      } else if (this.isTokenValidBasicDataType(nextValue)) {
+        tokens.push(nextValue);
+      }
+
+      this.getNextToken();
+    }
+
+    if (this.getCurrentToken().type !== "RBRACKET") {
+      this.errors.push({
+        message: "Unexpected vector value",
+        range: this.getCurrentToken().position,
+      });
+    }
+
+    return tokens;
+  }
+
+  public counter = 0;
+
+  /**
+   * Helper that returns a vector once a bracket it's found
+   */
+  private getVector(token?: Token): Token {
+    const [vectorArgs, _] = this.getVectorArgs();
+    const referenceToken = token ? token : this.getCurrentToken();
+    return {
+      type: "VECTOR",
+      content: vectorArgs,
+      position: {
+        start: referenceToken.position.start,
+        end: vectorArgs[vectorArgs.length - 1]?.position?.end ? vectorArgs[vectorArgs.length - 1]?.position?.end : referenceToken.position.end,
+      },
+    };
+  }
+
+  /**
+   * Helper that returns a list of tokens corresponding to
+   * a comma separated vector declaration
+   */
+  private getVectorValuesCommaSeparated(): Token[] {
+    const tokens: Token[] = [];
+
+    while (this.getCurrentToken().type === "COMMA") {
+      const nextValue = this.getNextToken();
+      if (nextValue.type === "LBRACKET") {
+        tokens.push(this.getVector(nextValue));
+        this.getPrevToken();
+      } else if (!this.isTokenValidBasicDataType(nextValue)) {
+        break;
+      } else {
+        tokens.push(nextValue);
+      }
+      this.getNextToken();
+    }
+
+    if (this.getCurrentToken().type !== "RBRACKET") {
+      this.errors.push({
+        message: "Unexpected vector value",
+        range: this.getCurrentToken().position,
+      });
+    }
+
+    return tokens;
+  }
+
   /**
    * Parses the do until loop statement
    * WARN: expects that the current token it's the one after the 'do' Token

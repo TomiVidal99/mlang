@@ -1,3 +1,4 @@
+# (STILL UNDER DEVELOPMENT)
 # mlang (LSP for Octave) - version 2.0.0
 
 This is an implementation of the [Language Server Protocol](https://code.visualstudio.com/api/language-extensions/language-server-extension-guide) for the [Octave](https://octave.org/) programming language.
@@ -23,6 +24,8 @@ This is an implementation of the [Language Server Protocol](https://code.visuals
 ## How to setup in the client
 
 ### Neovim (lua)
+
+The _'path/to/server.js'_ is the path to the compiled version of the server, you can find it in [releases](https://github.com/TomiVidal99/mlang/releases/tag/v2.1.0) or by compiling it yourself.
 
 ```lua
 local lspconfig = require("lspconfig")
