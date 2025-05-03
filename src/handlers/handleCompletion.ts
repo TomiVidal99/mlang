@@ -1,11 +1,12 @@
 import {
   type CompletionItem,
-  CompletionItemKind,
   type TextDocumentPositionParams,
-  InsertTextFormat,
 } from 'vscode-languageserver';
-import { getCompletionKeywords } from '../data';
+import { getCompletionKeywords, getCompletionNativeFunctions } from '../data';
 import { visitors } from '../server';
+import { fromDefinitionToCompletionItem } from '../utils';
+import { type Visitor } from '../parser';
+import { docManager } from '../types/DocumentsManager';
 
 export function handleCompletion({
   params,
@@ -18,49 +19,38 @@ export function handleCompletion({
   if (visitor?.definitions === undefined) return items;
 
   const { definitions } = visitor;
+  const nativeFunctions = getCompletionNativeFunctions();
 
+  console.error('Calling completion!');
+
+  // NATIVE FUNCTION
+  items.push(...nativeFunctions);
+
+  // CURRENT FILES REFERENCES
   items.push(
     ...definitions
-      .map((def) => {
-        // TODO: think how to consider the completion based on the current cursor position
-        // console.log('def: ' + JSON.stringify(def));
-        const args =
-          def?.arguments?.length !== undefined && def?.arguments?.length > 0
-            ? def.arguments.map((d, i) => {
-                return (
-                  `${i !== 0 ? ' ' : ''}` +
-                  '${' +
-                  `${i + 1}:${d.name}${
-                    d.type !== 'DEFAULT_ARGUMENT' ? '' : ` = ${d.content}`
-                  }` +
-                  '}'
-                );
-              })
-            : '';
-        const insertText =
-          def.type !== 'FUNCTION'
-            ? def.name
-            : `${def.name}(${
-                (Array.isArray(args) ? args.map((a) => a) : args) as string
-              });`;
-        const item: CompletionItem = {
-          label: def.name,
-          kind:
-            def.type === 'FUNCTION'
-              ? CompletionItemKind.Function
-              : CompletionItemKind.Variable,
-          documentation: def.documentation,
-          data: def.arguments,
-          insertText,
-          insertTextFormat: InsertTextFormat.Snippet,
-        };
-        return item;
-      })
+      .map((def) => fromDefinitionToCompletionItem(def))
       .filter(
         (item, index, self) =>
           index === self.findIndex((i) => i.label === item.label),
       ),
   );
+
+  // REFERENCES IN FILES IN THE CURRENT DIR
+  const otherDocuments = docManager
+    .getAllUris()
+    .filter((uri) => uri !== params.textDocument.uri);
+
+  const _visitors = otherDocuments
+    .map((d) => visitors.get(d))
+    .filter((visitor) => visitor !== undefined) as Visitor[];
+
+  const otherFilesCompletionItems = _visitors
+    .flatMap((v) => v.definitions)
+    .filter((def) => def.context === '0')
+    .map((def) => fromDefinitionToCompletionItem(def));
+
+  items.push(...otherFilesCompletionItems);
 
   return items;
 }

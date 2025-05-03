@@ -1,5 +1,7 @@
 import { expect, test } from 'bun:test';
-import { Parser, Tokenizer, Visitor } from '..';
+import { Parser } from '../parser';
+import { Tokenizer } from '../tokenizer';
+import { Visitor } from '../visitor';
 
 test('Handle references: string, number and vector references', function () {
   const inputCode = `

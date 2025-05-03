@@ -1,5 +1,7 @@
 import { expect, test } from 'bun:test';
-import { Parser, Tokenizer, Visitor } from '..';
+import { Visitor } from '../visitor';
+import { Parser } from '../parser';
+import { Tokenizer } from '../tokenizer';
 
 test('Handle definitions: variable and functions', function () {
   const inputCode = `

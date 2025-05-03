@@ -1,31 +1,3 @@
-// {
-//   "version": "0.2.0",
-//   "configurations": [
-//     {
-//       "type": "node",
-//       "request": "launch",
-//       "name": "Launch Extension",
-//       "program": "${workspaceFolder}/client/extension.ts",
-//       "outFiles": [
-//         "${workspaceFolder}/client/out/**/*.js"
-//       ],
-//       "preLaunchTask": "npm: watch",
-//       "runtimeExecutable": "${workspaceFolder}/client/out/extension.js",
-//       "stopOnEntry": false,
-//       "args": [
-//         "--extensionDevelopmentPath=${workspaceFolder}/client",
-//         "--extensionTestsPath=${workspaceFolder}/client/out/test"
-//       ],
-//       "cwd": "${workspaceFolder}/client",
-//       "runtimeArgs": [
-//         "--nolazy"
-//       ],
-//       "env": {
-//         "NODE_ENV": "development"
-//       }
-//     }
-//   ]
-// }
 {
 	"version": "0.2.0",
 	"configurations": [
@@ -34,7 +6,7 @@
 			"request": "launch",
 			"name": "Launch Client",
 			"runtimeExecutable": "${execPath}",
-			"args": ["--extensionDevelopmentPath=${workspaceRoot}"],
+			"args": ["--extensionDevelopmentPath=${workspaceRoot}/client"],
 			"outFiles": ["${workspaceRoot}/client/out/**/*.js"],
 			"preLaunchTask": {
 				"type": "npm",

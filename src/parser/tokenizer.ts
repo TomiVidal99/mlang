@@ -1,3 +1,4 @@
+import { CERO_POSITION } from '../constants';
 import { type Token, getTokenFromSymbols } from '../types';
 import {
   getKeywordsFromCompletion,
@@ -19,6 +20,7 @@ export class Tokenizer {
   private readonly tokens: Token[] = [];
   private readonly keywords = getKeywordsFromCompletion();
   private readonly nativeFunctions = getNataiveFunctionsList();
+  private errors: string[] = [];
 
   constructor(text = '') {
     this.text = text;
@@ -31,6 +33,193 @@ export class Tokenizer {
     this.currChar = '';
     this.nextChar = '';
     this.tokens.length = 0;
+  }
+
+  /**
+   * It's called after all the tokenizing process has been done
+   * It creates some more complex tokens like STRUCT_ACCESS
+   *
+   * This is "actually" work that the parser should do,
+   * but to make it simpler to code I did it here.
+   * Eventually it would "better" to take it to the parser
+   */
+  private postTokenizationHook(): void {
+    this.makeStructAccess();
+    this.makeCellArrayAccess();
+    this.makeIdentifierReferences();
+  }
+
+  /**
+   * Makes the more complex token of the CELL_ARRAY_ACCESS
+   * example: myCellArray{2} -> IDENTIFIER, 'LSQUIRLY', n amount of basic types
+   * comma separated or : (myCellArray{:})
+   * TODO: refactor and improve MAX_CALLS1
+   */
+  private makeCellArrayAccess(): void {
+    const newList: Token[] = [];
+    let MAX_CALLS = 0;
+    let i = 0;
+
+    // a.b.c("test", @myFunc);
+
+    while (i < this.tokens.length && MAX_CALLS < MAX_TOKENS_CALLS) {
+      if (this.isCellArrayAccessAt(i)) {
+        if (
+          this.tokens[i + 2].type !== 'IDENTIFIER' &&
+          this.tokens[i + 2].type !== 'CELL_ARRAY_ACCESS' &&
+          this.tokens[i + 2].type !== 'STRUCT_ACCESS' &&
+          this.tokens[i + 2].type !== 'NUMBER' &&
+          this.tokens[i + 2].type !== 'STRING' &&
+          this.tokens[i + 2].type !== 'COLON'
+        ) {
+          // TODO: move this function to the parser and check for the correct
+          // types
+          newList.push(this.tokens[i]);
+          i++;
+          this.errors.push(
+            `Argument of cell array it's not valid. ${this.tokens[i + 2].type}`,
+          );
+          throw new Error(
+            `Argument of cell array it's not valid. ${this.tokens[i + 2].type}`,
+          );
+        }
+
+        const newCellArrayAccess: Token = {
+          type: 'CELL_ARRAY_ACCESS',
+          content: [this.tokens[i], this.tokens[i + 2]],
+          position: {
+            start: this.tokens[i].position?.start ?? CERO_POSITION.start,
+            end: this.tokens[i + 3].position?.start ?? CERO_POSITION.start,
+          },
+        };
+
+        // console.log(
+        //   `Found new cell array access: ${JSON.stringify(newCellArrayAccess)}`,
+        // );
+
+        newList.push(newCellArrayAccess);
+        i = i + 4;
+        continue;
+      } else {
+        newList.push(this.tokens[i]);
+        i++;
+        continue;
+      }
+    }
+
+    // console.log('tok: ' + JSON.stringify(newList.map((t) => t.type)));
+
+    if (MAX_CALLS >= MAX_TOKENS_CALLS) {
+      this.errors.push('Max calls reached while processing cell array acess.');
+      throw new Error('Max calls reached while processing cell array acess.');
+    }
+
+    this.tokens.length = 0;
+    this.tokens.push(...newList);
+  }
+
+  /**
+   * Checks weather there is or not an array access at the given position
+   */
+  private isCellArrayAccessAt(i: number) {
+    return (
+      i < this.tokens.length - 2 &&
+      (this.tokens[i].type === 'IDENTIFIER' ||
+        this.tokens[i].type === 'STRUCT_ACCESS' ||
+        this.tokens[i].type === 'CELL_ARRAY_ACCESS') &&
+      this.tokens[i + 1].type === 'LSQUIRLY'
+    );
+  }
+
+  /**
+   * Checks weather the given Token it's of type:
+   * 'NUMBER' | 'IDENTIFIER' | 'STRUCT_ACCESS' | 'CELL_ARRAY_ACCESS'
+   * TODO: is there any other type that can access an struct access??? (idk)
+   */
+  private isBasicTokenData(token: Token): boolean {
+    return (
+      token.type === 'NUMBER' ||
+      token.type === 'STRING' ||
+      token.type === 'IDENTIFIER' ||
+      token.type === 'STRUCT_ACCESS' ||
+      token.type === 'CELL_ARRAY_ACCESS'
+    );
+  }
+
+  /**
+   * Makes the more complex tokens IDENTIFIER_REFERENCEs
+   */
+  private makeIdentifierReferences(): void {
+    const newList: Token[] = [];
+    let i = 0;
+    while (i < this.tokens.length) {
+      if (
+        i < this.tokens.length - 1 &&
+        this.tokens[i].type === 'AT' &&
+        this.tokens[i + 1].type === 'IDENTIFIER'
+      ) {
+        newList.push({
+          type: 'IDENTIFIER_REFERENCE',
+          position: {
+            start: this.tokens[i].position?.start ?? CERO_POSITION.start,
+            end: this.tokens[i + 1].position?.end ?? CERO_POSITION.end,
+          },
+          content: [this.tokens[i], this.tokens[i + 1]],
+        });
+        i = i + 2;
+      } else {
+        newList.push(this.tokens[i]);
+        i++;
+      }
+    }
+
+    this.tokens.length = 0;
+    this.tokens.push(...newList);
+  }
+
+  /**
+   * Makes STRUCT_ACCESS out of more basic tokens in the tokens list
+   */
+  private makeStructAccess(): void {
+    const newList: Token[] = [];
+    let i = 0;
+    while (i < this.tokens.length) {
+      if (
+        i < this.tokens.length - 3 &&
+        this.tokens[i].type === 'IDENTIFIER' &&
+        this.tokens[i + 1].type === 'PERIOD' &&
+        this.tokens[i + 2].type === 'IDENTIFIER'
+      ) {
+        let lastTokenIndex = i + 2;
+        const content = [
+          this.tokens[i],
+          this.tokens[i + 1],
+          this.tokens[i + 2],
+        ];
+        while (
+          lastTokenIndex < this.tokens.length - 3 &&
+          this.tokens[lastTokenIndex + 1].type === 'PERIOD' &&
+          this.tokens[lastTokenIndex + 2].type === 'IDENTIFIER'
+        ) {
+          lastTokenIndex = lastTokenIndex + 2;
+        }
+        const structAccess: Token = {
+          type: 'STRUCT_ACCESS',
+          content,
+          position: {
+            start: this.tokens[i].position?.start ?? CERO_POSITION.start,
+            end: content[content.length - 1].position?.end ?? CERO_POSITION.end,
+          },
+        };
+        newList.push(structAccess);
+        i = lastTokenIndex + 1;
+      } else {
+        newList.push(this.tokens[i]);
+        i++;
+      }
+    }
+    this.tokens.length = 0;
+    this.tokens.push(...newList);
   }
 
   /**
@@ -47,17 +236,16 @@ export class Tokenizer {
    * TODO: maybe update this to use this.tokens??
    */
   public getAllTokens(): Token[] {
-    const tokens: Token[] = [];
+    // const tokens: Token[] = [];
     let counter = 0;
-    do {
-      tokens.push(this.getNextToken());
+    let currentToken: Token = this.getNextToken();
+    while (currentToken.type !== 'EOF' && counter <= MAX_TOKENS_CALLS) {
+      currentToken = this.getNextToken();
       counter++;
-    } while (
-      tokens[tokens.length - 1].type !== 'EOF' &&
-      counter <= MAX_TOKENS_CALLS
-    );
+    }
 
     if (counter >= MAX_TOKENS_CALLS) {
+      this.errors.push('Tokens calls exeeded.');
       throw new Error(
         'Tokens calls exeeded. ' +
           JSON.stringify(this.text) +
@@ -66,7 +254,9 @@ export class Tokenizer {
       );
     }
 
-    return tokens;
+    this.postTokenizationHook();
+
+    return this.tokens;
   }
 
   /**
@@ -74,7 +264,7 @@ export class Tokenizer {
    */
   public getNextToken(): Token {
     // ignore spaces and jump lines
-    while (this.currChar === ' ') {
+    while (this.currChar === ' ' || this.currChar === '\r') {
       this.readChar();
     }
 
@@ -90,6 +280,8 @@ export class Tokenizer {
     }
 
     if (this.currChar === '#' || this.currChar === '%') {
+      const codeBreakToken = this.isCodeBreak();
+      if (codeBreakToken !== undefined) return this.addToken(codeBreakToken);
       const comment = this.readComment();
       return this.addToken({
         type: 'COMMENT',
@@ -128,6 +320,23 @@ export class Tokenizer {
         content: 'illegal',
         position: this.getPositionAfterCursor(this.currChar),
       });
+    }
+  }
+
+  /**
+   * Helper that checks weather the current token and the next one
+   * correspods to a code break type. (## or %%)
+   * TODO: ## only works for octave.
+   */
+  private isCodeBreak(): Token | undefined {
+    const codeBreak = `${this.currChar}${this.nextChar}`;
+    if (codeBreak === '##' || codeBreak === '%%') {
+      const content = this.readComment();
+      return {
+        type: 'CODE_BREAK',
+        content,
+        position: this.getPositionAfterCursor(content),
+      };
     }
   }
 
@@ -177,7 +386,7 @@ export class Tokenizer {
     do {
       comment += this.currChar;
       this.readChar();
-    } while (this.currChar !== '\n' && this.currPos < this.text.length);
+    } while (this.currChar !== '\n' && this.currChar !== '\r'  && this.currPos < this.text.length);
     return comment;
   }
 
@@ -310,6 +519,14 @@ export class Tokenizer {
   }
 
   /**
+   * Just the errors to check that everything ran well
+   * @returns errors - in form of string[]
+   */
+  public getErrors(): string[] {
+    return this.errors;
+  }
+
+  /**
    * Gets a literal string from the text.
    */
   private readLiteralString(): string {
@@ -321,6 +538,7 @@ export class Tokenizer {
     } while (
       this.currChar !== '"' &&
       this.currChar !== "'" &&
+      this.currChar !== "\r" &&
       this.currChar !== '\n' &&
       this.currPos < this.text.length
     );

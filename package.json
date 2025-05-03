@@ -1,53 +1,44 @@
 {
   "name": "mlang",
   "description": "LSP implementation for octave programming language",
-  "version": "2.3.0",
+  "version": "3.0.1",
   "author": "Tomás Vidal",
   "license": "MIT",
   "publisher": "mlang",
   "engines": {
     "node": "*"
   },
+  "scripts": {
+    "test-single-test": "bun test -t 'your-test-name-here'",
+    "test": "cross-env NODE_ENV=dev bun test",
+    "test-watch": "cross-env NODE_ENV=dev bun test --watch",
+    "compile": "esbuild src/server.ts --minify-whitespace --minify-identifiers --minify-syntax  --legal-comments=none  --analyze  --platform=node --bundle --outfile=./out/server.js && cp -f out/server.js client/server/server.js",
+    "windows:compile": "esbuild src/server.ts --minify-whitespace --minify-identifiers --minify-syntax --legal-comments=none --analyze --platform=node --bundle --outfile=./out/server.js && copy /Y out\\server.js client\\server\\server.js",
+    "build": "tsc ./client/src/extension.ts --outDir ./client/out/",
+    "watch": "tsc ./client/src/extension.ts -w --outDir ./client/out/",
+    "publish-extension": "cd client && vsce publish"
+  },
   "repository": {
     "type": "git",
     "url": "https://github.com/TomiVidal99/mlang"
   },
   "dependencies": {
-    "@types/node": "18.15.5",
-    "@types/recursive-readdir": "2.2.1",
-    "@typescript-eslint/eslint-plugin": "6.4.0",
-    "@typescript-eslint/parser": "5.56.0",
-    "esbuild": "0.17.14",
-    "eslint-config-prettier": "9.0.0",
-    "eslint-config-standard": "17.1.0",
-    "eslint-plugin-node": "11.1.0",
-    "eslint-plugin-prettier": "5.0.1",
-    "eslint-plugin-standard": "5.0.0",
-    "eslint_d": "^13.0.0",
-    "prettier": "3.0.3",
-    "prettier-eslint": "16.1.2",
+    "@types/debug": "^4.1.12",
+    "@types/node": "22.15.3",
+    "@types/recursive-readdir": "2.2.4",
+    "cross-env": "^7.0.3",
+    "debug": "^4.4.0",
+    "esbuild": "0.25.3",
+    "prettier-eslint": "16.4.1",
     "recursive-readdir": "2.2.3",
     "typescript": "*",
-    "vscode-languageclient": "9.0.1",
-    "vscode-languageserver": "8.1.0",
-    "vscode-languageserver-textdocument": "1.0.8",
-    "vscode-uri": "3.0.7"
-  },
-  "scripts": {
-    "test-single-test": "bun test -t 'your-test-name-here'",
-    "test": "bun test",
-    "compile": "esbuild src/server.ts --platform=node --bundle --outfile=./out/server.js && cp out/server.js client/server/server.js",
-    "build": "tsc ./client/src/extension.ts --outDir ./client/out/",
-    "watch": "tsc ./client/src/extension.ts -w --outDir ./client/out/",
-    "lint": "eslint_d ./src --ext .ts",
-    "lint-fix": "eslint_d --fix ./src --ext .ts",
-    "publish-extension": "cd client && vsce publish"
+    "vscode-languageclient": "^9.0.1",
+    "vscode-languageserver": "9.0.1",
+    "vscode-languageserver-textdocument": "1.0.12",
+    "vscode-uri": "3.1.0"
   },
   "devDependencies": {
-    "bun-types": "1.0.7",
-    "eslint-config-standard-with-typescript": "39.1.1",
-    "eslint-plugin-import": "2.25.2",
-    "eslint-plugin-n": "15.0.0 || 16.0.0 ",
-    "eslint-plugin-promise": "6.0.0"
+    "bun-types": "1.2.11",
+    "oxlint": "^0.16.8"
   }
 }

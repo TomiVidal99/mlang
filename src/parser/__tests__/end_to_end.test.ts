@@ -1,5 +1,7 @@
 import { test, expect } from 'bun:test';
-import { Tokenizer, Visitor, Parser } from '..';
+import { Visitor } from '../visitor';
+import { Parser } from '../parser';
+import { Tokenizer } from '../tokenizer';
 
 test('End 2 end test, should get references and definitions of whole file', function () {
   const fileContent = `
@@ -31,7 +33,7 @@ function [a, b, c] = func2(def = 20, a = "str value", setting = "lkjasldkjald")
 
 end
 
-func2(def = 20, "value 1", setting = "str 2");
+func2(def2 = 20, "value 1", setting2 = "str 2");
 
 func1();
 
@@ -44,7 +46,7 @@ vectorVariable = ["alskdjasldkj", 'm', 'd'];
   const ast = parser.makeAST();
   const visitor = new Visitor();
   visitor.visitProgram(ast);
-  const { references, definitions } = visitor;
+  const { references } = visitor;
   const errors = parser.getErrors();
 
   if (errors.length > 0) {
@@ -89,33 +91,12 @@ vectorVariable = ["alskdjasldkj", 'm', 'd'];
     'a',
     'setting',
     'func2',
+    'def2',
+    'setting2',
     'func1',
     'vectorVariable',
   ];
-  const expectedDefinitions: string[] = [];
-  // const expectedDefinitions: string[] = [
-  //   'a',
-  //   'a',
-  //   'b',
-  //   'c',
-  //   'a',
-  //   'a',
-  //   'b',
-  //   'a',
-  //   'a',
-  //   'funcTest',
-  //   'b',
-  //   'c',
-  //   'a',
-  //   'abcd',
-  //   'abcd',
-  //   'a',
-  //   'b',
-  //   'c',
-  //   'func2',
-  //   'def',
-  //   'setting',
-  // ];
+  // const expectedDefinitions: string[] = [];
 
   // console.log('REFERENCES: ' + JSON.stringify(references));
 

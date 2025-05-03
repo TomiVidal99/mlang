@@ -2,6 +2,7 @@ import {
   type CompletionItem,
   CompletionItemKind,
   MarkupKind,
+  InsertTextFormat,
 } from 'vscode-languageserver';
 
 export function getCompletionNativeFunctions(): CompletionItem[] {
@@ -53,6 +54,9 @@ export function getCompletionNativeFunctions(): CompletionItem[] {
     },
     {
       label: 'struct',
+      // eslint-disable-next-line no-template-curly-in-string
+      insertText: 'struct(${1:var});',
+      insertTextFormat: InsertTextFormat.Snippet,
       kind: CompletionItemKind.Function,
       documentation: {
         kind: MarkupKind.Markdown,

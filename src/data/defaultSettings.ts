@@ -4,8 +4,10 @@ import * as os from 'os';
 export interface ISettings {
   maxNumberOfProblems: number;
   maxFilesSearchDepth: number;
-  defaultInitFile: string;
   enableInitFile: boolean;
+  defaultInitFile: string;
+  defaultExecPath: string;
+  defaultDebounceTimeMS: number;
 }
 
 /**
@@ -30,14 +32,15 @@ function getDefaultInitFile(): string {
 // Please note that this is not the case when using this server with the client provided in this example
 // but could happen with other clients.
 export const defaultSettings: ISettings = {
-  // TODO: implement these settings
-  maxNumberOfProblems: 200,
+  maxNumberOfProblems: 1000,
   maxFilesSearchDepth: 3,
   defaultInitFile: getDefaultInitFile(),
   enableInitFile: false,
+  defaultExecPath: '/usr/bin/octave', // TODO: actually integrate this
+  defaultDebounceTimeMS: 1000,
 };
 
 export let globalSettings: ISettings = defaultSettings;
-export function updateGlobalSettings(settings: ISettings) {
+export function updateGlobalSettings(settings: ISettings): void {
   globalSettings = settings;
 }

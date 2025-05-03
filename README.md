@@ -53,14 +53,19 @@ end
 
 ## TODO
 
+- [ ] FIX: struct access can be of INDENTIFER.("string")
+- [ ] FIX: if statements not working when there's a comment before the end keyword.
+- [ ] ADD: reference checking for IDENTIFIER_REFERENCE.
+- [ ] FIX: function composition not working correctly.
+- [ ] FIX: structs can be accessed inside vector outputs: '[a.x] = myFunc()'.
+- [ ] ADD: an option for selecting octave or matlab mode, there are certain things that only work on octave.
+- [ ] ADD: message for missing arguments?
+- [ ] FIX: consider all the statements inside BasicStatements when finding references and definitions.
+- [ ] FIX: linting messages are not correctly positioned.
 - [ ] FIX: statements can have expression within the conditions. if (3+1 == 4) etc.
-- [ ] FIX: use INFO instead of WARN in ';' missing message.
-- [ ] FIX: documentation not showing for function definitions.
 - [ ] MAYBE: instead of creating new instances of Tokenizer, Parser and Visitor, reuse the same.
 - [ ] FIX: 'x(1)' it's not just a function call, it could be a vector (eventually add checking that the element accessed it's valid).
-- [ ] FIX: structs can be accessed inside vector outputs: '[a.x] = myFunc()'.
 - [ ] FIX: add more keywords like: 'global'.
-- [ ] FIX: functions with no parenthesis are not getting recognized.
 - [ ] ADD: diagnostics for: redefined functions, missing imports.
 - [ ] ADD: references to files.
 - [ ] ADD: block comments.
@@ -78,6 +83,10 @@ end
 ### _Reference_ or _Keyword_ not found
 
 If a reference or a keyword it's not found and it should because it's defined by default by the language you simply add it in _'./src/data/completionKeywords.ts'_.
+
+## Developer notes
+
+If you want to log information into the VSCode output you can use `console.error()` and you'll see it in the error output terminal of the LSP in VSCode.
 
 ## Contributors
 

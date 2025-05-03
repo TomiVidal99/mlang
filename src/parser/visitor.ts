@@ -1,5 +1,5 @@
 import type { Range } from 'vscode-languageserver';
-import { CERO_POSITION } from '../constants';
+import { CERO_POSITION, ERROR_CODES } from '../constants';
 import {
   type Expression,
   type Program,
@@ -9,11 +9,20 @@ import {
   type ReferenceType,
   type Definition,
   type StatementType,
+  type LintingError,
+  LintingWarning,
 } from '../types';
+import {
+  addNewDocumentFromPath,
+  cleanStringArg,
+  getNataiveFunctionsList,
+} from '../utils';
 
 export class Visitor {
-  public references: Reference[] = [];
-  public definitions: Definition[] = [];
+  public readonly references: Reference[] = [];
+  public readonly definitions: Definition[] = [];
+  private readonly errors: LintingError[] = [];
+  private warnings: LintingWarning[] = [];
 
   /**
    * Entry point: it extracts all the references and definitions from a Program
@@ -22,6 +31,14 @@ export class Visitor {
     for (const statement of node.body) {
       this.visitStatement(statement);
     }
+    this.finishHook();
+  }
+
+  /**
+   * Get the errors found during visiting
+   */
+  public getErrors(): LintingError[] {
+    return this.errors;
   }
 
   private visitStatement(node: Statement): void {
@@ -30,27 +47,52 @@ export class Visitor {
       case 'ASSIGNMENT':
         if (node.LHE === undefined) return;
         if (node.LHE.type === 'FUNCTION_DEFINITION') {
-          this.visitExpression(node.LHE, 'ASSIGNMENT');
+          this.visitExpression(node.LHE, 'ASSIGNMENT', node.context);
         } else {
-          this.visitExpression(node.LHE, 'ASSIGNMENT');
-          this.visitExpression(node.RHE as Expression, 'ASSIGNMENT', false);
+          this.visitExpression(node.LHE, 'ASSIGNMENT', node.context);
+          this.visitExpression(
+            node.RHE as Expression,
+            'ASSIGNMENT',
+            node.context,
+            false,
+          );
         }
         break;
       case 'FUNCTION_DEFINITION':
         if (node.LHE === undefined) return;
-        this.visitExpression(node.LHE, 'FUNCTION_DEFINITION');
+        this.visitExpression(node.LHE, 'FUNCTION_DEFINITION', node.context);
         (node?.RHE as Statement[]).forEach((statement) => {
           this.visitStatement(statement);
         });
         break;
       case 'MO_ASSIGNMENT':
         if (node.LHE === undefined) return;
-        this.visitExpression(node.LHE, 'MO_ASSIGNMENT');
-        this.visitExpression(node.RHE as Expression, 'MO_ASSIGNMENT', false);
+        this.visitExpression(node.LHE, 'MO_ASSIGNMENT', node.context);
+        this.visitExpression(
+          node.RHE as Expression,
+          'MO_ASSIGNMENT',
+          node.context,
+          false,
+        );
         break;
       case 'FUNCTION_CALL':
         if (node?.LHE === undefined) return;
-        this.visitExpression(node.LHE, 'FUNCTION_CALL');
+        this.visitExpression(node.LHE, 'FUNCTION_CALL', node.context);
+        break;
+      case 'REFERENCE_CALL_VAR_FUNC':
+        if (node?.LHE === undefined) return;
+        this.visitExpression(node.LHE, 'REFERENCE_CALL_VAR_FUNC', node.context);
+        break;
+      case 'FOR_STMNT':
+        if (node?.LHE === undefined) return;
+        this.visitExpression(node.LHE, 'FOR_STMNT', node.context);
+      case 'IF_STMNT':
+      case 'DO_STMNT':
+      case 'SWITCH_STMNT':
+      case 'WHILE_STMNT':
+        (node?.RHE as Statement[]).forEach((statement) => {
+          this.visitStatement(statement);
+        });
         break;
     }
   }
@@ -58,6 +100,7 @@ export class Visitor {
   private visitExpression(
     node: Expression,
     parentType: StatementType | null,
+    context: string,
     isLHE = true,
   ): void {
     if (node === undefined || node === null) return;
@@ -93,6 +136,7 @@ export class Visitor {
                       content,
                       position,
                       documentation: '', // TODO think if i should get the documentation
+                      context,
                     };
                     this.definitions.push(def);
                     return def;
@@ -105,6 +149,7 @@ export class Visitor {
             type: parentType === 'ASSIGNMENT' ? 'VARIABLE' : 'FUNCTION',
             documentation: this.getDocumentationOrLineDefinition(node),
             arguments: args,
+            context,
           });
           this.references.push({
             name: node.value as string,
@@ -118,6 +163,15 @@ export class Visitor {
             position: this.getExpressionPosition(node),
             type: 'FUNCTION',
             documentation: node?.functionData?.description ?? '',
+            args: this.getFunctionArgsAsStrings(node?.functionData?.args),
+          });
+        } else if (parentType === 'FOR_STMNT') {
+          this.definitions.push({
+            name: node.value as string,
+            type: 'VARIABLE',
+            position: node.position ?? CERO_POSITION,
+            documentation: node.lineContent ?? '',
+            context,
           });
         } else {
           this.references.push({
@@ -148,12 +202,16 @@ export class Visitor {
         break;
       case 'BINARY_OPERATION':
         if (node?.LHO === undefined) return;
-        this.visitExpression(node.LHO, null);
-        this.visitExpression(node.RHO as Expression, null, false);
+        this.visitExpression(node.LHO, null, context);
+        this.visitExpression(node.RHO as Expression, null, context, false);
         break;
       case 'FUNCTION_DEFINITION':
         if (node?.LHO === undefined) return;
-        this.visitExpression(node.LHO, 'FUNCTION_DEFINITION');
+        this.visitExpression(
+          node.LHO,
+          'FUNCTION_DEFINITION',
+          node.LHO.functionData?.contextCreated ?? '',
+        );
         if (Array.isArray(node.RHO)) {
           node.RHO.forEach((s) => {
             this.visitStatement(s);
@@ -162,8 +220,8 @@ export class Visitor {
         break;
       case 'KEYWORD':
         if (node?.LHO === undefined) return;
-        this.visitExpression(node.LHO, null);
-        this.visitExpression(node.RHO as Expression, null, false);
+        this.visitExpression(node.LHO, null, context);
+        this.visitExpression(node.RHO as Expression, null, context, false);
         break;
       case 'ANONYMOUS_FUNCTION_DEFINITION':
         // TODO: add a user setting to configure if should consider
@@ -177,9 +235,11 @@ export class Visitor {
             position: node.LHO.position,
             type: 'ANONYMOUS_FUNCTION',
             documentation: this.getDocumentationOrLineDefinition(node),
+            context,
             arguments:
               node?.functionData?.args?.map((a) => {
                 return {
+                  context: node?.functionData?.contextCreated ?? '',
                   name: a.content as string,
                   type: 'ARGUMENT',
                   position: this.getTokenPosition(a),
@@ -198,7 +258,7 @@ export class Visitor {
             };
           }) ?? []),
         );
-        this.visitExpression(node.RHO as Expression, null, false);
+        this.visitExpression(node.RHO as Expression, null, context, false);
         break;
       case 'VARIABLE_VECTOR':
         if (!Array.isArray(node.value) || !(node?.value?.length > 1)) return;
@@ -221,6 +281,7 @@ export class Visitor {
               type: 'VARIABLE',
               position: this.getTokenPosition(val),
               documentation: this.getDocumentationOrLineDefinition(node),
+              context,
             });
           });
         }
@@ -254,7 +315,55 @@ export class Visitor {
           }),
         );
         break;
+      case 'REFERENCE_CALL_VAR_FUNC':
+        this.references.push({
+          name: node.value as string,
+          position: this.getExpressionPosition(node),
+          documentation: this.getDocumentationOrLineDefinition(node),
+          type: 'VARIABLE', // TODO: actually here it's impossible to know weather it's a variable or a function
+        });
+        break;
     }
+  }
+
+  /**
+   * Gets all the arguments of the function data provided
+   * and it returns it as a list of string
+   * @returns string[]
+   */
+  private getFunctionArgsAsStrings(
+    functionArgs: Token[] | string | undefined,
+    totalCalls = 0,
+  ): string[] {
+    if (totalCalls > 300) {
+      throw new Error(
+        'Max calls exceeded in getFunctionArgsAsStrings. Tell a dev',
+      );
+      //   connection.window.showErrorMessage(
+      //     'Max calls exceeded in getFunctionArgsAsStrings. Tell a dev',
+      //   );
+      //   return [];
+    }
+    // if (functionArgs === undefined) return [];
+    // if (typeof functionArgs === 'string') return [functionArgs];
+    // return functionArgs.flatMap((t) => {
+    //   if (typeof t.content === 'string') return [t.content];
+    //   return this.getFunctionArgsAsStrings([t], totalCalls + 1);
+    // });
+    if (functionArgs === undefined) return [];
+    if (typeof functionArgs === 'string') return [functionArgs];
+
+    return functionArgs.flatMap((t) => {
+      if (typeof t.content === 'string') {
+        return [t.content];
+      } else if (Array.isArray(t.content)) {
+        // Recursively call for each element in the array
+        return this.getFunctionArgsAsStrings(t.content);
+      } else {
+        // Handle other cases as needed
+        return [];
+      }
+    });
   }
 
   /**
@@ -325,6 +434,8 @@ export class Visitor {
       return node?.functionData?.description;
     }
 
+    if (node?.lineContent) return node.lineContent;
+
     if (node?.RHO === undefined || Array.isArray(node.RHO)) return '';
 
     // TODO: complete this
@@ -359,5 +470,68 @@ export class Visitor {
       return 'FUNCTION';
     }
     return 'VARIABLE';
+  }
+
+  /**
+   * Executed after all statements have been visited
+   * TODO: consider the different scopes, right now it ignore the scopes
+   */
+  private finishHook(): void {
+    const defsNames = this.definitions.map((d) => d.name);
+    const nativeFuncList = getNataiveFunctionsList();
+    const refsNames = this.references.map((r) => r.name);
+
+    // add files to path
+    this.references.forEach((ref) => {
+      if (ref.name === 'addpath') {
+        const path = ref?.args ? ref.args : [];
+        if (path.length === 0) {
+          this.errors.push({
+            message: 'Missing path argument',
+            code: ERROR_CODES.MISSING_PATH,
+            range: ref.position,
+          });
+        } else if (path.length > 1) {
+          this.errors.push({
+            message: 'Too many arguments',
+            code: ERROR_CODES.TOO_MANY_ARGS,
+            range: ref.position,
+          });
+        }
+        const allPaths = path[0].split(':');
+        if (allPaths.length > 1) {
+          this.warnings.push({
+            message:
+              "Not recommended to use multiple paths separated with ':'. May not work properly in all systems (personal advice and experienced, not said octave.",
+            code: 0,
+            range: ref.position,
+          });
+        }
+        allPaths.forEach((p) => {
+          const failedPaths = addNewDocumentFromPath(cleanStringArg(p));
+          failedPaths.forEach((p) => {
+            this.warnings.push({
+              message: `Could not load '${p}'`,
+              code: 0,
+              range: ref.position,
+            });
+          });
+        });
+      }
+    });
+
+    // check weather the access methods and variables are defined
+    refsNames.forEach((ref, i) => {
+      if (nativeFuncList.includes(ref)) {
+        return;
+      }
+      if (!defsNames.includes(ref)) {
+        this.errors.push({
+          message: `Could not find reference '${ref}'`,
+          code: ERROR_CODES.VISITOR_COULDNT_FIND_REF,
+          range: this.references[i].position,
+        });
+      }
+    });
   }
 }
